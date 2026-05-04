@@ -1,0 +1,67 @@
+/* Varta Dark (default) */
+:root,
+[data-theme="varta-dark"] {
+  --varta-bg:              #1e1e1e;
+  --varta-bg-secondary:    #252526;
+  --varta-bg-tertiary:     #2d2d2d;
+  --varta-border:          #333333;
+  --varta-text:            #d4d4d4;
+  --varta-text-muted:      #6e6e6e;
+  --varta-text-faint:      #4e4e4e;
+  --varta-accent:          #569cd6;
+  --varta-accent-hover:    #4fc1ff;
+  --varta-success:         #4ec9b0;
+  --varta-warning:         #ff8c00;
+  --varta-error:           #f44747;
+  --varta-info:            #569cd6;
+  --varta-selection:       #264f78;
+  --varta-hover:           #2a2d2e;
+  --varta-active:          #37373d;
+  --varta-tab-active:      #1e1e1e;
+  --varta-tab-inactive:    #2d2d2d;
+  --varta-sidebar:         #252526;
+  --varta-activitybar:     #333333;
+  --varta-statusbar:       #007acc;
+  --varta-panel:           #1e1e1e;
+  --varta-titlebar:        #3c3c3c;
+  --varta-editor-font-size: 14px;
+  --varta-ui-font-size:     13px;
+  --varta-sidebar-width:    240px;
+  --varta-activitybar-width: 48px;
+  --varta-statusbar-height: 22px;
+  --varta-titlebar-height:  30px;
+  --varta-tab-height:       35px;
+  --varta-panel-height:     200px;
+  --varta-border-radius:    4px;
+  --varta-shadow-sm:        0 1px 3px rgba(0,0,0,0.4);
+  --varta-shadow-md:        0 4px 8px rgba(0,0,0,0.5);
+  --varta-shadow-lg:        0 8px 24px rgba(0,0,0,0.6);
+  --varta-shadow-popup:     0 4px 16px rgba(0,0,0,0.7);
+}
+
+/* Varta Light */
+[data-theme="varta-light"] {
+  --varta-bg:              #ffffff;
+  --varta-bg-secondary:    #f5f5f5;
+  --varta-bg-tertiary:     #ebebeb;
+  --varta-border:          #e0e0e0;
+  --varta-text:            #1a1a1a;
+  --varta-text-muted:      #737373;
+  --varta-text-faint:      #a0a0a0;
+  --varta-accent:          #0066b8;
+  --varta-accent-hover:    #005a9e;
+  --varta-success:         #008000;
+  --varta-warning:         #bf8803;
+  --varta-error:           #e51400;
+  --varta-info:            #0066b8;
+  --varta-selection:       #add6ff;
+  --varta-hover:           #e8e8e8;
+  --varta-active:          #d6d6d6;
+  --varta-tab-active:      #ffffff;
+  --varta-tab-inactive:    #ececec;
+  --varta-sidebar:         #f3f3f3;
+  --varta-activitybar:     #2c2c2c;
+  --varta-statusbar:       #007acc;
+  --varta-panel:           #f3f3f3;
+  --varta-titlebar:        #dddddd;
+}

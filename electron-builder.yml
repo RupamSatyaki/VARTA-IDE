@@ -1,0 +1,72 @@
+appId: com.varta.editor
+productName: Varta
+copyright: Copyright © 2024 Varta Team
+
+directories:
+  buildResources: assets
+  output: build
+
+files:
+  - out/**/*
+  - node_modules/**/*
+  - "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+  - "!node_modules/.bin"
+  - "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+  - "!.editorconfig"
+  - "!**/._*"
+  - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}"
+  - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+  - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+  - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+
+asarUnpack:
+  - "node_modules/node-pty/**/*"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icons/app.ico
+  artifactName: Varta-Setup-${version}.${ext}
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Varta
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: assets/icons/app.icns
+  category: public.app-category.developer-tools
+  artifactName: Varta-${version}.${ext}
+
+dmg:
+  title: Varta ${version}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  icon: assets/icons/app.png
+  category: Development
+  artifactName: Varta-${version}.${ext}
+
+publish:
+  provider: github
+  releaseType: draft

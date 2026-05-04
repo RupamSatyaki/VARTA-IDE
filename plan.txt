@@ -1,0 +1,490 @@
+================================================================================
+  VARTA — Desktop Code Editor
+  Full Build Plan (Updated)
+================================================================================
+
+TECH STACK
+----------
+- Electron (main process)
+- Vite + electron-vite (build tooling)
+- React 18 + TypeScript
+- Monaco Editor (@monaco-editor/react)
+- Zustand (state management)
+- Tailwind CSS (styling + CSS variables for theming)
+- xterm.js (terminal renderer)
+- node-pty (PTY backend)
+- simple-git (git operations)
+- chokidar (file watching)
+- electron-builder (packaging)
+
+CHANGES FROM ORIGINAL PLAN
+---------------------------
+1. Phase 16 (UI primitives) moved to before Phase 5 → now Phase 5
+2. src/shared/errors.ts added in Phase 2 for typed IPC error codes
+3. AI Panel phase added after Phase 15 (now Phase 16):
+   - aiStore, aiHandlers, AIChatPanel, AIInlineHint
+   - Claude API integration via IPC
+   - API key stored in settings, NEVER exposed to renderer directly
+
+================================================================================
+  COMPLETE FOLDER STRUCTURE
+================================================================================
+
+varta/
+├── .vscode/
+│   └── settings.json
+├── assets/
+│   ├── icons/
+│   │   ├── app.ico
+│   │   ├── app.icns
+│   │   └── app.png
+│   └── fonts/
+│       └── JetBrainsMono.woff2
+├── build/                          ← electron-builder output
+├── dist/                           ← vite build output
+├── resources/
+│   └── themes/
+│       ├── dark-default.json
+│       ├── light-default.json
+│       └── monokai.json
+├── src/
+│   ├── main/                       ← Electron Main Process
+│   │   ├── index.ts                ← Entry point
+│   │   ├── window/
+│   │   │   ├── WindowManager.ts
+│   │   │   ├── createMainWindow.ts
+│   │   │   └── windowState.ts
+│   │   ├── ipc/
+│   │   │   ├── index.ts            ← registers all handlers
+│   │   │   ├── fileHandlers.ts
+│   │   │   ├── terminalHandlers.ts
+│   │   │   ├── gitHandlers.ts
+│   │   │   ├── searchHandlers.ts
+│   │   │   ├── settingsHandlers.ts
+│   │   │   ├── dialogHandlers.ts
+│   │   │   ├── themeHandlers.ts
+│   │   │   └── aiHandlers.ts       ← AI/Claude API (key never leaves main)
+│   │   ├── services/
+│   │   │   ├── FileService.ts
+│   │   │   ├── TerminalService.ts
+│   │   │   ├── GitService.ts
+│   │   │   ├── SearchService.ts
+│   │   │   ├── SettingsService.ts
+│   │   │   ├── WatcherService.ts
+│   │   │   ├── ExtensionService.ts
+│   │   │   └── AIService.ts        ← Claude API calls live here
+│   │   ├── menu/
+│   │   │   ├── AppMenu.ts
+│   │   │   └── ContextMenu.ts
+│   │   └── utils/
+│   │       ├── logger.ts
+│   │       └── pathUtils.ts
+│   │
+│   ├── preload/                    ← Preload Scripts
+│   │   ├── index.ts                ← contextBridge bindings
+│   │   └── api/
+│   │       ├── fileApi.ts
+│   │       ├── terminalApi.ts
+│   │       ├── gitApi.ts
+│   │       ├── searchApi.ts
+│   │       ├── settingsApi.ts
+│   │       ├── dialogApi.ts
+│   │       ├── themeApi.ts
+│   │       └── aiApi.ts            ← exposes only safe AI methods
+│   │
+│   ├── shared/                     ← Shared between main & renderer
+│   │   ├── ipc.ts                  ← ALL IPC channel names (typed const enum)
+│   │   ├── errors.ts               ← Typed IPC error codes
+│   │   ├── types/
+│   │   │   ├── file.types.ts
+│   │   │   ├── terminal.types.ts
+│   │   │   ├── git.types.ts
+│   │   │   ├── search.types.ts
+│   │   │   ├── settings.types.ts
+│   │   │   ├── editor.types.ts
+│   │   │   ├── theme.types.ts
+│   │   │   ├── extension.types.ts
+│   │   │   └── ai.types.ts         ← AI message/response types
+│   │   └── constants/
+│   │       ├── keybindings.ts
+│   │       ├── languages.ts
+│   │       └── defaults.ts
+│   │
+│   └── renderer/                   ← React App
+│       ├── index.html
+│       ├── main.tsx                ← React entry
+│       ├── App.tsx                 ← Root layout
+│       │
+│       ├── assets/
+│       │   └── styles/
+│       │       ├── global.css
+│       │       ├── themes.css      ← CSS variables per theme
+│       │       └── scrollbar.css
+│       │
+│       ├── store/                  ← Zustand stores
+│       │   ├── index.ts
+│       │   ├── editorStore.ts
+│       │   ├── fileTreeStore.ts
+│       │   ├── terminalStore.ts
+│       │   ├── gitStore.ts
+│       │   ├── searchStore.ts
+│       │   ├── settingsStore.ts
+│       │   ├── themeStore.ts
+│       │   ├── tabStore.ts
+│       │   ├── panelStore.ts
+│       │   ├── notificationStore.ts
+│       │   ├── extensionStore.ts
+│       │   └── aiStore.ts          ← AI chat state
+│       │
+│       ├── hooks/                  ← Custom React hooks
+│       │   ├── useEditor.ts
+│       │   ├── useFileTree.ts
+│       │   ├── useTerminal.ts
+│       │   ├── useGit.ts
+│       │   ├── useSearch.ts
+│       │   ├── useSettings.ts
+│       │   ├── useTheme.ts
+│       │   ├── useKeybinding.ts
+│       │   ├── useResizable.ts
+│       │   ├── useContextMenu.ts
+│       │   ├── useDragDrop.ts
+│       │   ├── useNotification.ts
+│       │   ├── useCommandPalette.ts
+│       │   └── useAI.ts            ← AI hook
+│       │
+│       ├── components/
+│       │   │
+│       │   ├── ui/                 ← Reusable primitive UI (Phase 5 — FIRST)
+│       │   │   ├── Button.tsx
+│       │   │   ├── IconButton.tsx
+│       │   │   ├── Input.tsx
+│       │   │   ├── Textarea.tsx
+│       │   │   ├── Select.tsx
+│       │   │   ├── Checkbox.tsx
+│       │   │   ├── Toggle.tsx
+│       │   │   ├── Slider.tsx
+│       │   │   ├── Tooltip.tsx
+│       │   │   ├── Popover.tsx
+│       │   │   ├── Modal.tsx
+│       │   │   ├── Dialog.tsx
+│       │   │   ├── DropdownMenu.tsx
+│       │   │   ├── ContextMenu.tsx
+│       │   │   ├── Tabs.tsx
+│       │   │   ├── TabPanel.tsx
+│       │   │   ├── Badge.tsx
+│       │   │   ├── Spinner.tsx
+│       │   │   ├── Skeleton.tsx
+│       │   │   ├── Separator.tsx
+│       │   │   ├── ScrollArea.tsx
+│       │   │   ├── VirtualList.tsx
+│       │   │   ├── TreeView.tsx
+│       │   │   ├── Icon.tsx
+│       │   │   └── KeyboardShortcut.tsx
+│       │   │
+│       │   ├── layout/             ← Top-level layout shells (Phase 6)
+│       │   │   ├── RootLayout.tsx
+│       │   │   ├── ActivityBar.tsx
+│       │   │   ├── Sidebar.tsx
+│       │   │   ├── SidebarPanel.tsx
+│       │   │   ├── EditorArea.tsx
+│       │   │   ├── PanelArea.tsx
+│       │   │   ├── StatusBar.tsx
+│       │   │   ├── TitleBar.tsx
+│       │   │   └── ResizableDivider.tsx
+│       │   │
+│       │   ├── editor/             ← Monaco editor components (Phase 7)
+│       │   │   ├── EditorPane.tsx
+│       │   │   ├── EditorGroup.tsx
+│       │   │   ├── EditorTabs.tsx
+│       │   │   ├── EditorTab.tsx
+│       │   │   ├── EditorBreadcrumb.tsx
+│       │   │   ├── EditorScrollbar.tsx
+│       │   │   ├── EditorMinimap.tsx
+│       │   │   ├── EditorContextMenu.tsx
+│       │   │   ├── DiffEditor.tsx
+│       │   │   ├── WelcomeScreen.tsx
+│       │   │   └── UnsavedChangesDialog.tsx
+│       │   │
+│       │   ├── filetree/           ← File explorer (Phase 8)
+│       │   │   ├── FileTree.tsx
+│       │   │   ├── FileTreeItem.tsx
+│       │   │   ├── FileTreeFolder.tsx
+│       │   │   ├── FileTreeFile.tsx
+│       │   │   ├── FileTreeContextMenu.tsx
+│       │   │   ├── FileTreeToolbar.tsx
+│       │   │   ├── NewFileInput.tsx
+│       │   │   ├── RenameInput.tsx
+│       │   │   └── FileIcon.tsx
+│       │   │
+│       │   ├── terminal/           ← Integrated terminal (Phase 9)
+│       │   │   ├── TerminalPanel.tsx
+│       │   │   ├── TerminalTab.tsx
+│       │   │   ├── TerminalTabs.tsx
+│       │   │   ├── TerminalInstance.tsx
+│       │   │   ├── TerminalToolbar.tsx
+│       │   │   └── TerminalContextMenu.tsx
+│       │   │
+│       │   ├── search/             ← Search & replace (Phase 10)
+│       │   │   ├── SearchPanel.tsx
+│       │   │   ├── SearchInput.tsx
+│       │   │   ├── ReplaceInput.tsx
+│       │   │   ├── SearchFilters.tsx
+│       │   │   ├── SearchResults.tsx
+│       │   │   ├── SearchResultFile.tsx
+│       │   │   ├── SearchResultMatch.tsx
+│       │   │   └── SearchToolbar.tsx
+│       │   │
+│       │   ├── git/                ← Source control (Phase 11)
+│       │   │   ├── GitPanel.tsx
+│       │   │   ├── GitChanges.tsx
+│       │   │   ├── GitChangeItem.tsx
+│       │   │   ├── GitStagedChanges.tsx
+│       │   │   ├── GitCommitBox.tsx
+│       │   │   ├── GitBranchPicker.tsx
+│       │   │   ├── GitToolbar.tsx
+│       │   │   ├── GitDiffViewer.tsx
+│       │   │   └── GitStatusBadge.tsx
+│       │   │
+│       │   ├── settings/           ← Settings UI (Phase 12)
+│       │   │   ├── SettingsPanel.tsx
+│       │   │   ├── SettingsSidebar.tsx
+│       │   │   ├── SettingsSection.tsx
+│       │   │   ├── SettingsItem.tsx
+│       │   │   ├── SettingsSearch.tsx
+│       │   │   ├── SettingsToggle.tsx
+│       │   │   ├── SettingsSelect.tsx
+│       │   │   ├── SettingsInput.tsx
+│       │   │   ├── SettingsSlider.tsx
+│       │   │   ├── SettingsKeybinding.tsx
+│       │   │   └── SettingsJsonEditor.tsx
+│       │   │
+│       │   ├── commandpalette/     ← Command palette Ctrl+Shift+P (Phase 13)
+│       │   │   ├── CommandPalette.tsx
+│       │   │   ├── CommandInput.tsx
+│       │   │   ├── CommandList.tsx
+│       │   │   ├── CommandItem.tsx
+│       │   │   └── CommandGroup.tsx
+│       │   │
+│       │   ├── notifications/      ← Toast & notification system (Phase 13)
+│       │   │   ├── NotificationContainer.tsx
+│       │   │   ├── Notification.tsx
+│       │   │   ├── NotificationIcon.tsx
+│       │   │   └── ProgressNotification.tsx
+│       │   │
+│       │   ├── statusbar/          ← Status bar items (Phase 13)
+│       │   │   ├── StatusBarItem.tsx
+│       │   │   ├── StatusBarBranch.tsx
+│       │   │   ├── StatusBarLanguage.tsx
+│       │   │   ├── StatusBarEncoding.tsx
+│       │   │   ├── StatusBarLineCol.tsx
+│       │   │   ├── StatusBarIndent.tsx
+│       │   │   ├── StatusBarErrors.tsx
+│       │   │   └── StatusBarSync.tsx
+│       │   │
+│       │   ├── extensions/         ← Extensions panel (Phase 15)
+│       │   │   ├── ExtensionsPanel.tsx
+│       │   │   ├── ExtensionItem.tsx
+│       │   │   ├── ExtensionSearch.tsx
+│       │   │   ├── ExtensionDetails.tsx
+│       │   │   └── ExtensionToolbar.tsx
+│       │   │
+│       │   ├── outline/            ← Code outline / symbol tree (Phase 14)
+│       │   │   ├── OutlinePanel.tsx
+│       │   │   ├── OutlineItem.tsx
+│       │   │   └── OutlineToolbar.tsx
+│       │   │
+│       │   ├── problems/           ← Problems / diagnostics panel (Phase 14)
+│       │   │   ├── ProblemsPanel.tsx
+│       │   │   ├── ProblemItem.tsx
+│       │   │   ├── ProblemFilter.tsx
+│       │   │   └── ProblemCount.tsx
+│       │   │
+│       │   ├── debug/              ← Debug panel future-ready (Phase 15)
+│       │   │   ├── DebugPanel.tsx
+│       │   │   ├── DebugToolbar.tsx
+│       │   │   ├── DebugVariables.tsx
+│       │   │   ├── DebugCallStack.tsx
+│       │   │   ├── DebugBreakpoints.tsx
+│       │   │   └── DebugConsole.tsx
+│       │   │
+│       │   └── ai/                 ← AI Panel (Phase 16)
+│       │       ├── AIChatPanel.tsx
+│       │       ├── AIChatMessage.tsx
+│       │       ├── AIChatInput.tsx
+│       │       ├── AIInlineHint.tsx
+│       │       ├── AIToolbar.tsx
+│       │       └── AIModelSelector.tsx
+│       │
+│       └── utils/                  ← Renderer-side utilities
+│           ├── cn.ts               ← classnames helper
+│           ├── formatters.ts
+│           ├── fileUtils.ts
+│           ├── editorUtils.ts
+│           ├── gitUtils.ts
+│           ├── searchUtils.ts
+│           ├── keybindingUtils.ts
+│           └── themeUtils.ts
+│
+├── electron.vite.config.ts
+├── electron-builder.yml
+├── package.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── tsconfig.web.json
+├── tailwind.config.ts
+├── postcss.config.js
+└── .eslintrc.cjs
+
+================================================================================
+  PHASE BREAKDOWN (18 Phases Total)
+================================================================================
+
+Phase 1  — Project Scaffold & Tooling
+         package.json, tsconfig files, electron.vite.config.ts,
+         electron-builder.yml, tailwind.config.ts, postcss.config.js,
+         .eslintrc.cjs, .vscode/settings.json
+         Files: ~12
+
+Phase 2  — Shared Types + IPC Contract + Error Codes
+         src/shared/ipc.ts, src/shared/errors.ts,
+         src/shared/types/*.ts (9 files), src/shared/constants/*.ts (3 files)
+         Files: ~15
+
+Phase 3  — Main Process (Window, Menu, Services)
+         src/main/index.ts, window/*.ts, ipc/*.ts, services/*.ts,
+         menu/*.ts, utils/*.ts
+         Files: ~18
+
+Phase 4  — Preload + contextBridge API
+         src/preload/index.ts, src/preload/api/*.ts (8 files)
+         Files: ~9
+
+Phase 5  — UI Primitives Library  ← MOVED UP (was Phase 16)
+         src/renderer/components/ui/*.tsx (24 files)
+         Files: ~24
+
+Phase 6  — Layout Shell + Zustand Stores
+         App.tsx, main.tsx, index.html, store/*.ts (13 files),
+         layout/*.tsx (9 files), assets/styles/*.css (3 files)
+         Files: ~30
+
+Phase 7  — Monaco Editor + Tabs
+         components/editor/*.tsx (11 files), hooks/useEditor.ts
+         Files: ~12
+
+Phase 8  — File Tree + File Operations
+         components/filetree/*.tsx (9 files), hooks/useFileTree.ts,
+         renderer/utils/fileUtils.ts
+         Files: ~12
+
+Phase 9  — Integrated Terminal (node-pty + xterm.js)
+         components/terminal/*.tsx (6 files), hooks/useTerminal.ts
+         Files: ~8
+
+Phase 10 — Search & Replace
+         components/search/*.tsx (8 files), hooks/useSearch.ts,
+         renderer/utils/searchUtils.ts
+         Files: ~10
+
+Phase 11 — Git Panel + Diff Viewer
+         components/git/*.tsx (9 files), hooks/useGit.ts,
+         renderer/utils/gitUtils.ts
+         Files: ~11
+
+Phase 12 — Settings + Themes
+         components/settings/*.tsx (11 files), hooks/useSettings.ts,
+         hooks/useTheme.ts, renderer/utils/themeUtils.ts,
+         resources/themes/*.json (3 files)
+         Files: ~17
+
+Phase 13 — Command Palette + Keybindings + Notifications + Status Bar
+         components/commandpalette/*.tsx (5 files),
+         components/notifications/*.tsx (4 files),
+         components/statusbar/*.tsx (8 files),
+         hooks/useKeybinding.ts, hooks/useCommandPalette.ts,
+         hooks/useNotification.ts, renderer/utils/keybindingUtils.ts
+         Files: ~21
+
+Phase 14 — Problems + Outline Panels
+         components/problems/*.tsx (4 files),
+         components/outline/*.tsx (3 files)
+         Files: ~8
+
+Phase 15 — Debug Panel + Extensions Panel
+         components/debug/*.tsx (6 files),
+         components/extensions/*.tsx (5 files),
+         hooks/useDragDrop.ts, hooks/useContextMenu.ts,
+         hooks/useResizable.ts
+         Files: ~14
+
+Phase 16 — AI Panel (Claude API via IPC)
+         src/main/ipc/aiHandlers.ts,
+         src/main/services/AIService.ts,
+         src/preload/api/aiApi.ts,
+         src/shared/types/ai.types.ts,
+         src/renderer/store/aiStore.ts,
+         src/renderer/hooks/useAI.ts,
+         src/renderer/components/ai/*.tsx (6 files)
+         Security: API key read from settings in main process only,
+                   renderer only sends/receives message text
+         Files: ~12
+
+Phase 17 — Packaging + electron-builder
+         electron-builder.yml (finalize),
+         assets/icons/* (platform icons),
+         package.json scripts (finalize)
+         Files: ~5
+
+Phase 18 — Final QA, Error Boundaries, Performance
+         Error boundaries, loading states, edge case handling,
+         renderer/utils/formatters.ts, renderer/utils/editorUtils.ts,
+         renderer/utils/cn.ts, renderer/utils/gitUtils.ts
+         Files: ~8
+
+================================================================================
+  TOTAL: ~216 files across 18 phases
+================================================================================
+
+RISKS & MITIGATIONS
+-------------------
+1. node-pty native build on Windows
+   → electron-rebuild in postinstall; document VS Build Tools requirement
+
+2. Monaco + Vite worker bundling
+   → Explicit vite.config worker format + @monaco-editor/react wrapper
+
+3. Large file tree performance
+   → VirtualList component with windowing (react-window or custom)
+
+4. IPC type drift between main and renderer
+   → Single src/shared/ipc.ts as source of truth, imported by both sides
+
+5. Git operations blocking main thread
+   → All simple-git calls are async, wrapped in try/catch with typed errors
+
+6. Claude API key security
+   → Key stored in encrypted settings file (main process only)
+   → Never passed through contextBridge to renderer
+   → Renderer sends only prompt text, receives only response text
+
+7. Tailwind + Monaco theme conflict
+   → CSS variable isolation; Monaco theme applied programmatically
+
+================================================================================
+  IPC SECURITY MODEL
+================================================================================
+
+Renderer (React)
+    ↓  sends: { prompt: string, context: string }
+    ↑  receives: { response: string, error?: ErrorCode }
+
+Preload (contextBridge)
+    → exposes: window.varta.ai.sendMessage(prompt, context)
+    → NEVER exposes: API key, model config, raw HTTP responses
+
+Main Process (AIService)
+    → reads API key from SettingsService (encrypted store)
+    → makes HTTPS call to Claude API
+    → returns sanitized response to renderer via ipcMain.handle
+
+================================================================================
