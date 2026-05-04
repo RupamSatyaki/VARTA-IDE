@@ -1,9 +1,10 @@
-/* Varta Dark (default) */
+/* ── Varta Dark (default) ─────────────────────────────────────────────────── */
 :root,
 [data-theme="varta-dark"] {
   --varta-bg:              #1e1e1e;
   --varta-bg-secondary:    #252526;
   --varta-bg-tertiary:     #2d2d2d;
+  --varta-bg-input:        #3c3c3c;
   --varta-border:          #333333;
   --varta-text:            #d4d4d4;
   --varta-text-muted:      #6e6e6e;
@@ -24,6 +25,7 @@
   --varta-statusbar:       #007acc;
   --varta-panel:           #1e1e1e;
   --varta-titlebar:        #3c3c3c;
+  --varta-editor-bg:       #1a1a1a;
   --varta-editor-font-size: 14px;
   --varta-ui-font-size:     13px;
   --varta-sidebar-width:    240px;
@@ -39,21 +41,22 @@
   --varta-shadow-popup:     0 4px 16px rgba(0,0,0,0.7);
 }
 
-/* Varta Light */
+/* ── Varta Light ──────────────────────────────────────────────────────────── */
 [data-theme="varta-light"] {
   --varta-bg:              #ffffff;
   --varta-bg-secondary:    #f5f5f5;
   --varta-bg-tertiary:     #ebebeb;
+  --varta-bg-input:        #f0f0f0;
   --varta-border:          #e0e0e0;
   --varta-text:            #1a1a1a;
   --varta-text-muted:      #737373;
   --varta-text-faint:      #a0a0a0;
-  --varta-accent:          #0066b8;
-  --varta-accent-hover:    #005a9e;
+  --varta-accent:          #0066cc;
+  --varta-accent-hover:    #005ab5;
   --varta-success:         #008000;
   --varta-warning:         #bf8803;
   --varta-error:           #e51400;
-  --varta-info:            #0066b8;
+  --varta-info:            #0066cc;
   --varta-selection:       #add6ff;
   --varta-hover:           #e8e8e8;
   --varta-active:          #d6d6d6;
@@ -64,4 +67,92 @@
   --varta-statusbar:       #007acc;
   --varta-panel:           #f3f3f3;
   --varta-titlebar:        #dddddd;
+  --varta-editor-bg:       #ffffff;
+}
+
+/* ── Monokai ──────────────────────────────────────────────────────────────── */
+[data-theme="monokai"] {
+  --varta-bg:              #272822;
+  --varta-bg-secondary:    #3e3d32;
+  --varta-bg-tertiary:     #49483e;
+  --varta-bg-input:        #49483e;
+  --varta-border:          #49483e;
+  --varta-text:            #f8f8f2;
+  --varta-text-muted:      #75715e;
+  --varta-text-faint:      #5c5c4e;
+  --varta-accent:          #f92672;
+  --varta-accent-hover:    #fd5c8a;
+  --varta-success:         #a6e22e;
+  --varta-warning:         #e6db74;
+  --varta-error:           #f92672;
+  --varta-info:            #66d9e8;
+  --varta-selection:       #49483e;
+  --varta-hover:           #3e3d32;
+  --varta-active:          #49483e;
+  --varta-tab-active:      #272822;
+  --varta-tab-inactive:    #3e3d32;
+  --varta-sidebar:         #3e3d32;
+  --varta-activitybar:     #272822;
+  --varta-statusbar:       #f92672;
+  --varta-panel:           #272822;
+  --varta-titlebar:        #3e3d32;
+  --varta-editor-bg:       #272822;
+}
+
+/* ── GitHub Dark ──────────────────────────────────────────────────────────── */
+[data-theme="github-dark"] {
+  --varta-bg:              #0d1117;
+  --varta-bg-secondary:    #161b22;
+  --varta-bg-tertiary:     #21262d;
+  --varta-bg-input:        #21262d;
+  --varta-border:          #30363d;
+  --varta-text:            #c9d1d9;
+  --varta-text-muted:      #8b949e;
+  --varta-text-faint:      #484f58;
+  --varta-accent:          #58a6ff;
+  --varta-accent-hover:    #79b8ff;
+  --varta-success:         #3fb950;
+  --varta-warning:         #d29922;
+  --varta-error:           #f85149;
+  --varta-info:            #58a6ff;
+  --varta-selection:       #1f6feb;
+  --varta-hover:           #161b22;
+  --varta-active:          #21262d;
+  --varta-tab-active:      #0d1117;
+  --varta-tab-inactive:    #161b22;
+  --varta-sidebar:         #161b22;
+  --varta-activitybar:     #010409;
+  --varta-statusbar:       #1f6feb;
+  --varta-panel:           #0d1117;
+  --varta-titlebar:        #161b22;
+  --varta-editor-bg:       #0d1117;
+}
+
+/* ── Solarized Dark ───────────────────────────────────────────────────────── */
+[data-theme="solarized-dark"] {
+  --varta-bg:              #002b36;
+  --varta-bg-secondary:    #073642;
+  --varta-bg-tertiary:     #094555;
+  --varta-bg-input:        #073642;
+  --varta-border:          #094555;
+  --varta-text:            #839496;
+  --varta-text-muted:      #586e75;
+  --varta-text-faint:      #3d5059;
+  --varta-accent:          #268bd2;
+  --varta-accent-hover:    #2aa198;
+  --varta-success:         #859900;
+  --varta-warning:         #b58900;
+  --varta-error:           #dc322f;
+  --varta-info:            #268bd2;
+  --varta-selection:       #073642;
+  --varta-hover:           #073642;
+  --varta-active:          #094555;
+  --varta-tab-active:      #002b36;
+  --varta-tab-inactive:    #073642;
+  --varta-sidebar:         #073642;
+  --varta-activitybar:     #002b36;
+  --varta-statusbar:       #268bd2;
+  --varta-panel:           #002b36;
+  --varta-titlebar:        #073642;
+  --varta-editor-bg:       #002b36;
 }

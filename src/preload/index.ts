@@ -38,3 +38,10 @@ const vartaAPI = {
 } as const
 
 contextBridge.exposeInMainWorld('varta', vartaAPI)
+
+// Expose safe version info — process.versions is Node.js only, not available in renderer
+contextBridge.exposeInMainWorld('vartaVersions', {
+  electron: process.versions.electron ?? '',
+  node:     process.versions.node     ?? '',
+  chrome:   process.versions.chrome   ?? '',
+})

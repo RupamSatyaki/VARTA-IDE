@@ -46,7 +46,7 @@ export function ActivityBar() {
 
       {/* Bottom items */}
       <div className="flex flex-col items-center gap-0 pb-1">
-        <Tooltip content="Settings" placement="right">
+        <Tooltip content="Settings (Ctrl+,)" placement="right">
           <button
             onClick={openSettings}
             aria-label="Settings"
