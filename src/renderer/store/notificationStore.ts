@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { immer }  from 'zustand/middleware/immer'
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error'
 
@@ -7,7 +6,6 @@ export interface AppNotification {
   id:        string
   type:      NotificationType
   message:   string
-  detail?:   string
   duration?: number   // ms, 0 = persistent
   action?:   { label: string; onClick: () => void }
 }
@@ -21,36 +19,43 @@ export interface NotificationActions {
   dismiss: (id: string) => void
   clear:   () => void
   reset:   () => void
+  // Convenience helpers
+  success: (message: string, duration?: number) => string
+  error:   (message: string) => string
+  warning: (message: string, duration?: number) => string
+  info:    (message: string, duration?: number) => string
 }
 
-const INITIAL: NotificationState = { notifications: [] }
+export const useNotificationStore = create<NotificationState & NotificationActions>()((set, get) => ({
+  notifications: [],
 
-export const useNotificationStore = create<NotificationState & NotificationActions>()(
-  immer((set) => ({
-    ...INITIAL,
+  add: (n) => {
+    const id       = `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const duration = n.duration ?? (n.type === 'error' ? 0 : 4000)
+    set((s) => ({ notifications: [...s.notifications, { ...n, id, duration }] }))
 
-    add: (n) => {
-      const id = `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`
-      set((s) => { s.notifications.push({ ...n, id }) })
+    if (duration > 0) {
+      setTimeout(() => {
+        set((s) => ({ notifications: s.notifications.filter((x) => x.id !== id) }))
+      }, duration)
+    }
+    return id
+  },
 
-      const duration = n.duration ?? (n.type === 'error' ? 0 : 4000)
-      if (duration > 0) {
-        setTimeout(() => {
-          set((s) => {
-            const idx = s.notifications.findIndex((x) => x.id === id)
-            if (idx >= 0) { s.notifications.splice(idx, 1) }
-          })
-        }, duration)
-      }
-      return id
-    },
+  dismiss: (id) => set((s) => ({
+    notifications: s.notifications.filter((n) => n.id !== id),
+  })),
 
-    dismiss: (id) => set((s) => {
-      const idx = s.notifications.findIndex((n) => n.id === id)
-      if (idx >= 0) { s.notifications.splice(idx, 1) }
-    }),
+  clear: () => set({ notifications: [] }),
+  reset: () => set({ notifications: [] }),
 
-    clear: () => set((s) => { s.notifications = [] }),
-    reset: () => set(() => ({ ...INITIAL })),
-  }))
-)
+  // Helpers
+  success: (message, duration = 2500) =>
+    get().add({ type: 'success', message, duration }),
+  error:   (message) =>
+    get().add({ type: 'error',   message, duration: 0 }),
+  warning: (message, duration = 4000) =>
+    get().add({ type: 'warning', message, duration }),
+  info:    (message, duration = 3000) =>
+    get().add({ type: 'info',    message, duration }),
+}))

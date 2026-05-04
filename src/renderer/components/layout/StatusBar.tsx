@@ -1,72 +1,49 @@
 import React from 'react'
-import { cn } from '../../utils/cn'
-import { useGitStore }     from '../../store/gitStore'
-import { useEditorStore }  from '../../store/editorStore'
-import { useUIStore }      from '../../store/uiStore'
+import { useGitStore }          from '../../store/gitStore'
+import { useUIStore }           from '../../store/uiStore'
+import { StatusBarLanguage }    from '../statusbar/StatusBarLanguage'
+import { StatusBarLineCol }     from '../statusbar/StatusBarLineCol'
+import { StatusBarEncoding }    from '../statusbar/StatusBarEncoding'
+import { StatusBarIndent }      from '../statusbar/StatusBarIndent'
+import { StatusBarErrors }      from '../statusbar/StatusBarErrors'
+import { StatusBarSync }        from '../statusbar/StatusBarSync'
 
 export function StatusBar() {
   const { status: gitStatus }  = useGitStore()
-  const { getActiveTab }       = useEditorStore()
-  const { setActiveBottomPanel, setPanelVisible, setActiveSidebarPanel } = useUIStore()
-  const activeTab = getActiveTab()
+  const { setActiveSidebarPanel, setActiveBottomPanel, setPanelVisible } = useUIStore()
 
   return (
-    <div className="flex items-center justify-between h-[22px] shrink-0 bg-[#007acc] text-white text-xs px-2 select-none">
+    <div className="flex items-center justify-between h-[22px] shrink-0 bg-[#007acc] text-white text-xs px-1 select-none">
       {/* Left */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center">
+        {/* Git branch */}
         {gitStatus?.branch && (
-          <StatusBarItem
-            onClick={() => { setActiveSidebarPanel('git') }}
+          <button
+            onClick={() => setActiveSidebarPanel('git')}
             title={`Branch: ${gitStatus.branch}`}
+            className="flex items-center gap-1 px-2 h-full hover:bg-white/20 transition-colors"
           >
-            <span className="mr-1">⎇</span>
-            {gitStatus.branch}
-            {gitStatus.ahead  > 0 && <span className="ml-1">↑{gitStatus.ahead}</span>}
-            {gitStatus.behind > 0 && <span className="ml-1">↓{gitStatus.behind}</span>}
-          </StatusBarItem>
+            <span>⎇</span>
+            <span>{gitStatus.branch}</span>
+            {gitStatus.ahead  > 0 && <span>↑{gitStatus.ahead}</span>}
+            {gitStatus.behind > 0 && <span>↓{gitStatus.behind}</span>}
+          </button>
         )}
-        <StatusBarItem
-          onClick={() => { setActiveBottomPanel('problems'); setPanelVisible(true) }}
-          title="Errors and Warnings"
-        >
-          <span>⊗ 0</span>
-          <span className="ml-2">⚠ 0</span>
-        </StatusBarItem>
+
+        {/* Errors/warnings */}
+        <StatusBarErrors />
+
+        {/* Sync indicator */}
+        <StatusBarSync />
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-3">
-        {activeTab && (
-          <>
-            <StatusBarItem onClick={() => {}} title="Select Language Mode">
-              {activeTab.language}
-            </StatusBarItem>
-            <StatusBarItem onClick={() => {}} title="Select Indentation">
-              Spaces: 2
-            </StatusBarItem>
-            <StatusBarItem onClick={() => {}} title="Select Encoding">
-              UTF-8
-            </StatusBarItem>
-            <StatusBarItem onClick={() => {}} title="Go to Line">
-              Ln {activeTab.cursorLine ?? 1}, Col {activeTab.cursorCol ?? 1}
-            </StatusBarItem>
-          </>
-        )}
+      <div className="flex items-center">
+        <StatusBarLineCol />
+        <StatusBarIndent />
+        <StatusBarEncoding />
+        <StatusBarLanguage />
       </div>
     </div>
-  )
-}
-
-function StatusBarItem({ children, onClick, title }: {
-  children: React.ReactNode; onClick: () => void; title?: string
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="flex items-center gap-1 px-1 h-full hover:bg-white/20 transition-colors rounded-sm"
-    >
-      {children}
-    </button>
   )
 }
