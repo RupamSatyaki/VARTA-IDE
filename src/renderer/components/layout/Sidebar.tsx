@@ -6,6 +6,7 @@ import { FileTreeToolbar }   from '../filetree/FileTreeToolbar'
 import { useFileTree }       from '../../hooks/useFileTree'
 import { useEditor }         from '../../hooks/useEditor'
 import { SearchPanel }       from '../search/SearchPanel'
+import { GitPanel }          from '../git/GitPanel'
 
 export function Sidebar() {
   const { activeSidebarPanel, sidebarVisible, sidebarWidth } = useUIStore()
@@ -19,7 +20,8 @@ export function Sidebar() {
     >
       {activeSidebarPanel === 'explorer' && <ExplorerPanel />}
       {activeSidebarPanel === 'search'   && <SearchPanel />}
-      {activeSidebarPanel !== 'explorer' && activeSidebarPanel !== 'search' && (
+      {activeSidebarPanel === 'git'      && <GitPanel />}
+      {activeSidebarPanel !== 'explorer' && activeSidebarPanel !== 'search' && activeSidebarPanel !== 'git' && (
         <PlaceholderPanel panel={activeSidebarPanel} />
       )}
     </div>

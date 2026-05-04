@@ -52,6 +52,13 @@ function AppInner() {
 
     const offSettings = window.varta.settings.onChanged((s) => setSettings(s))
 
+    // Auto-refresh git status when git changes are pushed from main
+    const offGit = window.varta.git.onChanged((status) => {
+      import('./store/gitStore').then(({ useGitStore }) => {
+        useGitStore.getState().setStatus(status)
+      })
+    })
+
     const handleKey = (e: KeyboardEvent) => {
       const ui = useUIStore.getState()
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') { e.preventDefault(); ui.openCommandPalette() }
@@ -72,7 +79,7 @@ function AppInner() {
       }
     }
     window.addEventListener('keydown', handleKey)
-    return () => { offSettings(); window.removeEventListener('keydown', handleKey) }
+    return () => { offSettings(); offGit(); window.removeEventListener('keydown', handleKey) }
   }, [setSettings, setPlatform, setHasApiKey])
 
   return <RootLayout />

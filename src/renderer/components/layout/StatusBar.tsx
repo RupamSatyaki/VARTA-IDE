@@ -7,7 +7,7 @@ import { useUIStore }      from '../../store/uiStore'
 export function StatusBar() {
   const { status: gitStatus }  = useGitStore()
   const { getActiveTab }       = useEditorStore()
-  const { setActiveBottomPanel, setPanelVisible } = useUIStore()
+  const { setActiveBottomPanel, setPanelVisible, setActiveSidebarPanel } = useUIStore()
   const activeTab = getActiveTab()
 
   return (
@@ -16,12 +16,12 @@ export function StatusBar() {
       <div className="flex items-center gap-3">
         {gitStatus?.branch && (
           <StatusBarItem
-            onClick={() => {}}
+            onClick={() => { setActiveSidebarPanel('git') }}
             title={`Branch: ${gitStatus.branch}`}
           >
             <span className="mr-1">⎇</span>
             {gitStatus.branch}
-            {gitStatus.ahead > 0  && <span className="ml-1">↑{gitStatus.ahead}</span>}
+            {gitStatus.ahead  > 0 && <span className="ml-1">↑{gitStatus.ahead}</span>}
             {gitStatus.behind > 0 && <span className="ml-1">↓{gitStatus.behind}</span>}
           </StatusBarItem>
         )}
