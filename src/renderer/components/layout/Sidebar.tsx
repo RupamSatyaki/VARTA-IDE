@@ -5,6 +5,7 @@ import { FileTree }          from '../filetree/FileTree'
 import { FileTreeToolbar }   from '../filetree/FileTreeToolbar'
 import { useFileTree }       from '../../hooks/useFileTree'
 import { useEditor }         from '../../hooks/useEditor'
+import { SearchPanel }       from '../search/SearchPanel'
 
 export function Sidebar() {
   const { activeSidebarPanel, sidebarVisible, sidebarWidth } = useUIStore()
@@ -17,7 +18,10 @@ export function Sidebar() {
       style={{ width: sidebarWidth }}
     >
       {activeSidebarPanel === 'explorer' && <ExplorerPanel />}
-      {activeSidebarPanel !== 'explorer' && <PlaceholderPanel panel={activeSidebarPanel} />}
+      {activeSidebarPanel === 'search'   && <SearchPanel />}
+      {activeSidebarPanel !== 'explorer' && activeSidebarPanel !== 'search' && (
+        <PlaceholderPanel panel={activeSidebarPanel} />
+      )}
     </div>
   )
 }

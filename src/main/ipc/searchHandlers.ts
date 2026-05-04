@@ -12,10 +12,35 @@ function handleErr(e: unknown) {
 
 export function registerSearchHandlers(): void {
 
-  ipcMain.handle(SearchChannel.FIND_IN_FILES, async (_e, rootPath: string, query: SearchQuery) => {
+  /**
+   * FIX 6: Search streams results via PROGRESS channel as files are found.
+   * Returns { started: true } immediately — renderer listens to onProgress.
+   * Final complete result is sent via PROGRESS with a `done: true` flag.
+   */
+  ipcMain.handle(SearchChannel.FIND_IN_FILES, async (event, rootPath: string, query: SearchQuery) => {
     try {
-      const result = await searchService.findInFiles(rootPath, query)
-      return ipcOk(result)
+      // Fire-and-forget — results stream via PROGRESS channel
+      searchService.findInFiles(rootPath, query, event.sender)
+        .then((result) => {
+          // Send final complete result
+          if (!event.sender.isDestroyed()) {
+            event.sender.send(SearchChannel.PROGRESS, {
+              ...result,
+              done: true,
+            })
+          }
+        })
+        .catch((e) => {
+          const err = VartaError.from(e, VartaErrorCode.SEARCH_FAILED)
+          if (!event.sender.isDestroyed()) {
+            event.sender.send(SearchChannel.PROGRESS, {
+              done:  true,
+              error: err.toPayload(),
+            })
+          }
+        })
+
+      return ipcOk({ started: true })
     } catch (e) { return handleErr(e) }
   })
 

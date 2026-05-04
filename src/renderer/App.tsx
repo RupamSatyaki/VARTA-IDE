@@ -57,6 +57,14 @@ function AppInner() {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') { e.preventDefault(); ui.openCommandPalette() }
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'b') { e.preventDefault(); ui.toggleSidebar() }
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'j') { e.preventDefault(); ui.togglePanel() }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault()
+        ui.setActiveSidebarPanel('search')
+        // Focus the search input after panel opens
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('varta:focus-search'))
+        }, 50)
+      }
       if ((e.ctrlKey || e.metaKey) && e.key === '`') {
         e.preventDefault()
         ui.setActiveBottomPanel('terminal')

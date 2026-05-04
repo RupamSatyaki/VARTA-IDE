@@ -125,6 +125,9 @@ export function CodeCanvas({
     }
     editor.focus()
 
+    // Fire editorReady callback (used by search result navigation)
+    useEditorStore.getState().fireEditorReady(tabId, editor)
+
     // ── Keybindings ──────────────────────────────────────────────────────────
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       () => onSaveRef.current())
@@ -154,6 +157,24 @@ export function CodeCanvas({
     editor.onDidChangeModelContent(() => {
       onChangeRef.current(editor.getValue())
     })
+
+    // ── Reveal-in-editor event (from search result click) ─────────────────
+    const handleReveal = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.tabId !== tabId) { return }
+      const { lineNumber, column, matchLength } = detail
+      editor.revealLineInCenter(lineNumber)
+      editor.setSelection({
+        startLineNumber: lineNumber,
+        startColumn:     column,
+        endLineNumber:   lineNumber,
+        endColumn:       column + matchLength,
+      })
+      editor.focus()
+      // Clear the callback since we handled it
+      useEditorStore.getState().clearCallback(tabId)
+    }
+    window.addEventListener('varta:reveal-in-editor', handleReveal)
   }
 
   // ── Tab switch: save old cursor, swap model, restore new cursor ───────────

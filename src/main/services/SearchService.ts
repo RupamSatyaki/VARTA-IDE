@@ -1,25 +1,32 @@
 import fsp  from 'fs/promises'
-import fs   from 'fs'
 import path from 'path'
 import { BrowserWindow } from 'electron'
 import { SearchChannel } from '../../shared/ipc'
-import {
+import type {
   SearchQuery, ReplaceQuery,
   SearchResult, ReplaceResult,
   SearchResultFile, SearchMatch,
-  SearchProgressEvent,
 } from '../../shared/types/search.types'
 import { VartaError, VartaErrorCode } from '../../shared/errors'
 import { hasBinaryExtension }         from '../utils/pathUtils'
 import { logger }                     from '../utils/logger'
 
-const MAX_FILE_SIZE   = 5 * 1024 * 1024   // 5 MB — skip larger files
-const DEFAULT_MAX     = 1000
-const PROGRESS_EVERY  = 50                 // emit progress every N files
+const MAX_FILE_BYTES = 1 * 1024 * 1024   // 1 MB — skip larger files
+const BATCH_SIZE     = 20                // files processed concurrently
+const MAX_RESULTS    = 1000              // hard cap
+
+// FIX 1: Directories always skipped by name — checked before readdir
+const DEFAULT_EXCLUDE = new Set([
+  'node_modules', '.git', 'dist', 'build', 'out',
+  '.next', '.nuxt', 'coverage', '.cache', '.vite',
+  '__pycache__', '.venv', 'venv', 'target', 'vendor',
+  '.turbo', '.parcel-cache', '.svelte-kit', '.output',
+  'tmp', 'temp', '.tmp', 'logs',
+])
 
 export class SearchService {
-  private mainWindow:  BrowserWindow | null = null
-  private cancelFlag = false
+  private mainWindow:   BrowserWindow | null = null
+  private isCancelled = false
 
   init(mainWindow: BrowserWindow): void {
     this.mainWindow = mainWindow
@@ -27,22 +34,28 @@ export class SearchService {
   }
 
   destroy(): void {
-    this.cancelFlag = true
-    this.mainWindow = null
+    this.isCancelled = true
+    this.mainWindow  = null
     logger.info('SearchService', 'Destroyed')
   }
 
+  // FIX 4: Cancel support
   cancel(): void {
-    this.cancelFlag = true
+    this.isCancelled = true
   }
 
   // ── Find in files ─────────────────────────────────────────────────────────
 
-  async findInFiles(rootPath: string, query: SearchQuery): Promise<SearchResult> {
-    this.cancelFlag = false
-    const startMs   = Date.now()
-    const maxResults = query.maxResults ?? DEFAULT_MAX
+  async findInFiles(
+    rootPath:    string,
+    query:       SearchQuery,
+    webContents: Electron.WebContents,
+  ): Promise<SearchResult> {
+    // FIX 4: Reset cancel flag before new search
+    this.isCancelled = false
+    const startMs = Date.now()
 
+    // FIX 3: Build regex ONCE outside loop
     let regex: RegExp
     try {
       regex = this.buildRegex(query)
@@ -50,51 +63,79 @@ export class SearchService {
       throw new VartaError(VartaErrorCode.SEARCH_INVALID_REGEX, `Invalid regex: ${query.text}`)
     }
 
-    const files = await this.collectFiles(rootPath, query)
-    const resultFiles: SearchResultFile[] = []
+    // Build exclude set: defaults + user patterns
+    const userExcludes = (query.excludePattern ?? '')
+      .split(',').map((s) => s.trim()).filter(Boolean)
+    const excludeSet = new Set([...DEFAULT_EXCLUDE, ...userExcludes])
+
+    // Include pattern regex (optional)
+    const includeRe = query.includePattern?.trim()
+      ? this.globToRegex(query.includePattern)
+      : null
+
+    const allResults: SearchResultFile[] = []
     let totalMatches = 0
-    let truncated    = false
-    let scanned      = 0
+    let filesSearched = 0
+    let truncated = false
 
-    for (const filePath of files) {
-      if (this.cancelFlag) { break }
+    const fileBuffer: string[] = []
 
-      scanned++
-      if (scanned % PROGRESS_EVERY === 0) {
-        this.pushProgress({
-          scannedFiles: scanned,
-          matchedFiles: resultFiles.length,
-          totalMatches,
-          currentFile:  filePath,
-        })
-      }
+    // FIX 2: Process a batch of files concurrently
+    const processBatch = async (files: string[]) => {
+      await Promise.all(files.map(async (filePath) => {
+        if (this.isCancelled || truncated) { return }
+        try {
+          const stat = await fsp.stat(filePath)
+          if (stat.size > MAX_FILE_BYTES) { return }
 
-      try {
-        const stat = await fsp.stat(filePath)
-        if (stat.size > MAX_FILE_SIZE) { continue }
+          const content = await fsp.readFile(filePath, 'utf-8')
+          const matches = this.findMatches(content, regex)
 
-        const content = await fsp.readFile(filePath, 'utf-8')
-        const matches = this.matchInContent(content, regex)
+          if (matches.length > 0) {
+            allResults.push({ filePath, matches, matchCount: matches.length })
+            totalMatches += matches.length
 
-        if (matches.length > 0) {
-          resultFiles.push({ filePath, matches, matchCount: matches.length })
-          totalMatches += matches.length
+            if (totalMatches >= MAX_RESULTS) { truncated = true }
 
-          if (totalMatches >= maxResults) {
-            truncated = true
-            break
+            // FIX 6: Stream partial results to renderer immediately
+            webContents.send(SearchChannel.PROGRESS, {
+              scannedFiles: filesSearched,
+              matchedFiles: allResults.length,
+              totalMatches,
+              currentFile:  path.relative(rootPath, filePath),
+            })
           }
+        } catch {
+          // Skip unreadable / binary files silently
         }
-      } catch {
-        // Skip unreadable files silently
+        filesSearched++
+      }))
+    }
+
+    // FIX 1: Async generator walk — skips excluded dirs before readdir
+    for await (const filePath of this.walkDir(rootPath, excludeSet, includeRe)) {
+      if (this.isCancelled || truncated) { break }
+
+      fileBuffer.push(filePath)
+
+      if (fileBuffer.length >= BATCH_SIZE) {
+        await processBatch(fileBuffer.splice(0, BATCH_SIZE))
+
+        // FIX 2: Yield to event loop between batches — prevents main thread block
+        await new Promise<void>((resolve) => setImmediate(resolve))
       }
+    }
+
+    // Process remaining files
+    if (fileBuffer.length > 0 && !this.isCancelled) {
+      await processBatch(fileBuffer)
     }
 
     return {
       query,
-      files:        resultFiles,
+      files:        allResults,
       totalMatches,
-      totalFiles:   resultFiles.length,
+      totalFiles:   allResults.length,
       truncated,
       durationMs:   Date.now() - startMs,
     }
@@ -103,45 +144,122 @@ export class SearchService {
   // ── Replace in files ──────────────────────────────────────────────────────
 
   async replaceInFiles(rootPath: string, query: ReplaceQuery): Promise<ReplaceResult> {
-    this.cancelFlag = false
+    this.isCancelled = false
 
     let regex: RegExp
     try {
-      regex = this.buildRegex(query, true)  // global flag for replace
+      regex = this.buildRegex(query, true)
     } catch {
       throw new VartaError(VartaErrorCode.SEARCH_INVALID_REGEX, `Invalid regex: ${query.text}`)
     }
 
-    const files = await this.collectFiles(rootPath, query)
-    let filesModified    = 0
+    const userExcludes = (query.excludePattern ?? '')
+      .split(',').map((s) => s.trim()).filter(Boolean)
+    const excludeSet = new Set([...DEFAULT_EXCLUDE, ...userExcludes])
+    const includeRe  = query.includePattern?.trim()
+      ? this.globToRegex(query.includePattern)
+      : null
+
+    let filesModified     = 0
     let totalReplacements = 0
     const errors: ReplaceResult['errors'] = []
+    const fileBuffer: string[] = []
 
-    for (const filePath of files) {
-      if (this.cancelFlag) { break }
-
-      try {
-        const stat = await fsp.stat(filePath)
-        if (stat.size > MAX_FILE_SIZE) { continue }
-
-        const content = await fsp.readFile(filePath, 'utf-8')
-        let count = 0
-        const newContent = content.replace(regex, () => {
-          count++
-          return query.replaceText
-        })
-
-        if (count > 0) {
-          await fsp.writeFile(filePath, newContent, 'utf-8')
-          filesModified++
-          totalReplacements += count
+    const processBatch = async (files: string[]) => {
+      await Promise.all(files.map(async (filePath) => {
+        if (this.isCancelled) { return }
+        try {
+          const stat = await fsp.stat(filePath)
+          if (stat.size > MAX_FILE_BYTES) { return }
+          const content = await fsp.readFile(filePath, 'utf-8')
+          let count = 0
+          const newContent = content.replace(regex, () => { count++; return query.replaceText })
+          if (count > 0) {
+            await fsp.writeFile(filePath, newContent, 'utf-8')
+            filesModified++
+            totalReplacements += count
+          }
+        } catch (e) {
+          errors.push({ filePath, message: e instanceof Error ? e.message : String(e) })
         }
-      } catch (e) {
-        errors.push({ filePath, message: e instanceof Error ? e.message : String(e) })
+      }))
+    }
+
+    for await (const filePath of this.walkDir(rootPath, excludeSet, includeRe)) {
+      if (this.isCancelled) { break }
+      fileBuffer.push(filePath)
+      if (fileBuffer.length >= BATCH_SIZE) {
+        await processBatch(fileBuffer.splice(0, BATCH_SIZE))
+        await new Promise<void>((resolve) => setImmediate(resolve))
+      }
+    }
+    if (fileBuffer.length > 0) { await processBatch(fileBuffer) }
+
+    return { query, filesModified, totalReplacements, errors }
+  }
+
+  // ── FIX 1: Async generator directory walk ─────────────────────────────────
+  // Yields file paths one by one — never blocks, skips excluded dirs by name
+
+  private async *walkDir(
+    dir:       string,
+    exclude:   Set<string>,
+    includeRe: RegExp | null,
+    rootPath?: string,
+  ): AsyncGenerator<string> {
+    const root = rootPath ?? dir
+    let entries
+    try {
+      entries = await fsp.readdir(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+
+    for (const entry of entries) {
+      if (this.isCancelled) { return }
+
+      // Skip hidden files/dirs and excluded dirs immediately
+      if (entry.name.startsWith('.') && entry.name !== '.env') { continue }
+      if (entry.isDirectory()) {
+        if (exclude.has(entry.name)) { continue }
+        yield* this.walkDir(path.join(dir, entry.name), exclude, includeRe, root)
+      } else if (entry.isFile()) {
+        const fullPath = path.join(dir, entry.name)
+        if (hasBinaryExtension(fullPath)) { continue }
+        if (includeRe) {
+          const rel = path.relative(root, fullPath).replace(/\\/g, '/')
+          if (!includeRe.test(rel)) { continue }
+        }
+        yield fullPath
+      }
+    }
+  }
+
+  // ── FIX 3: Match per line — regex reset per line, no offset math ──────────
+
+  private findMatches(content: string, regex: RegExp): SearchMatch[] {
+    const matches: SearchMatch[] = []
+    const lines = content.split('\n')
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      // FIX 3: Reset lastIndex for each line
+      regex.lastIndex = 0
+      let match: RegExpExecArray | null
+      while ((match = regex.exec(line)) !== null) {
+        matches.push({
+          lineNumber: i + 1,
+          column:     match.index + 1,
+          matchText:  match[0],
+          lineText:   line,
+          matchStart: match.index,
+          matchEnd:   match.index + match[0].length,
+        })
+        if (match[0].length === 0) { regex.lastIndex++ }
       }
     }
 
-    return { query, filesModified, totalReplacements, errors }
+    return matches
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -154,116 +272,17 @@ export class SearchService {
     if (query.isWholeWord) {
       pattern = `\\b${pattern}\\b`
     }
-    const flags = [
-      global ? 'g' : 'g',
-      query.isCaseSensitive ? '' : 'i',
-      'm',
-    ].join('')
+    const flags = ['g', query.isCaseSensitive ? '' : 'i', 'm'].join('')
     return new RegExp(pattern, flags)
   }
 
-  private matchInContent(content: string, regex: RegExp): SearchMatch[] {
-    const matches: SearchMatch[] = []
-    const lines   = content.split('\n')
-    regex.lastIndex = 0
-
-    let match: RegExpExecArray | null
-    while ((match = regex.exec(content)) !== null) {
-      const offset = match.index
-      // Find which line this offset falls on
-      let lineStart = 0
-      let lineNumber = 1
-      for (let i = 0; i < lines.length; i++) {
-        const lineEnd = lineStart + lines[i].length + 1  // +1 for \n
-        if (offset < lineEnd) {
-          lineNumber = i + 1
-          matches.push({
-            lineNumber,
-            column:     offset - lineStart + 1,
-            matchText:  match[0],
-            lineText:   lines[i],
-            matchStart: offset - lineStart,
-            matchEnd:   offset - lineStart + match[0].length,
-          })
-          break
-        }
-        lineStart = lineEnd
-      }
-
-      // Prevent infinite loop on zero-length matches
-      if (match[0].length === 0) { regex.lastIndex++ }
-    }
-
-    return matches
-  }
-
-  private async collectFiles(rootPath: string, query: SearchQuery): Promise<string[]> {
-    const includeRe = query.includePattern
-      ? this.globToRegex(query.includePattern)
-      : null
-    const excludeRe = query.excludePattern
-      ? this.globToRegex(query.excludePattern)
-      : null
-
-    const results: string[] = []
-    await this.walkDir(rootPath, rootPath, results, includeRe, excludeRe)
-    return results
-  }
-
-  private async walkDir(
-    rootPath: string,
-    dirPath:  string,
-    results:  string[],
-    includeRe: RegExp | null,
-    excludeRe: RegExp | null,
-  ): Promise<void> {
-    let entries: fs.Dirent[]
-    try {
-      entries = await fsp.readdir(dirPath, { withFileTypes: true })
-    } catch {
-      return
-    }
-
-    for (const entry of entries) {
-      if (this.cancelFlag) { return }
-
-      const fullPath = path.join(dirPath, entry.name)
-      const rel      = path.relative(rootPath, fullPath).replace(/\\/g, '/')
-
-      // Always skip these
-      if (
-        entry.name.startsWith('.') ||
-        entry.name === 'node_modules' ||
-        entry.name === 'dist' ||
-        entry.name === 'out' ||
-        entry.name === 'build'
-      ) { continue }
-
-      if (excludeRe && excludeRe.test(rel)) { continue }
-
-      if (entry.isDirectory()) {
-        await this.walkDir(rootPath, fullPath, results, includeRe, excludeRe)
-      } else if (entry.isFile()) {
-        if (hasBinaryExtension(fullPath)) { continue }
-        if (includeRe && !includeRe.test(rel)) { continue }
-        results.push(fullPath)
-      }
-    }
-  }
-
-  /** Very basic glob → regex (supports * and **) */
   private globToRegex(glob: string): RegExp {
-    const escaped = glob
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replace(/\*\*/g, '§§')
-      .replace(/\*/g, '[^/]*')
-      .replace(/§§/g, '.*')
-    return new RegExp(escaped)
-  }
-
-  private pushProgress(event: SearchProgressEvent): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) { return }
-    this.mainWindow.webContents.send(SearchChannel.PROGRESS, event)
+    const patterns = glob.split(',').map((g) => g.trim()).filter(Boolean)
+    const parts = patterns.map((g) =>
+      g.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+       .replace(/\*\*/g, '\x00').replace(/\*/g, '[^/]*').replace(/\x00/g, '.*')
+    )
+    return new RegExp(parts.join('|'))
   }
 }
 

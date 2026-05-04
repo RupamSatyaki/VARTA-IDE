@@ -38,6 +38,8 @@ if (!gotLock) {
     if (process.env.NODE_ENV === 'development') {
       try {
         // Dynamic import with fallback — devtools installer is optional
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore — electron-devtools-installer has no types
         const devtoolsModule = await import('electron-devtools-installer').catch(() => null)
         if (devtoolsModule) {
           const installExtension = devtoolsModule.default ?? devtoolsModule

@@ -14,6 +14,8 @@ export interface EditorState {
   layout:        EditorLayout
   // Map<tabId, CursorState> — plain object so immer handles it fine
   cursorStates:  Record<string, CursorState>
+  // Callbacks fired when Monaco editor mounts for a tab
+  editorReadyCallbacks: Record<string, (editor: unknown) => void>
 }
 
 export interface EditorActions {
@@ -29,6 +31,10 @@ export interface EditorActions {
   // Cursor state
   saveCursorState:  (tabId: string, state: CursorState) => void
   getCursorState:   (tabId: string) => CursorState | null
+  // Editor ready callbacks (for search result navigation)
+  onEditorReady:    (tabId: string, cb: (editor: unknown) => void) => void
+  fireEditorReady:  (tabId: string, editor: unknown) => void
+  clearCallback:    (tabId: string) => void
   reset:            () => void
 }
 
@@ -39,6 +45,7 @@ const INITIAL: EditorState = {
   activeGroupId: 'group-1',
   layout:        'single',
   cursorStates:  {},
+  editorReadyCallbacks: {},
 }
 
 export const useEditorStore = create<EditorState & EditorActions>()(
@@ -126,10 +133,27 @@ export const useEditorStore = create<EditorState & EditorActions>()(
       return get().cursorStates[tabId] ?? null
     },
 
+    onEditorReady: (tabId, cb) => set((s) => {
+      s.editorReadyCallbacks[tabId] = cb
+    }),
+
+    fireEditorReady: (tabId, editor) => {
+      const cb = get().editorReadyCallbacks[tabId]
+      if (cb) {
+        cb(editor)
+        set((s) => { delete s.editorReadyCallbacks[tabId] })
+      }
+    },
+
+    clearCallback: (tabId) => set((s) => {
+      delete s.editorReadyCallbacks[tabId]
+    }),
+
     reset: () => set(() => ({
       ...INITIAL,
-      groups:       [{ ...INITIAL_GROUP, tabs: [] }],
-      cursorStates: {},
+      groups:               [{ ...INITIAL_GROUP, tabs: [] }],
+      cursorStates:         {},
+      editorReadyCallbacks: {},
     })),
   }))
 )
