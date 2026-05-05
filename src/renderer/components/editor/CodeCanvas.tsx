@@ -190,10 +190,103 @@ export function CodeCanvas({
         endColumn:       column + matchLength,
       })
       editor.focus()
-      // Clear the callback since we handled it
       useEditorStore.getState().clearCallback(tabId)
     }
     window.addEventListener('varta:reveal-in-editor', handleReveal)
+
+    // ── AI context menu actions ───────────────────────────────────────────
+    const aiActions = [
+      { id: 'varta.explainCode',   label: '✨ Explain this code',       action: 'explain' },
+      { id: 'varta.fixErrors',     label: '🔧 Fix errors',              action: 'fix' },
+      { id: 'varta.refactor',      label: '♻ Refactor',                 action: 'refactor' },
+      { id: 'varta.writeTests',    label: '🧪 Write tests',             action: 'tests' },
+      { id: 'varta.generateDocs',  label: '📝 Generate docs',           action: 'docs' },
+    ]
+    aiActions.forEach(({ id, label, action }, i) => {
+      editor.addAction({
+        id,
+        label,
+        contextMenuGroupId: 'varta',
+        contextMenuOrder:   i + 1,
+        run: (ed) => {
+          const sel  = ed.getSelection()
+          const text = sel ? (ed.getModel()?.getValueInRange(sel) ?? '') : ''
+          useUIStore.getState().setActiveSidebarPanel('ai')
+          window.dispatchEvent(new CustomEvent('varta:ai-action', {
+            detail: { action, selectedText: text },
+          }))
+        },
+      })
+    })
+
+    // ── Inline hints ──────────────────────────────────────────────────────
+    let inlineHintTimeout: ReturnType<typeof setTimeout> | null = null
+    let inlineDecorations: string[] = []
+    let tabDisposable: { dispose: () => void } | null = null
+
+    const contentChangeDisposable = editor.onDidChangeModelContent(() => {
+      // Clear previous hint
+      inlineDecorations = editor.deltaDecorations(inlineDecorations, [])
+      tabDisposable?.dispose()
+      tabDisposable = null
+      if (inlineHintTimeout) { clearTimeout(inlineHintTimeout) }
+
+      const settings = useSettingsStore.getState().settings
+      if (!settings.ai.inlineHints) { return }
+
+      const { useAIStore } = require('../../store/aiStore') as typeof import('../../store/aiStore')
+      if (!useAIStore.getState().hasApiKey) { return }
+
+      inlineHintTimeout = setTimeout(async () => {
+        const model    = editor.getModel()
+        const position = editor.getPosition()
+        if (!model || !position) { return }
+
+        const lineContent = model.getLineContent(position.lineNumber)
+        const isEndOfLine = position.column > lineContent.trimEnd().length
+        if (!isEndOfLine || !lineContent.trim()) { return }
+
+        const content = model.getValue()
+        const offset  = model.getOffsetAt(position)
+        const prefix  = content.substring(Math.max(0, offset - 500), offset)
+
+        try {
+          const res = await window.varta.ai.inlineHint({
+            context: {
+              activeFilePath:    model.uri.fsPath || '',
+              activeFileContent: prefix,
+              selectedText:      null,
+              cursorLine:        position.lineNumber,
+              language:          model.getLanguageId(),
+              diagnostics:       [],
+              projectRoot:       '',
+              openTabs:          [],
+            },
+          })
+
+          if (!res.success || !res.data?.hint) { return }
+          const hint = res.data.hint
+
+          inlineDecorations = editor.deltaDecorations([], [{
+            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            options: {
+              after: { content: hint, inlineClassName: 'ai-inline-hint' },
+            },
+          }])
+
+          // Tab → accept hint
+          tabDisposable = editor.addCommand(monaco.KeyCode.Tab, () => {
+            editor.executeEdits('ai-hint', [{
+              range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+              text:  hint,
+            }])
+            inlineDecorations = editor.deltaDecorations(inlineDecorations, [])
+            tabDisposable?.dispose()
+            tabDisposable = null
+          }) as unknown as { dispose: () => void }
+        } catch { /* ignore hint errors */ }
+      }, settings.ai.inlineHintsDelay ?? 600)
+    })
   }
 
   // ── Tab switch: save old cursor, swap model, restore new cursor ───────────

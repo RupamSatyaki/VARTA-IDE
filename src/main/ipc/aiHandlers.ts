@@ -18,13 +18,15 @@ export function registerAIHandlers(): void {
    * The renderer NEVER sends or receives the API key.
    * Renderer sends only: { conversationId, message, context? }
    */
-  ipcMain.handle(AIChannel.SEND_MESSAGE, async (_e, payload: AISendMessagePayload) => {
+  ipcMain.handle(AIChannel.SEND_MESSAGE, async (event, payload: AISendMessagePayload) => {
     try {
       const apiKey   = settingsService.getApiKey()
       const aiConfig = settingsService.get('ai')
 
-      // Fire-and-forget streaming — response comes via push events
-      aiService.sendMessage(payload, apiKey, aiConfig.model, aiConfig.maxTokens)
+      const model:      string = payload.model ?? aiConfig.model ?? 'claude-sonnet-4-5'
+
+      // Fire-and-forget streaming — response comes via push events on event.sender
+      aiService.sendMessage({ ...payload, model }, apiKey, event.sender)
         .catch((e) => {
           logger.error('AIHandlers', 'sendMessage stream error', e)
         })
@@ -37,7 +39,7 @@ export function registerAIHandlers(): void {
     try {
       const apiKey   = settingsService.getApiKey()
       const aiConfig = settingsService.get('ai')
-      const result   = await aiService.inlineHint(payload, apiKey, aiConfig.model)
+      const result   = await aiService.inlineHint(payload, apiKey)
       return ipcOk(result)
     } catch (e) { return handleErr(e) }
   })

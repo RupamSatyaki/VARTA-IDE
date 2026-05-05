@@ -31,7 +31,8 @@ export interface AIConversation {
 export interface AISendMessagePayload {
   conversationId: string
   message:        string
-  context?:       EditorContext   // optional editor context for code-aware replies
+  model?:         string
+  context?:       EditorContext
   systemPrompt?:  string
 }
 
