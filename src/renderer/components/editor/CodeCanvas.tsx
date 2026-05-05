@@ -128,6 +128,25 @@ export function CodeCanvas({
     // Fire editorReady callback (used by search result navigation)
     useEditorStore.getState().fireEditorReady(tabId, editor)
 
+    // Wire Monaco diagnostics → editorStore
+    monaco.editor.onDidChangeMarkers((uris) => {
+      uris.forEach((uri) => {
+        const markers = monaco.editor.getModelMarkers({ resource: uri })
+        useEditorStore.getState().setDiagnostics(uri.toString(), markers.map((m) => ({
+          severity:        m.severity === 8 ? 'error' : m.severity === 4 ? 'warning' : m.severity === 2 ? 'info' : 'hint',
+          message:         m.message,
+          range: {
+            startLine:   m.startLineNumber - 1,
+            startColumn: m.startColumn - 1,
+            endLine:     m.endLineNumber - 1,
+            endColumn:   m.endColumn - 1,
+          },
+          source:          m.source,
+          code:            m.code?.toString(),
+        })))
+      })
+    })
+
     // ── Keybindings ──────────────────────────────────────────────────────────
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       () => onSaveRef.current())

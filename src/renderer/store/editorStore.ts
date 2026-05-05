@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { immer }  from 'zustand/middleware/immer'
-import type { EditorTab, EditorGroup, EditorLayout } from '../../shared/types/editor.types'
+import type { EditorTab, EditorGroup, EditorLayout, Diagnostic } from '../../shared/types/editor.types'
 
 // Cursor state saved per tab before switching away
 export interface CursorState {
@@ -12,10 +12,10 @@ export interface EditorState {
   groups:        EditorGroup[]
   activeGroupId: string | null
   layout:        EditorLayout
-  // Map<tabId, CursorState> — plain object so immer handles it fine
   cursorStates:  Record<string, CursorState>
-  // Callbacks fired when Monaco editor mounts for a tab
   editorReadyCallbacks: Record<string, (editor: unknown) => void>
+  // Diagnostics: uri string → Diagnostic[]
+  diagnostics:   Record<string, Diagnostic[]>
 }
 
 export interface EditorActions {
@@ -35,6 +35,11 @@ export interface EditorActions {
   onEditorReady:    (tabId: string, cb: (editor: unknown) => void) => void
   fireEditorReady:  (tabId: string, editor: unknown) => void
   clearCallback:    (tabId: string) => void
+  // Diagnostics
+  setDiagnostics:   (uri: string, diagnostics: Diagnostic[]) => void
+  getAllDiagnostics: () => Diagnostic[]
+  getErrorCount:    () => number
+  getWarningCount:  () => number
   reset:            () => void
 }
 
@@ -46,6 +51,7 @@ const INITIAL: EditorState = {
   layout:        'single',
   cursorStates:  {},
   editorReadyCallbacks: {},
+  diagnostics:   {},
 }
 
 export const useEditorStore = create<EditorState & EditorActions>()(
@@ -149,11 +155,30 @@ export const useEditorStore = create<EditorState & EditorActions>()(
       delete s.editorReadyCallbacks[tabId]
     }),
 
+    setDiagnostics: (uri, diagnostics) => set((s) => {
+      s.diagnostics[uri] = diagnostics
+    }),
+
+    getAllDiagnostics: () => {
+      return Object.values(get().diagnostics).flat()
+    },
+
+    getErrorCount: () => {
+      return Object.values(get().diagnostics).flat()
+        .filter((d) => d.severity === 'error').length
+    },
+
+    getWarningCount: () => {
+      return Object.values(get().diagnostics).flat()
+        .filter((d) => d.severity === 'warning').length
+    },
+
     reset: () => set(() => ({
       ...INITIAL,
       groups:               [{ ...INITIAL_GROUP, tabs: [] }],
       cursorStates:         {},
       editorReadyCallbacks: {},
+      diagnostics:          {},
     })),
   }))
 )

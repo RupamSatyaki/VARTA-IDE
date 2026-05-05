@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { immer }  from 'zustand/middleware/immer'
 
-export type SidebarPanel = 'explorer' | 'search' | 'git' | 'extensions' | 'debug' | 'ai'
+export type SidebarPanel = 'explorer' | 'search' | 'git' | 'extensions' | 'debug' | 'ai' | 'outline'
 export type BottomPanel  = 'terminal' | 'problems' | 'output' | 'debug'
 
 export interface UIState {

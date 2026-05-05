@@ -16,6 +16,7 @@ const TOP_ITEMS: ActivityItem[] = [
   { id: 'git',        icon: 'git-branch', label: 'Source Control (Ctrl+Shift+G)' },
   { id: 'extensions', icon: 'extensions', label: 'Extensions (Ctrl+Shift+X)' },
   { id: 'debug',      icon: 'debug',      label: 'Run & Debug' },
+  { id: 'outline',    icon: 'info',       label: 'Outline' },
   { id: 'ai',         icon: 'sparkle',    label: 'AI Assistant (Ctrl+Shift+A)' },
 ]
 

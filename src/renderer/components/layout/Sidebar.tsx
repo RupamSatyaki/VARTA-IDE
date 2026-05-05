@@ -7,6 +7,9 @@ import { useFileTree }       from '../../hooks/useFileTree'
 import { useEditor }         from '../../hooks/useEditor'
 import { SearchPanel }       from '../search/SearchPanel'
 import { GitPanel }          from '../git/GitPanel'
+import { ExtensionsPanel }   from '../extensions/ExtensionsPanel'
+import { DebugPanel }        from '../debug/DebugPanel'
+import { OutlinePanel }      from '../outline/OutlinePanel'
 
 export function Sidebar() {
   const { activeSidebarPanel, sidebarVisible, sidebarWidth } = useUIStore()
@@ -18,10 +21,14 @@ export function Sidebar() {
       className="flex flex-col shrink-0 bg-[#252526] border-r border-[#333333] overflow-hidden"
       style={{ width: sidebarWidth }}
     >
-      {activeSidebarPanel === 'explorer' && <ExplorerPanel />}
-      {activeSidebarPanel === 'search'   && <SearchPanel />}
-      {activeSidebarPanel === 'git'      && <GitPanel />}
-      {activeSidebarPanel !== 'explorer' && activeSidebarPanel !== 'search' && activeSidebarPanel !== 'git' && (
+      {activeSidebarPanel === 'explorer'   && <ExplorerPanel />}
+      {activeSidebarPanel === 'search'     && <SearchPanel />}
+      {activeSidebarPanel === 'git'        && <GitPanel />}
+      {activeSidebarPanel === 'extensions' && <ExtensionsPanel />}
+      {activeSidebarPanel === 'debug'      && <DebugPanel />}
+      {activeSidebarPanel === 'outline'    && <OutlinePanel />}
+      {activeSidebarPanel === 'ai'         && <PlaceholderPanel panel="AI Chat" />}
+      {!['explorer','search','git','extensions','debug','outline','ai'].includes(activeSidebarPanel) && (
         <PlaceholderPanel panel={activeSidebarPanel} />
       )}
     </div>
