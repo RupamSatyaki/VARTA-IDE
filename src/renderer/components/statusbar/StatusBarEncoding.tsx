@@ -9,7 +9,7 @@ export function StatusBarEncoding() {
   return (
     <button
       title="Select Encoding"
-      className="flex items-center px-2 h-full hover:bg-white/20 transition-colors text-xs"
+      className="flex items-center px-2.5 h-full hover:bg-white/5 hover:text-white transition-colors text-[11px] text-[#9090b0]"
     >
       UTF-8
     </button>
