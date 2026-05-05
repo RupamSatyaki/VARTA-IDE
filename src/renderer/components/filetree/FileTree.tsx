@@ -136,30 +136,63 @@ export function FileTree({
   // Empty state
   if (!rootPath) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 px-5 text-center">
-        {/* Folder icon */}
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center
-          bg-gradient-to-br from-[#7c3aed]/20 to-[#a855f7]/10
-          border border-[#a855f7]/20
-          shadow-[0_4px_20px_rgba(168,85,247,0.1)]">
-          <svg width="28" height="28" viewBox="0 0 16 16" fill="currentColor" className="text-[#7c3aed]">
-            <path d="M.5 3l1-1h4l1 1 1-1h7l1 1v9l-1 1h-13l-1-1V3zm1 9h12V4H8L7 3H2L1 4v8z"/>
-          </svg>
+      <div className="flex flex-col items-center justify-center h-full gap-6 px-6 text-center select-none">
+
+        {/* Animated folder illustration */}
+        <div className="relative flex items-center justify-center">
+          {/* Outer glow ring */}
+          <div className="absolute w-24 h-24 rounded-full bg-[#7c3aed]/5 blur-xl" />
+          {/* Icon container */}
+          <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center
+            bg-gradient-to-br from-[#2a2a3a] to-[#1e1e2e]
+            border border-[#3a3a4a]
+            shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-[#6e6e9a]">
+              <path d="M3 7C3 5.9 3.9 5 5 5H9.6C10.1 5 10.6 5.2 10.9 5.6L12 7H19C20.1 7 21 7.9 21 9V17C21 18.1 20.1 19 19 19H5C3.9 19 3 18.1 3 17V7Z"
+                stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M12 11V15M10 13H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium text-[#c4c4d4]">No folder opened</p>
-          <p className="text-xs text-[#6e6e9a]">Open a folder to start exploring</p>
+
+        {/* Text */}
+        <div className="flex flex-col gap-2">
+          <p className="text-[13px] font-semibold text-[#cccccc]">No folder opened</p>
+          <p className="text-[11px] text-[#6e6e6e] leading-relaxed">
+            Open a folder to browse<br />your files and projects
+          </p>
         </div>
+
+        {/* CTA Button */}
         <button
           onClick={onOpenFolder}
-          className="px-4 py-1.5 text-xs font-medium rounded-lg
-            bg-gradient-to-br from-[#7c3aed]/30 to-[#a855f7]/20
-            border border-[#a855f7]/30 text-[#c084fc]
-            hover:from-[#7c3aed]/50 hover:to-[#a855f7]/40 hover:text-white
+          className="group relative px-5 py-2 text-[12px] font-medium rounded-lg overflow-hidden
+            border border-[#3a3a4a] text-[#cccccc]
+            hover:border-[#a855f7]/40 hover:text-white
             transition-all duration-200"
         >
-          Open Folder
+          <span className="absolute inset-0 bg-gradient-to-br from-[#7c3aed]/0 to-[#a855f7]/0
+            group-hover:from-[#7c3aed]/20 group-hover:to-[#a855f7]/10
+            transition-all duration-200" />
+          <span className="relative flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M.5 3l1-1h4l1 1 1-1h7l1 1v9l-1 1h-13l-1-1V3zm1 9h12V4H8L7 3H2L1 4v8z"/>
+            </svg>
+            Open Folder
+          </span>
         </button>
+
+        {/* Keyboard hint */}
+        <p className="text-[10px] text-[#3c3c3c]">
+          <kbd className="px-1.5 py-0.5 rounded bg-[#2a2a2a] border border-[#3a3a3a] text-[#6e6e6e] font-mono">Ctrl</kbd>
+          {' + '}
+          <kbd className="px-1.5 py-0.5 rounded bg-[#2a2a2a] border border-[#3a3a3a] text-[#6e6e6e] font-mono">K</kbd>
+          {' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-[#2a2a2a] border border-[#3a3a3a] text-[#6e6e6e] font-mono">Ctrl</kbd>
+          {' + '}
+          <kbd className="px-1.5 py-0.5 rounded bg-[#2a2a2a] border border-[#3a3a3a] text-[#6e6e6e] font-mono">O</kbd>
+        </p>
+
       </div>
     )
   }

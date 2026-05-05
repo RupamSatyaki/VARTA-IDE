@@ -1,14 +1,12 @@
 import React from 'react'
-import { cn } from '../../utils/cn'
-import { IconButton } from '../ui/IconButton'
+import { Tooltip } from '../ui/Tooltip'
 import { useFileTreeStore } from '../../store/fileTreeStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faFileMedical,
+  faFileCirclePlus,
   faFolderPlus,
-  faRotateRight,
-  faAnglesDown,
-  faFolderOpen,
+  faArrowsRotate,
+  faFolderMinus,
 } from '@fortawesome/free-solid-svg-icons'
 
 export interface FileTreeToolbarProps {
@@ -24,7 +22,6 @@ export function FileTreeToolbar({
   onNewFolder,
   onRefresh,
   onCollapseAll,
-  onOpenFolder,
 }: FileTreeToolbarProps) {
   const { rootPath } = useFileTreeStore()
 
@@ -33,32 +30,44 @@ export function FileTreeToolbar({
     : null
 
   return (
-    <div className="flex items-center justify-between h-9 px-2 shrink-0 border-b border-[#333333]">
+    <div className="flex items-center justify-between h-9 px-3 shrink-0 border-b border-[#333333] group/toolbar">
       {/* Folder name */}
       <span
-        className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e6e] truncate flex-1 min-w-0 mr-1"
+        className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e6e] truncate flex-1 min-w-0 mr-2"
         title={rootPath ?? undefined}
       >
         {folderName ?? 'EXPLORER'}
       </span>
 
-      {/* Action buttons — only show when folder is open */}
+      {/* Action buttons — visible on toolbar hover */}
       {rootPath && (
-        <div className="flex items-center gap-0.5 shrink-0">
-          <ToolbarBtn tooltip="New File"         onClick={onNewFile}     icon={<FontAwesomeIcon icon={faFileMedical}  style={{ fontSize: 12 }} />} />
-          <ToolbarBtn tooltip="New Folder"       onClick={onNewFolder}   icon={<FontAwesomeIcon icon={faFolderPlus}  style={{ fontSize: 12 }} />} />
-          <ToolbarBtn tooltip="Refresh Explorer" onClick={onRefresh}     icon={<FontAwesomeIcon icon={faRotateRight} style={{ fontSize: 12 }} />} />
-          <ToolbarBtn tooltip="Collapse All"     onClick={onCollapseAll} icon={<FontAwesomeIcon icon={faAnglesDown}  style={{ fontSize: 12 }} />} />
+        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/toolbar:opacity-100 transition-opacity duration-150">
+          <ToolbarBtn tooltip="New File"         onClick={onNewFile}     icon={faFileCirclePlus} />
+          <ToolbarBtn tooltip="New Folder"       onClick={onNewFolder}   icon={faFolderPlus}     />
+          <ToolbarBtn tooltip="Refresh Explorer" onClick={onRefresh}     icon={faArrowsRotate}   />
+          <ToolbarBtn tooltip="Collapse All"     onClick={onCollapseAll} icon={faFolderMinus}    />
         </div>
       )}
     </div>
   )
 }
 
-function ToolbarBtn({ tooltip, onClick, icon }: { tooltip: string; onClick: () => void; icon: React.ReactNode }) {
+function ToolbarBtn({ tooltip, onClick, icon }: {
+  tooltip: string
+  onClick: () => void
+  icon: any
+}) {
   return (
-    <IconButton tooltip={tooltip} size="sm" onClick={onClick} aria-label={tooltip}>
-      {icon}
-    </IconButton>
+    <Tooltip content={tooltip} placement="bottom">
+      <button
+        onClick={onClick}
+        aria-label={tooltip}
+        className="w-6 h-6 flex items-center justify-center rounded
+          text-[#6e6e6e] hover:text-[#cccccc] hover:bg-[#2a2d2e]
+          transition-all duration-150"
+      >
+        <FontAwesomeIcon icon={icon} style={{ fontSize: 13 }} />
+      </button>
+    </Tooltip>
   )
 }
