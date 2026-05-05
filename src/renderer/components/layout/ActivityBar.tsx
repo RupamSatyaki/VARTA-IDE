@@ -1,23 +1,39 @@
 import React from 'react'
 import { cn } from '../../utils/cn'
-import { Icon } from '../ui/Icon'
 import { Tooltip } from '../ui/Tooltip'
 import { useUIStore, type SidebarPanel } from '../../store/uiStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faFile,
+  faMagnifyingGlass,
+  faCodeBranch,
+  faBug,
+  faPuzzlePiece,
+  faGear,
+  faUser,
+  faListUl,
+  faWandMagicSparkles,
+} from '@fortawesome/free-solid-svg-icons'
+import {
+  faFile as faFileRegular,
+  faUser as faUserRegular,
+} from '@fortawesome/free-regular-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 interface ActivityItem {
-  id:      SidebarPanel
-  icon:    string
-  label:   string
+  id:    SidebarPanel
+  icon:  IconDefinition
+  label: string
 }
 
 const TOP_ITEMS: ActivityItem[] = [
-  { id: 'explorer',   icon: 'file',       label: 'Explorer (Ctrl+Shift+E)' },
-  { id: 'search',     icon: 'search',     label: 'Search (Ctrl+Shift+F)' },
-  { id: 'git',        icon: 'git-branch', label: 'Source Control (Ctrl+Shift+G)' },
-  { id: 'extensions', icon: 'extensions', label: 'Extensions (Ctrl+Shift+X)' },
-  { id: 'debug',      icon: 'debug',      label: 'Run & Debug' },
-  { id: 'outline',    icon: 'info',       label: 'Outline' },
-  { id: 'ai',         icon: 'sparkle',    label: 'AI Assistant (Ctrl+Shift+A)' },
+  { id: 'explorer',   icon: faFileRegular,       label: 'Explorer (Ctrl+Shift+E)' },
+  { id: 'search',     icon: faMagnifyingGlass,   label: 'Search (Ctrl+Shift+F)' },
+  { id: 'git',        icon: faCodeBranch,        label: 'Source Control (Ctrl+Shift+G)' },
+  { id: 'debug',      icon: faBug,               label: 'Run & Debug' },
+  { id: 'extensions', icon: faPuzzlePiece,       label: 'Extensions (Ctrl+Shift+X)' },
+  { id: 'outline',    icon: faListUl,            label: 'Outline' },
+  { id: 'ai',         icon: faWandMagicSparkles, label: 'AI Assistant (Ctrl+Shift+A)' },
 ]
 
 export function ActivityBar() {
@@ -32,9 +48,9 @@ export function ActivityBar() {
   }
 
   return (
-    <div className="flex flex-col items-center w-12 shrink-0 bg-[#333333] border-r border-[#252525]">
+    <div className="flex flex-col items-center w-14 shrink-0 bg-[#1e1e2e] border-r border-[#2a2a3d]">
       {/* Top items */}
-      <div className="flex flex-col items-center gap-0 flex-1 pt-1">
+      <div className="flex flex-col items-center gap-1 flex-1 pt-2">
         {TOP_ITEMS.map((item) => (
           <ActivityBarItem
             key={item.id}
@@ -46,22 +62,33 @@ export function ActivityBar() {
       </div>
 
       {/* Bottom items */}
-      <div className="flex flex-col items-center gap-0 pb-1">
+      <div className="flex flex-col items-center gap-1 pb-2">
         <Tooltip content="Settings (Ctrl+,)" placement="right">
           <button
             onClick={openSettings}
             aria-label="Settings"
-            className="w-12 h-12 flex items-center justify-center text-[#6e6e6e] hover:text-[#d4d4d4] transition-colors"
+            className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300 text-[#6e6e9a] hover:text-white"
           >
-            <Icon name="settings" size={22} />
+            {/* Glassmorphism hover layer */}
+            <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300
+              bg-gradient-to-br from-[#7c3aed]/15 to-[#a855f7]/10
+              backdrop-blur-sm border border-[#a855f7]/15
+              shadow-[0_4px_16px_rgba(168,85,247,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]" />
+            <FontAwesomeIcon icon={faGear} className="relative z-10" style={{ fontSize: 17 }} />
           </button>
         </Tooltip>
-        <Tooltip content="Account" placement="right">
+
+        <Tooltip content="Profile" placement="right">
           <button
-            aria-label="Account"
-            className="w-12 h-12 flex items-center justify-center text-[#6e6e6e] hover:text-[#d4d4d4] transition-colors"
+            aria-label="Profile"
+            className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300 text-[#6e6e9a] hover:text-white"
           >
-            <Icon name="account" size={22} />
+            {/* Glassmorphism hover layer */}
+            <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300
+              bg-gradient-to-br from-[#7c3aed]/15 to-[#a855f7]/10
+              backdrop-blur-sm border border-[#a855f7]/15
+              shadow-[0_4px_16px_rgba(168,85,247,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]" />
+            <FontAwesomeIcon icon={faUserRegular} className="relative z-10" style={{ fontSize: 17 }} />
           </button>
         </Tooltip>
       </div>
@@ -79,17 +106,32 @@ function ActivityBarItem({ item, active, onClick }: {
         aria-label={item.label}
         aria-pressed={active}
         className={cn(
-          'relative w-12 h-12 flex items-center justify-center transition-colors',
-          active
-            ? 'text-[#d4d4d4]'
-            : 'text-[#6e6e6e] hover:text-[#d4d4d4]',
+          'group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300',
+          active ? 'text-white' : 'text-[#6e6e9a] hover:text-white',
         )}
       >
-        {/* Active indicator bar */}
-        {active && (
-          <span className="absolute left-0 top-2 bottom-2 w-0.5 bg-[#d4d4d4] rounded-r" />
+        {/* Glassmorphism layer — hover state */}
+        {!active && (
+          <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300
+            bg-gradient-to-br from-[#7c3aed]/15 to-[#a855f7]/10
+            backdrop-blur-sm border border-[#a855f7]/15
+            shadow-[0_4px_16px_rgba(168,85,247,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]" />
         )}
-        <Icon name={item.icon} size={22} />
+
+        {/* Active state — slightly more visible glass */}
+        {active && (
+          <span className="absolute inset-0 rounded-lg
+            bg-gradient-to-br from-[#7c3aed]/25 to-[#a855f7]/18
+            backdrop-blur-sm border border-[#a855f7]/25
+            shadow-[0_4px_20px_rgba(168,85,247,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]" />
+        )}
+
+        {/* Active left indicator bar */}
+        {active && (
+          <span className="absolute -left-1 top-2.5 bottom-2.5 w-0.5 bg-[#c084fc] rounded-r shadow-[0_0_8px_#c084fc]" />
+        )}
+
+        <FontAwesomeIcon icon={item.icon} className="relative z-10" style={{ fontSize: 17 }} />
       </button>
     </Tooltip>
   )
