@@ -30,7 +30,7 @@ export function FileTreeToolbar({
     : null
 
   return (
-    <div className="flex items-center justify-between h-9 px-3 shrink-0 border-b border-[#333333] group/toolbar">
+    <div className="flex items-center justify-between h-9 px-3 shrink-0 border-b group/toolbar" style={{ borderColor: 'var(--varta-border)' }}>
       {/* Folder name */}
       <span
         className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e6e] truncate flex-1 min-w-0 mr-2"

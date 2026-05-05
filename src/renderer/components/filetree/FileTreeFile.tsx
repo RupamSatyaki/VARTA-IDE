@@ -50,7 +50,7 @@ export function FileTreeFile({
       className={cn(
         'relative flex items-center h-[26px] pr-3 cursor-pointer select-none group',
         'hover:bg-[#2a2d2e] focus:outline-none',
-        isSelected ? 'bg-[#37373d] hover:bg-[#37373d]' : 'hover:bg-[#2a2d2e]',
+        isSelected ? 'bg-[#352f3d] hover:bg-[#352f3d]' : 'hover:bg-[#2a2d2e]',
       )}
       style={{ paddingLeft: depth * 16 + 8 }}
     >

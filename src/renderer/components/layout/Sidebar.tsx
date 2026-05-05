@@ -19,8 +19,11 @@ export function Sidebar() {
 
   return (
     <div
-      className="flex flex-col shrink-0 bg-[#252526] border-r border-[#333333] overflow-hidden"
-      style={{ width: sidebarWidth }}
+      className="flex flex-col shrink-0 overflow-hidden rounded-tr-3xl rounded-br-3xl mr-2"
+      style={{
+        width:           sidebarWidth,
+        backgroundColor: 'var(--varta-sidebar)',
+      }}
     >
       {activeSidebarPanel === 'explorer'   && <ExplorerPanel />}
       {activeSidebarPanel === 'search'     && <SearchPanel />}

@@ -4,13 +4,11 @@ import { Tooltip } from '../ui/Tooltip'
 import { useUIStore, type SidebarPanel } from '../../store/uiStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
-  faFile,
   faMagnifyingGlass,
   faCodeBranch,
   faBug,
   faPuzzlePiece,
   faGear,
-  faUser,
   faListUl,
   faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons'
@@ -48,7 +46,13 @@ export function ActivityBar() {
   }
 
   return (
-    <div className="flex flex-col items-center w-14 shrink-0 bg-[#1e1e2e] border-r border-[#2a2a3d]">
+    <div
+      className="flex flex-col items-center w-14 shrink-0 border-r"
+      style={{
+        backgroundColor: 'var(--varta-activitybar)',
+        borderColor:     'var(--varta-activitybar-border)',
+      }}
+    >
       {/* Top items */}
       <div className="flex flex-col items-center gap-1 flex-1 pt-2">
         {TOP_ITEMS.map((item) => (
@@ -67,32 +71,54 @@ export function ActivityBar() {
           <button
             onClick={openSettings}
             aria-label="Settings"
-            className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300 text-[#6e6e9a] hover:text-white"
+            className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
+            style={{ color: 'var(--varta-activitybar-icon)' }}
           >
-            {/* Glassmorphism hover layer */}
-            <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300
-              bg-gradient-to-br from-[#7c3aed]/15 to-[#a855f7]/10
-              backdrop-blur-sm border border-[#a855f7]/15
-              shadow-[0_4px_16px_rgba(168,85,247,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]" />
-            <FontAwesomeIcon icon={faGear} className="relative z-10" style={{ fontSize: 17 }} />
+            <GlassHover />
+            <FontAwesomeIcon icon={faGear} className="relative z-10 group-hover:text-white transition-colors duration-300" style={{ fontSize: 17 }} />
           </button>
         </Tooltip>
 
         <Tooltip content="Profile" placement="right">
           <button
             aria-label="Profile"
-            className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300 text-[#6e6e9a] hover:text-white"
+            className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
+            style={{ color: 'var(--varta-activitybar-icon)' }}
           >
-            {/* Glassmorphism hover layer */}
-            <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300
-              bg-gradient-to-br from-[#7c3aed]/15 to-[#a855f7]/10
-              backdrop-blur-sm border border-[#a855f7]/15
-              shadow-[0_4px_16px_rgba(168,85,247,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]" />
-            <FontAwesomeIcon icon={faUserRegular} className="relative z-10" style={{ fontSize: 17 }} />
+            <GlassHover />
+            <FontAwesomeIcon icon={faUserRegular} className="relative z-10 group-hover:text-white transition-colors duration-300" style={{ fontSize: 17 }} />
           </button>
         </Tooltip>
       </div>
     </div>
+  )
+}
+
+/** Glassmorphism hover layer using CSS variables */
+function GlassHover() {
+  return (
+    <span
+      className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm"
+      style={{
+        background:   'linear-gradient(135deg, var(--varta-activitybar-hover-from), var(--varta-activitybar-hover-to))',
+        border:       '1px solid var(--varta-activitybar-hover-border)',
+        boxShadow:    '0 4px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
+      }}
+    />
+  )
+}
+
+/** Glassmorphism active layer using CSS variables */
+function GlassActive() {
+  return (
+    <span
+      className="absolute inset-0 rounded-lg backdrop-blur-sm"
+      style={{
+        background: 'linear-gradient(135deg, var(--varta-activitybar-active-from), var(--varta-activitybar-active-to))',
+        border:     '1px solid var(--varta-activitybar-active-border)',
+        boxShadow:  '0 4px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08)',
+      }}
+    />
   )
 }
 
@@ -105,33 +131,31 @@ function ActivityBarItem({ item, active, onClick }: {
         onClick={onClick}
         aria-label={item.label}
         aria-pressed={active}
-        className={cn(
-          'group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300',
-          active ? 'text-white' : 'text-[#6e6e9a] hover:text-white',
-        )}
+        className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
+        style={{ color: active ? '#b38dceff' : 'var(--varta-activitybar-icon)' }}
       >
-        {/* Glassmorphism layer — hover state */}
-        {!active && (
-          <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300
-            bg-gradient-to-br from-[#7c3aed]/15 to-[#a855f7]/10
-            backdrop-blur-sm border border-[#a855f7]/15
-            shadow-[0_4px_16px_rgba(168,85,247,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]" />
-        )}
+        {/* Hover glass — only when not active */}
+        {!active && <GlassHover />}
 
-        {/* Active state — slightly more visible glass */}
+        {/* Active glass */}
+        {active && <GlassActive />}
+
+        {/* Active left indicator */}
         {active && (
-          <span className="absolute inset-0 rounded-lg
-            bg-gradient-to-br from-[#7c3aed]/25 to-[#a855f7]/18
-            backdrop-blur-sm border border-[#a855f7]/25
-            shadow-[0_4px_20px_rgba(168,85,247,0.15),inset_0_1px_0_rgba(255,255,255,0.08)]" />
+          <span
+            className="absolute -left-1 top-2.5 bottom-2.5 w-0.5 rounded-r"
+            style={{
+              backgroundColor: 'var(--varta-activitybar-indicator)',
+              boxShadow:       '0 0 8px var(--varta-activitybar-indicator)',
+            }}
+          />
         )}
 
-        {/* Active left indicator bar */}
-        {active && (
-          <span className="absolute -left-1 top-2.5 bottom-2.5 w-0.5 bg-[#c084fc] rounded-r shadow-[0_0_8px_#c084fc]" />
-        )}
-
-        <FontAwesomeIcon icon={item.icon} className="relative z-10" style={{ fontSize: 17 }} />
+        <FontAwesomeIcon
+          icon={item.icon}
+          className={cn('relative z-10 transition-colors duration-300', !active && 'group-hover:text-white')}
+          style={{ fontSize: 17 }}
+        />
       </button>
     </Tooltip>
   )
