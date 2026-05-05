@@ -1,5 +1,7 @@
 import React from 'react'
 import { cn } from '../../utils/cn'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTerminal, faXmark } from '@fortawesome/free-solid-svg-icons'
 import type { TerminalInstance } from '../../../shared/types/terminal.types'
 
 export interface TerminalTabProps {
@@ -19,7 +21,6 @@ const SHELL_LABELS: Record<string, string> = {
 }
 
 export function TerminalTab({ instance, isActive, onClick, onClose }: TerminalTabProps) {
-  // Derive shell label from profile
   const label = SHELL_LABELS[instance.profileId] ?? 'terminal'
 
   return (
@@ -28,38 +29,43 @@ export function TerminalTab({ instance, isActive, onClick, onClose }: TerminalTa
       aria-selected={isActive}
       onClick={onClick}
       className={cn(
-        'group flex items-center gap-1.5 h-[30px] px-3 min-w-[80px] max-w-[160px]',
-        'border-r border-[#252525] cursor-pointer select-none shrink-0 text-xs',
-        'transition-colors',
+        'group relative flex items-center gap-1.5 h-[34px] px-3.5',
+        'min-w-[90px] max-w-[150px] cursor-pointer select-none shrink-0',
+        'text-[12px] transition-all duration-150',
         isActive
-          ? 'bg-[#1e1e1e] text-[#d4d4d4] border-t-2 border-t-[#569cd6]'
-          : 'bg-[#2d2d2d] text-[#6e6e6e] border-t-2 border-t-transparent hover:bg-[#252525] hover:text-[#d4d4d4]',
+          ? 'bg-[#1a1a2e] text-[#cccccc]'
+          : 'text-[#5a5a7a] hover:text-[#9090b0] hover:bg-white/5',
       )}
     >
-      {/* Shell icon */}
-      <TerminalIcon className="w-3 h-3 shrink-0" />
+      {/* Active top accent */}
+      {isActive && (
+        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7c3aed] to-[#a855f7]" />
+      )}
+
+      {/* Right separator */}
+      {!isActive && (
+        <span className="absolute right-0 top-2 bottom-2 w-px bg-[#1e1e30]" />
+      )}
+
+      {/* Terminal icon */}
+      <FontAwesomeIcon
+        icon={faTerminal}
+        style={{ fontSize: 11 }}
+        className={cn('shrink-0', isActive ? 'text-[#a855f7]' : 'text-[#4a4a6a]')}
+      />
 
       {/* Label */}
       <span className="flex-1 truncate">{label}</span>
 
-      {/* Close button */}
+      {/* Close */}
       <button
         onClick={(e) => { e.stopPropagation(); onClose() }}
         aria-label="Close terminal"
-        className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-3.5 h-3.5 rounded hover:bg-[#ffffff20] text-[#6e6e6e] hover:text-[#d4d4d4] transition-opacity shrink-0"
+        className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-4 h-4 rounded
+          hover:bg-white/10 text-[#6e6e8a] hover:text-white transition-all shrink-0"
       >
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
-          <path d="M4 3.293L6.646.646l.708.708L4.707 4l2.647 2.646-.708.708L4 4.707 1.354 7.354l-.708-.708L3.293 4 .646 1.354l.708-.708L4 3.293z"/>
-        </svg>
+        <FontAwesomeIcon icon={faXmark} style={{ fontSize: 10 }} />
       </button>
     </div>
-  )
-}
-
-function TerminalIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor">
-      <path d="M6 9L1 4l1-1 4 4-4 4-1-1 4-4zm4 4H6v-1h4v1z"/>
-    </svg>
   )
 }

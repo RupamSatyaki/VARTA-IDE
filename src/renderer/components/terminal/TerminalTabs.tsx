@@ -1,9 +1,10 @@
 import React from 'react'
-import { cn } from '../../utils/cn'
 import { TerminalTab } from './TerminalTab'
 import { TerminalToolbar } from './TerminalToolbar'
 import { useTerminalStore } from '../../store/terminalStore'
 import { useUIStore } from '../../store/uiStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons'
 
 export interface TerminalTabsProps {
   onNewTerminal:     () => void
@@ -11,30 +12,18 @@ export interface TerminalTabsProps {
   onClearTerminal:   () => void
 }
 
-export function TerminalTabs({
-  onNewTerminal,
-  onDestroyTerminal,
-  onClearTerminal,
-}: TerminalTabsProps) {
+export function TerminalTabs({ onNewTerminal, onDestroyTerminal, onClearTerminal }: TerminalTabsProps) {
   const { instances, activeTerminalId, setActive } = useTerminalStore()
   const { panelHeight, setPanelHeight, setPanelVisible } = useUIStore()
 
   const instanceList = Array.from(instances.values())
-
-  const isMaximized = panelHeight > 500
-
-  const handleMaximize = () => {
-    if (isMaximized) {
-      setPanelHeight(200)
-    } else {
-      setPanelHeight(600)
-    }
-  }
+  const isMaximized  = panelHeight > 500
 
   return (
-    <div className="flex items-center h-[30px] bg-[#252526] border-b border-[#333333] shrink-0">
+    <div className="flex items-center h-[34px] bg-[#12121e] border-b border-[#1e1e30] shrink-0">
+
       {/* Tab list */}
-      <div className="flex items-center flex-1 overflow-x-auto overflow-y-hidden" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex items-end h-full flex-1 overflow-x-auto overflow-y-hidden" style={{ scrollbarWidth: 'none' }}>
         {instanceList.map((inst) => (
           <TerminalTab
             key={inst.id}
@@ -45,16 +34,14 @@ export function TerminalTabs({
           />
         ))}
 
-        {/* New terminal button */}
+        {/* New terminal */}
         <button
           onClick={onNewTerminal}
           aria-label="New Terminal"
-          className="flex items-center justify-center w-7 h-[30px] text-[#6e6e6e] hover:text-[#d4d4d4] hover:bg-[#2a2d2e] transition-colors shrink-0"
           title="New Terminal"
+          className="flex items-center justify-center w-7 h-full text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5 transition-colors shrink-0"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M11 5H7V1H5v4H1v2h4v4h2V7h4z"/>
-          </svg>
+          <FontAwesomeIcon icon={faPlus} style={{ fontSize: 11 }} />
         </button>
       </div>
 
@@ -62,20 +49,18 @@ export function TerminalTabs({
       <TerminalToolbar
         onClear={onClearTerminal}
         onKill={() => activeTerminalId && onDestroyTerminal(activeTerminalId)}
-        onMaximize={handleMaximize}
+        onMaximize={() => setPanelHeight(isMaximized ? 200 : 600)}
         isMaximized={isMaximized}
       />
 
-      {/* Close panel button */}
+      {/* Close panel */}
       <button
         onClick={() => setPanelVisible(false)}
         aria-label="Close panel"
-        className="flex items-center justify-center w-7 h-[30px] text-[#6e6e6e] hover:text-[#d4d4d4] hover:bg-[#2a2d2e] transition-colors shrink-0 mr-1"
         title="Close Panel"
+        className="flex items-center justify-center w-7 h-full text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5 transition-colors shrink-0 mr-1"
       >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-          <path d="M5 4.293L8.646.646l.708.708L5.707 5l3.647 3.646-.708.708L5 5.707 1.354 9.354l-.708-.708L4.293 5 .646 1.354l.708-.708L5 4.293z"/>
-        </svg>
+        <FontAwesomeIcon icon={faXmark} style={{ fontSize: 12 }} />
       </button>
     </div>
   )

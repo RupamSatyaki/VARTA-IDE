@@ -11,13 +11,10 @@ export function TerminalPanel() {
   const { rootPath } = useFileTreeStore()
   const initializedRef = useRef(false)
 
-  // Auto-create one terminal on first mount
   useEffect(() => {
     if (initializedRef.current) { return }
     initializedRef.current = true
-    if (instances.size === 0) {
-      createTerminal(rootPath ?? undefined)
-    }
+    if (instances.size === 0) { createTerminal(rootPath ?? undefined) }
   }, [])
 
   const instanceList = Array.from(instances.values())
@@ -29,46 +26,26 @@ export function TerminalPanel() {
   }
 
   return (
-    <div
-      style={{
-        display:        'flex',
-        flexDirection:  'column',
-        width:          '100%',
-        height:         '100%',
-        overflow:       'hidden',
-        backgroundColor:'#1a1a1a',
-      }}
-    >
-      {/* Tab bar — fixed height */}
+    <div className="flex flex-col w-full h-full overflow-hidden bg-[#12121e]">
       <TerminalTabs
         onNewTerminal={() => createTerminal(rootPath ?? undefined)}
         onDestroyTerminal={(id) => destroyTerminal(id)}
         onClearTerminal={handleClearTerminal}
       />
 
-      {/* Terminal area — fills remaining height */}
-      <div
-        style={{
-          flex:     '1 1 0',
-          position: 'relative',
-          overflow: 'hidden',
-          minHeight: 0,
-        }}
-      >
+      <div className="flex-1 relative overflow-hidden min-h-0">
         {instanceList.length === 0 ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100%', color: '#6e6e6e', fontSize: 13,
-          }}>
-            No terminal — click + to create one
+          <div className="flex items-center justify-center h-full text-[#4a4a6a] text-[12px] gap-2">
+            <span>No terminal —</span>
+            <button
+              onClick={() => createTerminal(rootPath ?? undefined)}
+              className="text-[#7c3aed] hover:text-[#a855f7] transition-colors underline underline-offset-2"
+            >
+              create one
+            </button>
           </div>
         ) : (
           instanceList.map((inst) => (
-            /*
-             * RC3 FIX: Use visibility + pointerEvents instead of display:none.
-             * display:none gives xterm 0×0 dimensions on mount.
-             * visibility:hidden still allows layout so xterm gets real dimensions.
-             */
             <div
               key={inst.id}
               style={{
