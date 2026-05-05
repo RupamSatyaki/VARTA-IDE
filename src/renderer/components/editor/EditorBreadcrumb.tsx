@@ -30,7 +30,7 @@ export function EditorBreadcrumb({ filePath, currentSymbol, onSegmentClick }: Ed
   const filename = segments[segments.length - 1] ?? ''
 
   return (
-    <div className="flex items-center h-[26px] px-3 bg-[#1a1a1a] border-b border-[#222233] overflow-hidden shrink-0">
+    <div className="flex items-center h-[26px] px-3 bg-[#28242e] border-b border-[#2a1f30] overflow-hidden shrink-0">
       <div className="flex items-center gap-0.5 text-[11px] text-[#5a5a7a] overflow-hidden">
         {segments.map((seg, idx) => {
           const isLast = idx === segments.length - 1

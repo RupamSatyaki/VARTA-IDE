@@ -30,7 +30,7 @@ export function WelcomeScreen({
   onOpenRecent,
 }: WelcomeScreenProps) {
   return (
-    <div className="flex items-center justify-center h-full bg-[#1e1e1e] overflow-auto">
+    <div className="flex items-center justify-center h-full bg-[#28242e] overflow-auto">
       <div className="w-full max-w-[520px] px-8 py-10 select-none">
 
         {/* ── Logo ── */}

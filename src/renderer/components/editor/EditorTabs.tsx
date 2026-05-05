@@ -37,7 +37,7 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
   if (tabs.length === 0) { return null }
 
   return (
-    <div className="flex items-center h-[38px] bg-[#181825] border-b border-[#2a2a3d] shrink-0 overflow-hidden">
+    <div className="flex items-center h-[38px] bg-[#28242e] border-b border-[#2a1f30] shrink-0 overflow-hidden">
 
       {/* Left scroll */}
       <button

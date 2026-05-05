@@ -23,7 +23,7 @@ export function RootLayout() {
   }, [setPanelHeight])
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden bg-[#1e1e1e]">
+    <div className="flex flex-col w-full h-full overflow-hidden bg-[#1a1620]">
       {/* Title bar */}
       <TitleBar />
 

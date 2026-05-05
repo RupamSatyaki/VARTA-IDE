@@ -68,7 +68,7 @@ export function EditorPane() {
   const showEditor = tabs.length > 0 && activeTab !== null
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-[#1e1e1e]">
+    <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-[#28242e] rounded-xl">
 
       {/* Tab bar — always rendered when tabs exist */}
       {tabs.length > 0 && (

@@ -52,19 +52,19 @@ function ensureTheme() {
       { token: 'invalid',                 foreground: 'f44747' },
     ],
     colors: {
-      'editor.background':                  '#1a1a1a',
+      'editor.background':                  '#28242e',
       'editor.foreground':                  '#d4d4d4',
       'editor.lineHighlightBackground':     '#1f1f2e',
       'editor.lineHighlightBorder':         '#1f1f2e',
       'editor.selectionBackground':         '#3d2b6e',
       'editor.inactiveSelectionBackground': '#2d2040',
       'editorCursor.foreground':            '#a855f7',
-      'editorLineNumber.foreground':        '#3a3a5a',
-      'editorLineNumber.activeForeground':  '#7070a0',
+      'editorLineNumber.foreground':        '#6b6070',
+      'editorLineNumber.activeForeground':  '#c8b8d8',
       'editorWhitespace.foreground':        '#2a2a3a',
       'editorIndentGuide.background1':      '#2a2a3a',
       'editorIndentGuide.activeBackground1':'#4a4a6a',
-      'editorGutter.background':            '#1a1a1a',
+      'editorGutter.background':            '#221e28',
       'editorWidget.background':            '#1e1e2e',
       'editorWidget.border':                '#3a3a5a',
       'editorSuggestWidget.background':     '#1e1e2e',
@@ -78,7 +78,7 @@ function ensureTheme() {
       'scrollbarSlider.background':         '#2a2a4a40',
       'scrollbarSlider.hoverBackground':    '#4a4a7a',
       'scrollbarSlider.activeBackground':   '#7c3aed',
-      'minimap.background':                 '#1a1a1a',
+      'minimap.background':                 '#211d27',
       'editorOverviewRuler.border':         '#1a1a1a',
       'editorBracketMatch.background':      '#2d1f5e',
       'editorBracketMatch.border':          '#7c3aed',
@@ -348,7 +348,7 @@ export function CodeCanvas({
       fontFamily:          es.fontFamily,
       tabSize:             es.tabSize,
       wordWrap:            es.wordWrap,
-      minimap:             { enabled: es.showMinimap, maxColumn: es.minimapMaxColumn },
+      minimap:             { enabled: es.showMinimap, maxColumn: 60 },
       lineNumbers:         es.showLineNumbers ? 'on' : 'off',
       renderWhitespace:    es.renderWhitespace,
       cursorStyle:         es.cursorStyle,
@@ -378,7 +378,8 @@ export function CodeCanvas({
         padding:              { top: 8, bottom: 8 },
         contextmenu:          true,
         folding:              true,
-        glyphMargin:          true,
+        glyphMargin:          false,
+        lineNumbersMinChars:  2,
         overviewRulerBorder:  false,
         renderLineHighlight:  'line',
         fixedOverflowWidgets: true,
@@ -387,11 +388,11 @@ export function CodeCanvas({
         fontFamily:           settings.editor.fontFamily,
         tabSize:              settings.editor.tabSize,
         wordWrap:             settings.editor.wordWrap,
-        minimap:              { enabled: settings.editor.showMinimap },
+        minimap:              { enabled: settings.editor.showMinimap, maxColumn: 60 },
         lineNumbers:          settings.editor.showLineNumbers ? 'on' : 'off',
       }}
       loading={
-        <div className="flex items-center justify-center h-full bg-[#1a1a1a] text-[#5a5a7a] text-[12px] gap-2.5">
+        <div className="flex items-center justify-center h-full bg-[#28242e] text-[#5a5a7a] text-[12px] gap-2.5">
           <div className="w-4 h-4 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
           Loading editor…
         </div>
