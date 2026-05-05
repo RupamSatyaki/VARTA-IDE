@@ -2,14 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { VirtualList }         from '../ui/VirtualList'
 import { FileTreeItem }        from './FileTreeItem'
 import { NewFileInput }        from './NewFileInput'
-import { Button }              from '../ui/Button'
 import { useFileTreeStore }    from '../../store/fileTreeStore'
 import { useTabStore }         from '../../store/tabStore'
 import { useGitStore }         from '../../store/gitStore'
 import type { FileTreeNode }   from '../../../shared/types/file.types'
 import type { GitFileChange }  from '../../../shared/types/git.types'
 
-const ROW_HEIGHT = 22
+const ROW_HEIGHT = 26
 
 export interface FileTreeProps {
   onOpenFolder:  () => void
@@ -137,14 +136,30 @@ export function FileTree({
   // Empty state
   if (!rootPath) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 px-4 text-center">
-        <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor" className="text-[#3c3c3c]">
-          <path d="M.5 3l1-1h4l1 1 1-1h7l1 1v9l-1 1h-13l-1-1V3zm1 9h12V4H8L7 3H2L1 4v8z"/>
-        </svg>
-        <p className="text-sm text-[#6e6e6e]">No folder opened</p>
-        <Button variant="primary" size="sm" onClick={onOpenFolder}>
+      <div className="flex flex-col items-center justify-center h-full gap-4 px-5 text-center">
+        {/* Folder icon */}
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center
+          bg-gradient-to-br from-[#7c3aed]/20 to-[#a855f7]/10
+          border border-[#a855f7]/20
+          shadow-[0_4px_20px_rgba(168,85,247,0.1)]">
+          <svg width="28" height="28" viewBox="0 0 16 16" fill="currentColor" className="text-[#7c3aed]">
+            <path d="M.5 3l1-1h4l1 1 1-1h7l1 1v9l-1 1h-13l-1-1V3zm1 9h12V4H8L7 3H2L1 4v8z"/>
+          </svg>
+        </div>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-[#c4c4d4]">No folder opened</p>
+          <p className="text-xs text-[#6e6e9a]">Open a folder to start exploring</p>
+        </div>
+        <button
+          onClick={onOpenFolder}
+          className="px-4 py-1.5 text-xs font-medium rounded-lg
+            bg-gradient-to-br from-[#7c3aed]/30 to-[#a855f7]/20
+            border border-[#a855f7]/30 text-[#c084fc]
+            hover:from-[#7c3aed]/50 hover:to-[#a855f7]/40 hover:text-white
+            transition-all duration-200"
+        >
           Open Folder
-        </Button>
+        </button>
       </div>
     )
   }

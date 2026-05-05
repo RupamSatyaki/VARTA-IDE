@@ -44,9 +44,7 @@ function ExplorerPanel() {
     refreshNode, collapseAll,
   } = useFileTree()
 
-  // File open goes through useEditor so content is cached properly
   const { openFile } = useEditor()
-
   const { rootPath } = useFileTreeStore()
 
   return (
@@ -79,7 +77,7 @@ function ExplorerPanel() {
 function PlaceholderPanel({ panel }: { panel: string }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] border-b border-[#333333]">
+      <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#7c7ca8] border-b border-[#333333] bg-[#252526]">
         {panel.toUpperCase()}
       </div>
       <div className="flex-1 flex items-center justify-center text-[#6e6e6e] text-sm opacity-40">

@@ -48,17 +48,23 @@ export function FileTreeFile({
       onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
       className={cn(
-        'flex items-center h-[22px] pr-2 cursor-pointer select-none group',
-        'hover:bg-[#2a2d2e] focus:outline-none focus:bg-[#2a2d2e]',
-        isSelected && 'bg-[#37373d] hover:bg-[#37373d]',
+        'relative flex items-center h-[26px] pr-3 cursor-pointer select-none group',
+        'hover:bg-[#2a2d2e] focus:outline-none',
+        isSelected ? 'bg-[#37373d] hover:bg-[#37373d]' : 'hover:bg-[#2a2d2e]',
       )}
-      style={{ paddingLeft: depth * 12 + 8 }}
+      style={{ paddingLeft: depth * 16 + 8 }}
     >
-      {/* Indent spacer */}
-      <span className="w-4 shrink-0" />
+      {/* Indent guide lines */}
+      {Array.from({ length: depth }).map((_, i) => (
+        <span
+          key={i}
+          className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
+          style={{ left: i * 16 + 14 }}
+        />
+      ))}
 
-      {/* File icon */}
-      <FileIcon filename={node.name} size={16} className="mr-1.5 shrink-0" />
+      {/* File icon — size 18 */}
+      <FileIcon filename={node.name} size={20} className="mr-2 shrink-0" />
 
       {/* Filename */}
       <span
@@ -68,7 +74,7 @@ export function FileTreeFile({
             ? 'line-through text-[#6e6e6e]'
             : gitChange
               ? 'text-[#e2c08d]'
-              : 'text-[#d4d4d4]',
+              : 'text-[#cccccc]',
         )}
       >
         {node.name}
@@ -77,7 +83,7 @@ export function FileTreeFile({
       {/* Dirty dot */}
       {isDirty && (
         <span
-          className="w-2 h-2 rounded-full bg-[#d4d4d4] shrink-0 ml-1"
+          className="w-1.5 h-1.5 rounded-full bg-[#cccccc] shrink-0 ml-1.5 opacity-70"
           title="Unsaved changes"
           aria-label="Unsaved changes"
         />
@@ -86,7 +92,7 @@ export function FileTreeFile({
       {/* Git badge */}
       {badge && badge.label && (
         <span
-          className="text-[11px] font-medium ml-1 shrink-0"
+          className="text-[11px] font-semibold ml-1.5 shrink-0 opacity-90"
           style={{ color: badge.color }}
           title={`Git: ${gitChange?.status}`}
         >
