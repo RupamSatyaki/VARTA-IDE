@@ -54,30 +54,34 @@ function ensureTheme() {
     colors: {
       'editor.background':                  '#1a1a1a',
       'editor.foreground':                  '#d4d4d4',
-      'editor.lineHighlightBackground':     '#252525',
-      'editor.selectionBackground':         '#264f78',
-      'editor.inactiveSelectionBackground': '#3a3d41',
-      'editorCursor.foreground':            '#d4d4d4',
-      'editorLineNumber.foreground':        '#6e6e6e',
-      'editorLineNumber.activeForeground':  '#c6c6c6',
-      'editorWhitespace.foreground':        '#3b3b3b',
-      'editorIndentGuide.background1':      '#404040',
-      'editorIndentGuide.activeBackground1':'#707070',
+      'editor.lineHighlightBackground':     '#1f1f2e',
+      'editor.lineHighlightBorder':         '#1f1f2e',
+      'editor.selectionBackground':         '#3d2b6e',
+      'editor.inactiveSelectionBackground': '#2d2040',
+      'editorCursor.foreground':            '#a855f7',
+      'editorLineNumber.foreground':        '#3a3a5a',
+      'editorLineNumber.activeForeground':  '#7070a0',
+      'editorWhitespace.foreground':        '#2a2a3a',
+      'editorIndentGuide.background1':      '#2a2a3a',
+      'editorIndentGuide.activeBackground1':'#4a4a6a',
       'editorGutter.background':            '#1a1a1a',
-      'editorWidget.background':            '#252526',
-      'editorWidget.border':                '#454545',
-      'editorSuggestWidget.background':     '#252526',
-      'editorSuggestWidget.border':         '#454545',
-      'editorSuggestWidget.selectedBackground': '#062f4a',
-      'editorHoverWidget.background':       '#252526',
-      'editorHoverWidget.border':           '#454545',
-      'input.background':                   '#3c3c3c',
-      'focusBorder':                        '#569cd6',
-      'scrollbarSlider.background':         '#42424260',
-      'scrollbarSlider.hoverBackground':    '#686868',
-      'scrollbarSlider.activeBackground':   '#bfbfbf',
+      'editorWidget.background':            '#1e1e2e',
+      'editorWidget.border':                '#3a3a5a',
+      'editorSuggestWidget.background':     '#1e1e2e',
+      'editorSuggestWidget.border':         '#3a3a5a',
+      'editorSuggestWidget.selectedBackground': '#2d1f5e',
+      'editorSuggestWidget.highlightForeground': '#a855f7',
+      'editorHoverWidget.background':       '#1e1e2e',
+      'editorHoverWidget.border':           '#3a3a5a',
+      'input.background':                   '#252535',
+      'focusBorder':                        '#7c3aed',
+      'scrollbarSlider.background':         '#2a2a4a40',
+      'scrollbarSlider.hoverBackground':    '#4a4a7a',
+      'scrollbarSlider.activeBackground':   '#7c3aed',
       'minimap.background':                 '#1a1a1a',
       'editorOverviewRuler.border':         '#1a1a1a',
+      'editorBracketMatch.background':      '#2d1f5e',
+      'editorBracketMatch.border':          '#7c3aed',
     },
   })
   monaco.editor.setTheme('varta-dark')
@@ -387,8 +391,8 @@ export function CodeCanvas({
         lineNumbers:          settings.editor.showLineNumbers ? 'on' : 'off',
       }}
       loading={
-        <div className="flex items-center justify-center h-full bg-[#1a1a1a] text-[#6e6e6e] text-sm gap-2">
-          <div className="w-4 h-4 border-2 border-[#569cd6] border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center h-full bg-[#1a1a1a] text-[#5a5a7a] text-[12px] gap-2.5">
+          <div className="w-4 h-4 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
           Loading editor…
         </div>
       }

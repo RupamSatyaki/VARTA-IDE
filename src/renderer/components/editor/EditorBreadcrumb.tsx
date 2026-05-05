@@ -1,9 +1,12 @@
 import React from 'react'
 import { cn } from '../../utils/cn'
 import { useFileTreeStore } from '../../store/fileTreeStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons'
+import { FileIcon } from '../filetree/FileIcon'
 
 export interface EditorBreadcrumbProps {
-  filePath:      string
+  filePath:       string
   currentSymbol?: string
   onSegmentClick?: (path: string) => void
 }
@@ -11,7 +14,6 @@ export interface EditorBreadcrumbProps {
 export function EditorBreadcrumb({ filePath, currentSymbol, onSegmentClick }: EditorBreadcrumbProps) {
   const { rootPath } = useFileTreeStore()
 
-  // Build segments relative to rootPath
   const norm     = filePath.replace(/\\/g, '/')
   const normRoot = (rootPath ?? '').replace(/\\/g, '/')
   const relative = norm.startsWith(normRoot)
@@ -25,34 +27,49 @@ export function EditorBreadcrumb({ filePath, currentSymbol, onSegmentClick }: Ed
     return parts.join('/')
   }
 
+  const filename = segments[segments.length - 1] ?? ''
+
   return (
-    <div className="flex items-center h-[22px] px-3 bg-[#1e1e1e] border-b border-[#252525] overflow-hidden">
-      <div className="flex items-center gap-0 text-xs text-[#6e6e6e] overflow-hidden">
+    <div className="flex items-center h-[26px] px-3 bg-[#1a1a1a] border-b border-[#222233] overflow-hidden shrink-0">
+      <div className="flex items-center gap-0.5 text-[11px] text-[#5a5a7a] overflow-hidden">
         {segments.map((seg, idx) => {
           const isLast = idx === segments.length - 1
           return (
             <React.Fragment key={idx}>
               {idx > 0 && (
-                <span className="mx-1 text-[#3c3c3c]">›</span>
+                <FontAwesomeIcon
+                  icon={faChevronRight}
+                  style={{ fontSize: 8 }}
+                  className="mx-1 text-[#3a3a4a] shrink-0"
+                />
               )}
               <button
                 onClick={() => !isLast && onSegmentClick?.(buildPath(idx))}
                 className={cn(
-                  'truncate max-w-[160px] hover:text-[#d4d4d4] transition-colors',
-                  isLast ? 'text-[#d4d4d4] cursor-default' : 'cursor-pointer',
+                  'flex items-center gap-1 truncate max-w-[160px] transition-colors rounded px-0.5',
+                  isLast
+                    ? 'text-[#cccccc] cursor-default'
+                    : 'hover:text-[#9090b0] cursor-pointer',
                 )}
                 title={seg}
               >
-                {seg}
+                {/* Show file icon only for last segment */}
+                {isLast && (
+                  <FileIcon filename={seg} size={12} className="shrink-0" />
+                )}
+                <span>{seg}</span>
               </button>
             </React.Fragment>
           )
         })}
 
-        {/* Current symbol */}
         {currentSymbol && (
           <>
-            <span className="mx-1 text-[#3c3c3c]">›</span>
+            <FontAwesomeIcon
+              icon={faChevronRight}
+              style={{ fontSize: 8 }}
+              className="mx-1 text-[#3a3a4a] shrink-0"
+            />
             <span className="text-[#dcdcaa] truncate max-w-[160px]">{currentSymbol}</span>
           </>
         )}
