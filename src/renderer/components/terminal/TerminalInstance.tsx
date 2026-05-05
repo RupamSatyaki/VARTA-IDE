@@ -26,7 +26,7 @@ export function TerminalInstance({ terminalId, isActive }: TerminalInstanceProps
 
     const xterm = new Terminal({
       theme: {
-        background:          '#12121e',
+        background:          '#28242e',
         foreground:          '#cdd6f4',
         cursor:              '#a855f7',
         cursorAccent:        '#12121e',
@@ -187,7 +187,7 @@ export function TerminalInstance({ terminalId, isActive }: TerminalInstanceProps
           overflow:        'hidden',
           padding:         '4px 8px',
           boxSizing:       'border-box',
-          backgroundColor: '#12121e',
+          backgroundColor: '#28242e',
         }}
       />
     </TerminalContextMenu>

@@ -45,15 +45,17 @@ export function PanelArea() {
         flexDirection:  'column',
         flexShrink:     0,
         overflow:       'hidden',
-        borderTop:      '1px solid #333333',
-        backgroundColor:'#1e1e1e',
+        border:         'none',
+        backgroundColor:'#28242e',
+        borderRadius:   '24px 24px 24px 24px',
+        margin:         '0 0',
       }}
     >
       <Tabs
         tabs={PANEL_TABS}
         activeTab={activeBottomPanel}
         onChange={(id) => setActiveBottomPanel(id as 'terminal' | 'problems' | 'output' | 'debug')}
-        className="bg-[#252526] border-b border-[#333333] px-2 shrink-0"
+        className="bg-[#28242e] border-b border-[#2a1f30] px-2 shrink-0"
       />
 
       <div style={{ flex: '1 1 0', overflow: 'hidden', minHeight: 0 }}>

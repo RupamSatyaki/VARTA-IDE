@@ -57,9 +57,9 @@ export function ProblemsPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#1e1e1e]">
+    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#333333] shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#2a1f30] bg-[#28242e] shrink-0">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e]">
           Problems
           {(errorCount > 0 || warningCount > 0) && (

@@ -42,8 +42,8 @@ export function ResizableDivider({ orientation, onResize, className }: Resizable
     <div
       onMouseDown={onMouseDown}
       className={cn(
-        'shrink-0 bg-[#333333] transition-colors hover:bg-[#569cd6] active:bg-[#569cd6]',
-        orientation === 'vertical'   ? 'w-px cursor-col-resize hover:w-[2px]' : 'h-px cursor-row-resize hover:h-[2px]',
+        'shrink-0 bg-transparent transition-colors',
+        orientation === 'vertical'   ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize',
         className,
       )}
       aria-hidden="true"

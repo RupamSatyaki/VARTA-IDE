@@ -26,7 +26,7 @@ export function TerminalPanel() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden bg-[#12121e]">
+    <div className="flex flex-col w-full h-full overflow-hidden bg-[#28242e]">
       <TerminalTabs
         onNewTerminal={() => createTerminal(rootPath ?? undefined)}
         onDestroyTerminal={(id) => destroyTerminal(id)}

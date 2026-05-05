@@ -33,7 +33,7 @@ export function TerminalTab({ instance, isActive, onClick, onClose }: TerminalTa
         'min-w-[90px] max-w-[150px] cursor-pointer select-none shrink-0',
         'text-[12px] transition-all duration-150',
         isActive
-          ? 'bg-[#1a1a2e] text-[#cccccc]'
+          ? 'bg-[#2d2535] text-[#cccccc]'
           : 'text-[#5a5a7a] hover:text-[#9090b0] hover:bg-white/5',
       )}
     >

@@ -20,7 +20,7 @@ export function TerminalTabs({ onNewTerminal, onDestroyTerminal, onClearTerminal
   const isMaximized  = panelHeight > 500
 
   return (
-    <div className="flex items-center h-[34px] bg-[#12121e] border-b border-[#1e1e30] shrink-0">
+    <div className="flex items-center h-[34px] bg-[#28242e] border-b border-[#2a1f30] shrink-0">
 
       {/* Tab list */}
       <div className="flex items-end h-full flex-1 overflow-x-auto overflow-y-hidden" style={{ scrollbarWidth: 'none' }}>

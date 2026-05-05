@@ -53,9 +53,9 @@ export function OutputPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#1e1e1e]">
+    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-[#333333] shrink-0">
+      <div className="flex items-center gap-2 px-2 py-1 border-b border-[#2a1f30] bg-[#28242e] shrink-0">
         {/* Channel selector */}
         <select
           value={channel}
