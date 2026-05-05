@@ -1,7 +1,8 @@
 import React, { useRef, useState, useCallback } from 'react'
-import { cn } from '../../utils/cn'
 import { EditorTab } from './EditorTab'
 import { useTabStore } from '../../store/tabStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronLeft, faChevronRight, faPlus } from '@fortawesome/free-solid-svg-icons'
 import type { EditorTab as EditorTabType } from '../../../shared/types/editor.types'
 
 export interface EditorTabsProps {
@@ -25,50 +26,34 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
     scrollRef.current.scrollBy({ left: dir === 'left' ? -120 : 120, behavior: 'smooth' })
   }, [])
 
-  // Drag-to-reorder
-  const handleDragStart = useCallback((idx: number) => {
-    dragIdx.current = idx
-  }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
-    e.preventDefault()
-    setDragOver(idx)
-  }, [])
-
-  const handleDrop = useCallback((toIdx: number) => {
-    if (dragIdx.current !== null && dragIdx.current !== toIdx) {
-      reorderTabs(dragIdx.current, toIdx)
-    }
-    dragIdx.current = null
-    setDragOver(null)
+  const handleDragStart = useCallback((idx: number) => { dragIdx.current = idx }, [])
+  const handleDragOver  = useCallback((e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOver(idx) }, [])
+  const handleDrop      = useCallback((toIdx: number) => {
+    if (dragIdx.current !== null && dragIdx.current !== toIdx) { reorderTabs(dragIdx.current, toIdx) }
+    dragIdx.current = null; setDragOver(null)
   }, [reorderTabs])
-
-  const handleDragEnd = useCallback(() => {
-    dragIdx.current = null
-    setDragOver(null)
-  }, [])
+  const handleDragEnd   = useCallback(() => { dragIdx.current = null; setDragOver(null) }, [])
 
   if (tabs.length === 0) { return null }
 
   return (
-    <div className="flex items-center h-[35px] bg-[#2d2d2d] border-b border-[#252525] shrink-0 overflow-hidden">
-      {/* Left scroll arrow */}
+    <div className="flex items-center h-[38px] bg-[#181825] border-b border-[#2a2a3d] shrink-0 overflow-hidden">
+
+      {/* Left scroll */}
       <button
         onClick={() => handleScroll('left')}
-        className="shrink-0 w-6 h-full flex items-center justify-center text-[#6e6e6e] hover:text-[#d4d4d4] hover:bg-[#3c3c3c]"
+        className="shrink-0 w-6 h-full flex items-center justify-center text-[#4a4a6a] hover:text-[#9090b0] transition-colors"
         aria-label="Scroll tabs left"
       >
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M5 1L2 4l3 3V1z"/></svg>
+        <FontAwesomeIcon icon={faChevronLeft} style={{ fontSize: 9 }} />
       </button>
 
       {/* Tab list */}
       <div
         ref={scrollRef}
-        className="flex-1 flex items-center overflow-x-auto overflow-y-hidden"
+        className="flex-1 flex items-end h-full overflow-x-auto overflow-y-hidden"
         style={{ scrollbarWidth: 'none' }}
-        onDoubleClick={(e) => {
-          if (e.target === e.currentTarget) { onNewUntitled() }
-        }}
+        onDoubleClick={(e) => { if (e.target === e.currentTarget) { onNewUntitled() } }}
       >
         {tabs.map((tab, idx) => (
           <EditorTab
@@ -79,7 +64,6 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
             onClose={() => onCloseTab(tab.id)}
             onMiddleClick={() => onCloseTab(tab.id)}
             onDoubleClick={() => {
-              // Double-click converts preview to permanent
               if (tab.isPreview) {
                 useTabStore.setState((s) => {
                   const t = s.tabs.find((x) => x.id === tab.id)
@@ -94,19 +78,30 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
               onDrop:      () => handleDrop(idx),
               onDragEnd:   handleDragEnd,
             }}
-            style={dragOver === idx ? { opacity: 0.5 } : undefined}
+            style={dragOver === idx ? { opacity: 0.4 } : undefined}
           />
         ))}
       </div>
 
-      {/* Right scroll arrow */}
+      {/* New tab button */}
+      <button
+        onClick={onNewUntitled}
+        title="New File"
+        className="shrink-0 w-8 h-full flex items-center justify-center text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5 transition-colors"
+        aria-label="New tab"
+      >
+        <FontAwesomeIcon icon={faPlus} style={{ fontSize: 11 }} />
+      </button>
+
+      {/* Right scroll */}
       <button
         onClick={() => handleScroll('right')}
-        className="shrink-0 w-6 h-full flex items-center justify-center text-[#6e6e6e] hover:text-[#d4d4d4] hover:bg-[#3c3c3c]"
+        className="shrink-0 w-6 h-full flex items-center justify-center text-[#4a4a6a] hover:text-[#9090b0] transition-colors"
         aria-label="Scroll tabs right"
       >
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M3 1l3 3-3 3V1z"/></svg>
+        <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />
       </button>
+
     </div>
   )
 }
