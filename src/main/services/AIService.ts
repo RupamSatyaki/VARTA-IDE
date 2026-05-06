@@ -24,27 +24,17 @@ function isOpenAICompatible(baseUrl?: string): boolean {
 
 // ── Build system prompt ───────────────────────────────────────────────────────
 function buildSystemPrompt(context: AISendMessagePayload['context']): string {
-  return [
-    'You are Varta Intelligence, a coding assistant built into the Varta desktop code editor.',
-    'You have access to the active file, selected code, LSP diagnostics, and project structure.',
-    'Be concise and precise. No filler phrases.',
-    '',
-    'When producing code to replace selected text, wrap it in <varta:replace> tags.',
-    'When producing a new file, wrap it in <varta:newfile path="..."> tags.',
-    'When suggesting a terminal command, wrap it in <varta:terminal> tags.',
-    'Match the coding style, language, and patterns already present in the project.',
-    '',
-    context ? [
-      `File: ${context.activeFilePath}`,
-      `Language: ${context.language}`,
-      `Project: ${context.projectRoot}`,
-      context.selectedText ? `Selected code:\n${context.selectedText}` : '',
-      context.diagnostics?.length > 0
-        ? `Errors: ${context.diagnostics.map((d) => d.message).slice(0, 5).join('; ')}`
-        : '',
-      `Open tabs: ${context.openTabs?.slice(0, 5).join(', ')}`,
-    ].filter(Boolean).join('\n') : '',
-  ].filter(Boolean).join('\n')
+  const lines = [
+    'You are Varta Intelligence, a coding assistant in the Varta code editor.',
+    'Be concise. No filler phrases.',
+    'For code replacements use <varta:replace> tags.',
+    'For new files use <varta:newfile path="..."> tags.',
+    'For terminal commands use <varta:terminal> tags.',
+  ]
+  if (context?.activeFilePath) lines.push(`File: ${context.activeFilePath} | Lang: ${context.language}`)
+  if (context?.selectedText)   lines.push(`Selected:\n${context.selectedText.slice(0, 500)}`)
+  if (context?.diagnostics?.length) lines.push(`Errors: ${context.diagnostics.slice(0,3).map(d=>d.message).join('; ')}`)
+  return lines.join('\n')
 }
 
 export class AIService {
@@ -167,17 +157,19 @@ export class AIService {
             { role: 'system', content: systemPrompt },
             { role: 'user',   content: message },
           ],
-          max_tokens:  16384,
+          max_tokens:  4096,
           temperature: 0.6,
           top_p:       0.95,
           stream:      true,
         },
         {
           headers: {
-            Authorization: `Bearer ${apiKey}`,
-            Accept:        'text/event-stream',
+            Authorization:  `Bearer ${apiKey}`,
+            Accept:         'text/event-stream',
+            'Content-Type': 'application/json',
           },
           responseType: 'stream',
+          timeout:      60000,   // 60s timeout
         },
       )
 
@@ -312,7 +304,8 @@ export class AIService {
       { id: 'claude-sonnet-4-5',      name: 'Claude Sonnet 4.5',      contextWindow: 200000, maxOutput: 8192,  description: 'Best balance (Anthropic)' },
       { id: 'claude-haiku-3-5',       name: 'Claude Haiku 3.5',       contextWindow: 200000, maxOutput: 8192,  description: 'Fastest (Anthropic)' },
       // NVIDIA NIM models
-      { id: 'moonshotai/kimi-k2.6',   name: 'Kimi K2.6 (NVIDIA NIM)', contextWindow: 131072, maxOutput: 16384, description: 'Kimi K2 via NVIDIA NIM' },
+      { id: 'moonshotai/kimi-k2.6',   name: 'Kimi K2.6 (NVIDIA NIM)', contextWindow: 131072, maxOutput: 8192, description: 'Kimi K2 via NVIDIA NIM' },
+      { id: 'qwen/qwen3-next-80b-a3b-instruct',   name: 'qwen/qwen3-next-80b-a3b-instruct (NVIDIA NIM)', contextWindow: 8192, maxOutput: 16384, description: 'qwen/qwen3-next-80b-a3b-instruct' },
       { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B',  contextWindow: 128000, maxOutput: 4096,  description: 'Meta Llama via NVIDIA NIM' },
       { id: 'mistralai/mistral-large-2-instruct', name: 'Mistral Large 2', contextWindow: 128000, maxOutput: 4096, description: 'Mistral via NVIDIA NIM' },
     ]
