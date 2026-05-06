@@ -54,11 +54,15 @@ export const useAIStore = create<AIState & AIActions>()((set, get) => ({
     const next = new Map(get().conversations)
     const conv = next.get(chunk.conversationId)
     if (!conv) { return }
-    const messages = conv.messages.map((m) =>
-      m.id === chunk.messageId
+    const messages = conv.messages.map((m, idx) => {
+      // Match by messageId if provided, otherwise update last assistant message
+      const match = chunk.messageId
+        ? m.id === chunk.messageId
+        : idx === conv.messages.length - 1 && m.role === 'assistant'
+      return match
         ? { ...m, content: m.content + chunk.delta, status: 'streaming' as const }
         : m
-    )
+    })
     next.set(chunk.conversationId, { ...conv, messages })
     set({ conversations: next })
   },
@@ -67,11 +71,14 @@ export const useAIStore = create<AIState & AIActions>()((set, get) => ({
     const next = new Map(get().conversations)
     const conv = next.get(event.conversationId)
     if (conv) {
-      const messages = conv.messages.map((m) =>
-        m.id === event.messageId
+      const messages = conv.messages.map((m, idx) => {
+        const match = event.messageId
+          ? m.id === event.messageId
+          : idx === conv.messages.length - 1 && m.role === 'assistant'
+        return match
           ? { ...m, status: 'complete' as const, tokenCount: event.totalTokens }
           : m
-      )
+      })
       next.set(event.conversationId, { ...conv, messages, updatedAt: Date.now() })
     }
     set({ conversations: next, isStreaming: false, streamingConversationId: null })

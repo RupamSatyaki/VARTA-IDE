@@ -13,7 +13,6 @@ import { Button }           from '../ui/Button'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore }       from '../../store/uiStore'
 import { useSettings }      from '../../hooks/useSettings'
-import { CLAUDE_MODELS }    from '../../../shared/types/ai.types'
 import { isIPCSuccess }     from '../../../shared/ipc'
 
 export function SettingsPanel() {
@@ -25,6 +24,8 @@ export function SettingsPanel() {
   const [activeSection, setActiveSection] = useState('editor')
   const [apiKeyInput,   setApiKeyInput]   = useState('')
   const [apiKeyStatus,  setApiKeyStatus]  = useState<'idle' | 'saved' | 'none'>('idle')
+  const [baseUrlInput,  setBaseUrlInput]  = useState('')
+  const [baseUrlStatus, setBaseUrlStatus] = useState<'idle' | 'saved' | 'none'>('idle')
   const [appVersion,    setAppVersion]    = useState('')
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -36,6 +37,9 @@ export function SettingsPanel() {
     }).catch(() => {})
     window.varta.ai.hasApiKey().then((r) => {
       if (isIPCSuccess(r)) { setApiKeyStatus(r.data ? 'saved' : 'none') }
+    }).catch(() => {})
+    window.varta.ai.hasBaseUrl().then((r) => {
+      if (isIPCSuccess(r)) { setBaseUrlStatus(r.data ? 'saved' : 'none') }
     }).catch(() => {})
   }, [settingsOpen])
 
@@ -54,13 +58,28 @@ export function SettingsPanel() {
   const handleSaveApiKey = async () => {
     if (!apiKeyInput.trim()) { return }
     const res = await window.varta.ai.setApiKey(apiKeyInput.trim())
-    if (isIPCSuccess(res)) {
-      setApiKeyStatus('saved')
-      setApiKeyInput('')
-    }
+    if (isIPCSuccess(res)) { setApiKeyStatus('saved'); setApiKeyInput('') }
   }
 
-  const modelOptions = CLAUDE_MODELS.map((m) => ({ value: m.id, label: m.name }))
+  const handleSaveBaseUrl = async () => {
+    if (!baseUrlInput.trim()) { return }
+    const res = await window.varta.ai.setBaseUrl(baseUrlInput.trim())
+    if (isIPCSuccess(res)) { setBaseUrlStatus('saved'); setBaseUrlInput('') }
+  }
+
+  const handleClearBaseUrl = async () => {
+    await window.varta.ai.clearBaseUrl()
+    setBaseUrlStatus('none')
+  }
+
+  const modelOptions = [
+    { value: 'claude-opus-4-5',                    label: 'Claude Opus 4.5' },
+    { value: 'claude-sonnet-4-5',                  label: 'Claude Sonnet 4.5' },
+    { value: 'claude-haiku-3-5',                   label: 'Claude Haiku 3.5' },
+    { value: 'moonshotai/kimi-k2.6',               label: 'Kimi K2.6 (NVIDIA NIM)' },
+    { value: 'meta/llama-3.1-405b-instruct',       label: 'Llama 3.1 405B (NVIDIA NIM)' },
+    { value: 'mistralai/mistral-large-2-instruct', label: 'Mistral Large 2 (NVIDIA NIM)' },
+  ]
 
   return (
     <div
@@ -194,25 +213,34 @@ export function SettingsPanel() {
 
             {/* ── AI ─────────────────────────────────────────────────────── */}
             <SettingsSection id="ai" title="AI / Varta Intelligence">
-              {/* API Key */}
-              <SettingsItem label="Claude API Key" description="Your Anthropic API key (stored securely, never exposed)"
+              <SettingsItem label="Claude API Key" description="API key — Anthropic (sk-ant-...) or NVIDIA NIM (nvapi-...)"
                 control={
                   <div className="flex flex-col gap-1.5 w-64">
                     <div className="flex gap-1.5">
-                      <SettingsInput
-                        value={apiKeyInput}
-                        onChange={setApiKeyInput}
-                        type="password"
-                        placeholder="sk-ant-..."
-                        className="flex-1 w-auto"
-                      />
-                      <Button variant="primary" size="sm" onClick={handleSaveApiKey} disabled={!apiKeyInput.trim()}>
-                        Save
-                      </Button>
+                      <SettingsInput value={apiKeyInput} onChange={setApiKeyInput} type="password" placeholder="API key (sk-ant-... or nvapi-...)" className="flex-1 w-auto" />
+                      <Button variant="primary" size="sm" onClick={handleSaveApiKey} disabled={!apiKeyInput.trim()}>Save</Button>
                     </div>
                     <p className={cn('text-[10px]', apiKeyStatus === 'saved' ? 'text-[#4ec9b0]' : 'text-[#6e6e6e]')}>
                       {apiKeyStatus === 'saved' ? '✓ API key saved' : apiKeyStatus === 'none' ? '✗ No key set' : ''}
                     </p>
+                  </div>
+                }
+              />
+              <SettingsItem label="Base URL" description="Custom API base URL (optional — leave blank for default Anthropic endpoint)"
+                control={
+                  <div className="flex flex-col gap-1.5 w-64">
+                    <div className="flex gap-1.5">
+                      <SettingsInput value={baseUrlInput} onChange={setBaseUrlInput} type="text" placeholder="https://api.anthropic.com" className="flex-1 w-auto" />
+                      <Button variant="primary" size="sm" onClick={handleSaveBaseUrl} disabled={!baseUrlInput.trim()}>Save</Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className={cn('text-[10px]', baseUrlStatus === 'saved' ? 'text-[#4ec9b0]' : 'text-[#6e6e6e]')}>
+                        {baseUrlStatus === 'saved' ? '✓ Base URL saved' : baseUrlStatus === 'none' ? 'Using default endpoint' : ''}
+                      </p>
+                      {baseUrlStatus === 'saved' && (
+                        <button onClick={handleClearBaseUrl} className="text-[10px] text-[#f44747] hover:text-[#ff6b6b] transition-colors">Clear</button>
+                      )}
+                    </div>
                   </div>
                 }
               />

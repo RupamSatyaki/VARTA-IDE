@@ -4,10 +4,12 @@ import { AIChatMessages } from './AIChatMessages'
 import { AIChatInput }    from './AIChatInput'
 import { APIKeyPrompt }   from './APIKeyPrompt'
 import { useAIStore }     from '../../store/aiStore'
+import { useSettingsStore } from '../../store/settingsStore'
 import { useAI }          from '../../hooks/useAI'
 
 export function AIChatPanel() {
   const { hasApiKey, conversations, activeConversationId, createConversation } = useAIStore()
+  const { settings } = useSettingsStore()
   const { sendMessage, cancelStream } = useAI()
   const [contextLabel, setContextLabel] = useState<string | undefined>()
 
@@ -16,9 +18,9 @@ export function AIChatPanel() {
     if (!hasApiKey) { return }
     if (!activeConversationId || !conversations.has(activeConversationId)) {
       const id = `conv-${Date.now()}`
-      createConversation(id, 'claude-sonnet-4-5')
+      createConversation(id, settings.ai.model)
     }
-  }, [hasApiKey, activeConversationId, conversations, createConversation])
+  }, [hasApiKey, activeConversationId, conversations, createConversation, settings.ai.model])
 
   // Listen for AI actions from editor context menu
   useEffect(() => {
@@ -57,8 +59,8 @@ export function AIChatPanel() {
 
   const handleNewChat = useCallback(() => {
     const id = `conv-${Date.now()}`
-    createConversation(id, 'claude-sonnet-4-5')
-  }, [createConversation])
+    createConversation(id, settings.ai.model)
+  }, [createConversation, settings.ai.model])
 
   const handleClearChat = useCallback(() => {
     if (!activeConversationId) { return }

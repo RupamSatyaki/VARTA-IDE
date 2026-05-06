@@ -1,10 +1,17 @@
 import React from 'react'
-import { cn } from '../../utils/cn'
 import { IconButton } from '../ui/IconButton'
 import { Select } from '../ui/Select'
 import { useAIStore } from '../../store/aiStore'
 import { useSettingsStore } from '../../store/settingsStore'
-import { CLAUDE_MODELS } from '../../../shared/types/ai.types'
+
+const MODEL_OPTIONS = [
+  { value: 'claude-opus-4-5',                    label: 'Claude Opus 4.5' },
+  { value: 'claude-sonnet-4-5',                  label: 'Claude Sonnet 4.5' },
+  { value: 'claude-haiku-3-5',                   label: 'Claude Haiku 3.5' },
+  { value: 'moonshotai/kimi-k2.6',               label: 'Kimi K2.6 (NIM)' },
+  { value: 'meta/llama-3.1-405b-instruct',       label: 'Llama 3.1 405B (NIM)' },
+  { value: 'mistralai/mistral-large-2-instruct', label: 'Mistral Large 2 (NIM)' },
+]
 
 export interface AIChatToolbarProps {
   onNewChat:   () => void
@@ -15,8 +22,6 @@ export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
   const { isStreaming } = useAIStore()
   const { settings, update } = useSettingsStore()
 
-  const modelOptions = CLAUDE_MODELS.map((m) => ({ value: m.id, label: m.name }))
-
   return (
     <div className="flex items-center justify-between px-3 h-9 border-b border-[#333333] shrink-0">
       <div className="flex items-center gap-1.5">
@@ -25,15 +30,11 @@ export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
         </svg>
         <span className="text-xs font-semibold text-[#d4d4d4]">Varta Intelligence</span>
 
-        {/* Streaming indicator */}
         {isStreaming && (
           <div className="flex items-center gap-0.5 ml-1">
             {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="w-1 h-1 rounded-full bg-[#569cd6] animate-bounce"
-                style={{ animationDelay: `${i * 150}ms` }}
-              />
+              <span key={i} className="w-1 h-1 rounded-full bg-[#569cd6] animate-bounce"
+                style={{ animationDelay: `${i * 150}ms` }} />
             ))}
           </div>
         )}
@@ -43,13 +44,13 @@ export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
         {/* Model selector */}
         <Select
           value={settings.ai.model}
-          options={modelOptions}
+          options={MODEL_OPTIONS}
           onChange={(e) => {
             const v = e.target.value
             update({ ai: { ...settings.ai, model: v } })
             window.varta.settings.set({ ai: { model: v } }).catch(() => {})
           }}
-          className="h-6 text-[10px] w-36 border-transparent bg-transparent"
+          className="h-6 text-[10px] w-40 border-transparent bg-transparent"
         />
 
         <IconButton tooltip="New Chat" size="sm" onClick={onNewChat} aria-label="New chat">

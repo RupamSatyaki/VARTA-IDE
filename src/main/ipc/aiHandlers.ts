@@ -21,25 +21,20 @@ export function registerAIHandlers(): void {
   ipcMain.handle(AIChannel.SEND_MESSAGE, async (event, payload: AISendMessagePayload) => {
     try {
       const apiKey   = settingsService.getApiKey()
+      const baseUrl  = settingsService.getBaseUrl()
       const aiConfig = settingsService.get('ai')
-
       const model:      string = payload.model ?? aiConfig.model ?? 'claude-sonnet-4-5'
-
-      // Fire-and-forget streaming — response comes via push events on event.sender
-      aiService.sendMessage({ ...payload, model }, apiKey, event.sender)
-        .catch((e) => {
-          logger.error('AIHandlers', 'sendMessage stream error', e)
-        })
-
+      aiService.sendMessage({ ...payload, model }, apiKey, event.sender, baseUrl)
+        .catch((e) => { logger.error('AIHandlers', 'sendMessage stream error', e) })
       return ipcOk(null)
     } catch (e) { return handleErr(e) }
   })
 
   ipcMain.handle(AIChannel.INLINE_HINT, async (_e, payload: AIInlineHintPayload) => {
     try {
-      const apiKey   = settingsService.getApiKey()
-      const aiConfig = settingsService.get('ai')
-      const result   = await aiService.inlineHint(payload, apiKey)
+      const apiKey  = settingsService.getApiKey()
+      const baseUrl = settingsService.getBaseUrl()
+      const result  = await aiService.inlineHint(payload, apiKey, baseUrl)
       return ipcOk(result)
     } catch (e) { return handleErr(e) }
   })
@@ -64,7 +59,6 @@ export function registerAIHandlers(): void {
     } catch (e) { return handleErr(e) }
   })
 
-  /** Stores key in encrypted settings — never echoed back */
   ipcMain.handle(AIChannel.SET_API_KEY, (_e, key: string) => {
     try {
       if (typeof key !== 'string' || key.trim() === '') {
@@ -82,6 +76,26 @@ export function registerAIHandlers(): void {
     } catch (e) { return handleErr(e) }
   })
 
+  ipcMain.handle(AIChannel.HAS_BASE_URL, () => {
+    try { return ipcOk(settingsService.hasBaseUrl()) }
+    catch (e) { return handleErr(e) }
+  })
+
+  ipcMain.handle(AIChannel.SET_BASE_URL, (_e, url: string) => {
+    try {
+      if (typeof url !== 'string') {
+        throw new VartaError(VartaErrorCode.INVALID_ARGUMENT, 'Base URL must be a string')
+      }
+      settingsService.setBaseUrl(url.trim())
+      return ipcOk(null)
+    } catch (e) { return handleErr(e) }
+  })
+
+  ipcMain.handle(AIChannel.CLEAR_BASE_URL, () => {
+    try { settingsService.clearBaseUrl(); return ipcOk(null) }
+    catch (e) { return handleErr(e) }
+  })
+
   logger.info('IPC', 'AI handlers registered')
 }
 
@@ -90,6 +104,7 @@ export function removeAIHandlers(): void {
     AIChannel.SEND_MESSAGE, AIChannel.INLINE_HINT,
     AIChannel.CANCEL_STREAM, AIChannel.GET_MODELS,
     AIChannel.HAS_API_KEY, AIChannel.SET_API_KEY, AIChannel.CLEAR_API_KEY,
+    AIChannel.HAS_BASE_URL, AIChannel.SET_BASE_URL, AIChannel.CLEAR_BASE_URL,
   ]
   for (const ch of channels) { ipcMain.removeHandler(ch) }
 }

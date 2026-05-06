@@ -55,6 +55,15 @@ export const aiApi = {
   clearApiKey: (): Promise<IPCResponse<null>> =>
     ipcRenderer.invoke(AIChannel.CLEAR_API_KEY),
 
+  hasBaseUrl: (): Promise<IPCResponse<boolean>> =>
+    ipcRenderer.invoke(AIChannel.HAS_BASE_URL),
+
+  setBaseUrl: (url: string): Promise<IPCResponse<null>> =>
+    ipcRenderer.invoke(AIChannel.SET_BASE_URL, url),
+
+  clearBaseUrl: (): Promise<IPCResponse<null>> =>
+    ipcRenderer.invoke(AIChannel.CLEAR_BASE_URL),
+
   // ── Push listeners (streaming) ─────────────────────────────────────────────
 
   /**

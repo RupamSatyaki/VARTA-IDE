@@ -132,6 +132,9 @@ export const enum AIChannel {
   HAS_API_KEY     = 'AI:HAS_API_KEY',
   SET_API_KEY     = 'AI:SET_API_KEY',     // writes to encrypted settings only
   CLEAR_API_KEY   = 'AI:CLEAR_API_KEY',
+  HAS_BASE_URL    = 'AI:HAS_BASE_URL',
+  SET_BASE_URL    = 'AI:SET_BASE_URL',    // writes to settings only
+  CLEAR_BASE_URL  = 'AI:CLEAR_BASE_URL',
 }
 
 // ─── Extension Channels ───────────────────────────────────────────────────────

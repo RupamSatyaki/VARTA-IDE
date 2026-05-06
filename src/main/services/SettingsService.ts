@@ -34,6 +34,7 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
 interface StoreSchema {
   settings: VartaSettings
   apiKey:   string   // encrypted separately — never sent to renderer
+  baseUrl:  string   // custom API base URL — never sent to renderer
 }
 
 export class SettingsService {
@@ -46,10 +47,11 @@ export class SettingsService {
 
     this.store = new Store<StoreSchema>({
       name: 'varta-settings',
-      encryptionKey: undefined,   // settings are not encrypted (only apiKey is)
+      encryptionKey: undefined,
       defaults: {
         settings: DEFAULT_SETTINGS,
         apiKey:   '',
+        baseUrl:  '',
       },
     })
 
@@ -142,6 +144,35 @@ export class SettingsService {
 
   hasApiKey(): boolean {
     return this.getApiKey().trim().length > 0
+  }
+
+  // ── Base URL (never sent to renderer) ─────────────────────────────────────
+
+  getBaseUrl(): string {
+    try {
+      return this.store.get('baseUrl', '')
+    } catch { return '' }
+  }
+
+  setBaseUrl(url: string): void {
+    try {
+      this.store.set('baseUrl', url.trim())
+      logger.info('SettingsService', 'Base URL updated')
+    } catch (e) {
+      throw new VartaError(VartaErrorCode.SETTINGS_WRITE_FAILED, 'Failed to save base URL', e)
+    }
+  }
+
+  clearBaseUrl(): void {
+    try {
+      this.store.set('baseUrl', '')
+    } catch (e) {
+      throw new VartaError(VartaErrorCode.SETTINGS_WRITE_FAILED, 'Failed to clear base URL', e)
+    }
+  }
+
+  hasBaseUrl(): boolean {
+    return this.getBaseUrl().trim().length > 0
   }
 
   // ── Export / Import ───────────────────────────────────────────────────────

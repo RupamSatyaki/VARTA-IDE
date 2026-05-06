@@ -3,6 +3,7 @@ import { useAIStore }          from '../store/aiStore'
 import { useEditorStore }      from '../store/editorStore'
 import { useFileTreeStore }    from '../store/fileTreeStore'
 import { useTabStore }         from '../store/tabStore'
+import { useSettingsStore }    from '../store/settingsStore'
 import { useNotificationStore } from '../store/notificationStore'
 import { isIPCSuccess }        from '../../shared/ipc'
 import type { EditorContext }  from '../../shared/types/editor.types'
@@ -17,12 +18,14 @@ export function useAI() {
   const edStore    = useEditorStore()
   const tabStore   = useTabStore()
   const { rootPath } = useFileTreeStore()
+  const { settings } = useSettingsStore()
   const { error: notifyError } = useNotificationStore()
 
   const aiRef    = useRef(aiStore);    aiRef.current    = aiStore
   const edRef    = useRef(edStore);    edRef.current    = edStore
   const tabRef   = useRef(tabStore);   tabRef.current   = tabStore
   const rootRef  = useRef(rootPath);   rootRef.current  = rootPath
+  const modelRef = useRef(settings.ai.model); modelRef.current = settings.ai.model
 
   // ── Listen for streaming events ───────────────────────────────────────────
   useEffect(() => {
@@ -85,10 +88,11 @@ export function useAI() {
     }
     aiRef.current.addMessage(conversationId, assistantMsg)
 
-    // Send via IPC
+    // Send via IPC — always pass current model from settings
     const res = await window.varta.ai.sendMessage({
       conversationId,
       message: content,
+      model:   modelRef.current,
       context,
     })
 
