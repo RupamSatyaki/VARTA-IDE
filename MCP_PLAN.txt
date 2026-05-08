@@ -1,0 +1,395 @@
+================================================================================
+  VARTA IDE — MCP (Model Context Protocol) IMPLEMENTATION PLAN
+================================================================================
+  Version   : 1.0.0
+  Date      : May 2026
+  Author    : Varta Team
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  WHAT IS MCP IN VARTA?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  MCP (Model Context Protocol) is a tool execution layer that allows the AI
+  assistant to directly interact with the IDE — creating files, running terminal
+  commands, making git commits, searching code, and much more.
+
+  Think of it as giving the AI "hands" inside the editor. Instead of just
+  suggesting code, the AI can actually write it, run it, and commit it.
+
+  Key Principles:
+  - Every tool is sandboxed and permission-gated
+  - Destructive operations require user confirmation
+  - All tool calls are logged and undoable
+  - External MCP servers (Claude Desktop, etc.) can connect
+  - Tools stream results in real-time
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  COMPLETE FOLDER STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+src/mcp/
+│
+├── index.ts                          ← MCP entry point, bootstraps server
+├── types.ts                          ← Core types: ToolDef, ToolCall, ToolResult
+├── errors.ts                         ← MCPError class + error codes
+│
+├── server/
+│   ├── MCPServer.ts                  ← Main server class, lifecycle management
+│   ├── MCPRouter.ts                  ← Routes tool calls to correct handler
+│   ├── MCPContext.ts                 ← Request context (workspace, active file)
+│   └── MCPMiddleware.ts              ← Auth, rate limiting, logging middleware
+│
+├── tools/
+│   ├── index.ts                      ← Registers ALL tools into registry
+│   │
+│   ├── filesystem/
+│   │   ├── index.ts                  ← Exports all filesystem tools
+│   │   ├── readFile.ts               ← Read file content as string
+│   │   ├── writeFile.ts              ← Write/overwrite file content
+│   │   ├── createFile.ts             ← Create new file (with parent dirs)
+│   │   ├── deleteFile.ts             ← Delete a file (with confirmation)
+│   │   ├── renameFile.ts             ← Rename or move a file
+│   │   ├── copyFile.ts               ← Copy file to destination
+│   │   ├── createDirectory.ts        ← Create directory recursively
+│   │   ├── deleteDirectory.ts        ← Delete directory (with confirmation)
+│   │   ├── listDirectory.ts          ← List directory contents
+│   │   ├── fileExists.ts             ← Check if path exists
+│   │   ├── getFileStats.ts           ← Get size, mtime, type info
+│   │   └── searchFiles.ts            ← Glob pattern file search
+│   │
+│   ├── editor/
+│   │   ├── index.ts
+│   │   ├── openFile.ts               ← Open file in editor tab
+│   │   ├── closeFile.ts              ← Close editor tab
+│   │   ├── getActiveFile.ts          ← Get current file path + content
+│   │   ├── getSelection.ts           ← Get selected text in editor
+│   │   ├── insertText.ts             ← Insert text at cursor/line/position
+│   │   ├── replaceText.ts            ← Replace selected text or range
+│   │   ├── applyDiff.ts              ← Apply unified diff patch to file
+│   │   ├── formatDocument.ts         ← Trigger format on active file
+│   │   ├── getDiagnostics.ts         ← Get errors/warnings for file
+│   │   ├── getOpenTabs.ts            ← List all open editor tabs
+│   │   ├── scrollToLine.ts           ← Scroll editor to specific line
+│   │   └── setSelection.ts           ← Programmatically set selection range
+│   │
+│   ├── terminal/
+│   │   ├── index.ts
+│   │   ├── runCommand.ts             ← Execute shell command, stream output
+│   │   ├── createTerminal.ts         ← Open new terminal session
+│   │   ├── sendInput.ts              ← Send input to active terminal
+│   │   ├── getOutput.ts              ← Get terminal output buffer
+│   │   └── killTerminal.ts           ← Kill terminal session
+│   │
+│   ├── git/
+│   │   ├── index.ts
+│   │   ├── getStatus.ts              ← Git status (staged, unstaged, untracked)
+│   │   ├── stageFiles.ts             ← Stage specific files or all
+│   │   ├── unstageFiles.ts           ← Unstage files
+│   │   ├── commit.ts                 ← Create commit with message
+│   │   ├── push.ts                   ← Push to remote (with confirmation)
+│   │   ├── pull.ts                   ← Pull from remote
+│   │   ├── fetch.ts                  ← Fetch from remote
+│   │   ├── createBranch.ts           ← Create new branch
+│   │   ├── checkoutBranch.ts         ← Switch to branch
+│   │   ├── deleteBranch.ts           ← Delete branch (with confirmation)
+│   │   ├── getDiff.ts                ← Get file diff (staged or working)
+│   │   ├── getLog.ts                 ← Get commit history
+│   │   └── getBlame.ts               ← Get git blame for file
+│   │
+│   ├── search/
+│   │   ├── index.ts
+│   │   ├── searchInFiles.ts          ← Search text across workspace (streaming)
+│   │   ├── searchSymbols.ts          ← Search code symbols in workspace
+│   │   ├── findReferences.ts         ← Find all references to a symbol
+│   │   └── replaceInFiles.ts         ← Replace text across multiple files
+│   │
+│   ├── workspace/
+│   │   ├── index.ts
+│   │   ├── getWorkspaceInfo.ts       ← Root path, name, file count, language stats
+│   │   ├── getFileTree.ts            ← Full workspace file tree as JSON
+│   │   ├── openFolder.ts             ← Open folder in workspace
+│   │   └── getSettings.ts            ← Get current IDE settings
+│   │
+│   ├── ui/
+│   │   ├── index.ts
+│   │   ├── showNotification.ts       ← Show toast notification (info/warn/error)
+│   │   ├── showDialog.ts             ← Show confirm/input/message dialog
+│   │   ├── openSettings.ts           ← Open settings panel
+│   │   ├── toggleSidebar.ts          ← Toggle primary sidebar
+│   │   ├── togglePanel.ts            ← Toggle terminal panel
+│   │   └── setStatusBar.ts           ← Update status bar message temporarily
+│   │
+│   └── system/
+│       ├── index.ts
+│       ├── getSystemInfo.ts          ← OS, platform, memory, CPU info
+│       ├── getEnvVars.ts             ← Read environment variables
+│       ├── openExternal.ts           ← Open URL in system browser
+│       └── clipboardRead.ts          ← Read clipboard content
+│
+├── pipeline/
+│   ├── MCPPipeline.ts                ← Tool chaining engine
+│   ├── PipelineStep.ts               ← Individual step definition + config
+│   ├── PipelineExecutor.ts           ← Runs pipeline, handles step errors
+│   └── PipelineTemplates.ts          ← Pre-built pipelines (e.g. fix-and-commit)
+│
+├── history/
+│   ├── MCPHistory.ts                 ← Persistent call history store
+│   ├── MCPSnapshot.ts                ← File/state snapshot before destructive ops
+│   └── MCPUndo.ts                    ← Undo/redo engine for tool calls
+│
+├── cache/
+│   ├── MCPCache.ts                   ← TTL-based result cache (read-only tools)
+│   └── CacheInvalidator.ts           ← Invalidates cache on write operations
+│
+├── sandbox/
+│   ├── PathGuard.ts                  ← Prevent path traversal outside workspace
+│   ├── CommandFilter.ts              ← Block dangerous terminal commands
+│   └── ConfirmationGate.ts           ← User confirmation for destructive ops
+│
+├── external/
+│   ├── ExternalMCPClient.ts          ← Connect to external MCP servers
+│   ├── MCPConfig.ts                  ← Parse .varta/mcp.json config file
+│   └── ServerDiscovery.ts            ← Auto-discover local MCP servers
+│
+├── marketplace/
+│   ├── MarketplaceClient.ts          ← Fetch available tools from registry
+│   ├── ToolInstaller.ts              ← npm install + register community tool
+│   └── InstalledTools.ts             ← Manage installed/enabled/disabled tools
+│
+├── transport/
+│   ├── StdioTransport.ts             ← stdio MCP transport (Claude Desktop etc.)
+│   ├── IPCTransport.ts               ← Electron IPC transport (renderer ↔ main)
+│   └── WebSocketTransport.ts         ← WebSocket transport (remote AI agents)
+│
+├── registry/
+│   ├── ToolRegistry.ts               ← Central tool registration + lookup
+│   ├── ToolValidator.ts              ← Zod schema validation for tool inputs
+│   └── ToolPermissions.ts            ← Permission system per tool
+│
+├── hooks/
+│   ├── useMCPTools.ts                ← React hook — list available tools
+│   ├── useMCPCall.ts                 ← React hook — call a tool from renderer
+│   └── useMCPStatus.ts               ← React hook — MCP server connection status
+│
+├── ui/
+│   ├── MCPPanel.tsx                  ← MCP tools panel (sidebar tab)
+│   ├── MCPToolCard.tsx               ← Individual tool display card
+│   ├── MCPToolCall.tsx               ← Tool call result display in chat
+│   ├── MCPToolInput.tsx              ← Auto-generated input form from schema
+│   ├── MCPServerStatus.tsx           ← Server connection status indicator
+│   ├── MCPLogViewer.tsx              ← Tool call history + logs viewer
+│   ├── MCPPipelineBuilder.tsx        ← Visual pipeline builder UI
+│   └── MCPMarketplace.tsx            ← Marketplace browser UI
+│
+└── utils/
+    ├── schemaBuilder.ts              ← Build JSON Schema from tool definitions
+    ├── resultFormatter.ts            ← Format tool results for AI consumption
+    ├── pathResolver.ts               ← Resolve relative paths to absolute
+    └── sanitizer.ts                  ← Sanitize inputs, prevent injection
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TOOL DEFINITION INTERFACE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Every tool follows this standard contract:
+
+  interface ToolDef<TInput, TOutput> {
+    name:        string           // e.g. "filesystem.readFile"
+    description: string           // Human-readable, used by AI
+    category:    ToolCategory     // filesystem | editor | terminal | git | ...
+    permission:  Permission       // read | write | execute | admin
+    inputSchema: ZodSchema        // Validated before execution
+    streaming?:  boolean          // Supports AsyncGenerator output
+    dangerous?:  boolean          // Requires user confirmation
+    execute(input: TInput, ctx: MCPContext): Promise<TOutput>
+              | AsyncGenerator<TOutput>
+  }
+
+  Permission Levels:
+  ┌─────────────┬──────────────────────────────────────────────────────────┐
+  │ read        │ filesystem read, search, git status, workspace info      │
+  │ write       │ filesystem write, git stage/commit, editor changes       │
+  │ execute     │ terminal commands, git push/pull, format document        │
+  │ admin       │ settings change, folder open, install tools              │
+  └─────────────┴──────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  IPC CHANNELS (new MCPChannel enum)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  mcp:list-tools          → Get all registered tools with schemas
+  mcp:call-tool           → Execute a tool (invoke)
+  mcp:tool-result         → Streaming result chunk (push)
+  mcp:tool-complete       → Tool execution finished (push)
+  mcp:tool-error          → Tool execution failed (push)
+  mcp:tool-confirm        → Request user confirmation (push)
+  mcp:tool-confirm-reply  → User confirmation response (invoke)
+  mcp:get-history         → Get tool call history
+  mcp:undo-last           → Undo last destructive tool call
+  mcp:server-status       → Get MCP server connection status
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  KEY IMPROVEMENTS OVER BASIC MCP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. STREAMING RESULTS
+     Long-running tools (terminal, search) stream output in real-time
+     using AsyncGenerator. User sees progress, not just final result.
+
+  2. TOOL CHAINING / PIPELINES
+     Chain tools: searchInFiles → readFile → applyDiff → commit
+     Pre-built pipelines for common workflows.
+     Visual pipeline builder in UI.
+
+  3. TOOL CALL HISTORY + UNDO  ← Unique to Varta
+     Every destructive tool call takes a snapshot before executing.
+     User can undo any AI action from the MCP log viewer.
+     This is NOT available in VS Code Copilot or Cursor.
+
+  4. SANDBOXING
+     PathGuard: AI cannot access files outside workspace root.
+     CommandFilter: Blocks rm -rf, format C:, etc.
+     ConfirmationGate: User must approve dangerous operations.
+
+  5. EXTERNAL MCP SERVER SUPPORT
+     .varta/mcp.json config — connect to any MCP-compatible server.
+     Compatible with Claude Desktop, Cursor, and community servers.
+     Database tools, browser tools, API tools — all pluggable.
+
+  6. RESULT CACHING
+     Read-only tools cache results with TTL.
+     Write operations automatically invalidate relevant cache entries.
+     Reduces redundant AI tool calls, improves response speed.
+
+  7. TOOL MARKETPLACE
+     Community tools installable via npm.
+     Enable/disable tools per workspace.
+     Settings panel "MCP Tools" tab.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  IMPLEMENTATION PHASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌─────────┬────────────────────────────────────────────────────────────────┐
+  │ PHASE 1 │ FOUNDATION                                                     │
+  │         │ - types.ts, errors.ts                                          │
+  │         │ - ToolRegistry, ToolValidator, ToolPermissions                 │
+  │         │ - MCPServer, MCPRouter, MCPContext                             │
+  │         │ - IPCTransport (renderer ↔ main)                               │
+  │         │ - MCPChannel enum in shared/ipc.ts                             │
+  │         │ - All filesystem tools (12 tools)                              │
+  │         │ - PathGuard sandbox                                            │
+  │         │ - Basic useMCPCall hook                                        │
+  ├─────────┼────────────────────────────────────────────────────────────────┤
+  │ PHASE 2 │ EDITOR + TERMINAL TOOLS                                        │
+  │         │ - All editor tools (12 tools)                                  │
+  │         │ - All terminal tools (5 tools)                                 │
+  │         │ - Streaming results via AsyncGenerator                         │
+  │         │ - CommandFilter sandbox                                        │
+  │         │ - ConfirmationGate for dangerous ops                           │
+  │         │ - MCPHistory + MCPSnapshot + MCPUndo                           │
+  ├─────────┼────────────────────────────────────────────────────────────────┤
+  │ PHASE 3 │ GIT + SEARCH + WORKSPACE TOOLS                                 │
+  │         │ - All git tools (13 tools)                                     │
+  │         │ - All search tools (4 tools)                                   │
+  │         │ - All workspace tools (4 tools)                                │
+  │         │ - All UI tools (6 tools)                                       │
+  │         │ - All system tools (4 tools)                                   │
+  │         │ - MCPCache + CacheInvalidator                                  │
+  ├─────────┼────────────────────────────────────────────────────────────────┤
+  │ PHASE 4 │ AI INTEGRATION                                                 │
+  │         │ - AI chat detects tool calls in responses                      │
+  │         │ - Tool call display in AIChatMessage                           │
+  │         │ - MCPToolCall component                                        │
+  │         │ - Tool result injection back into AI context                   │
+  │         │ - MCPPipeline + PipelineExecutor                               │
+  │         │ - Pre-built pipeline templates                                 │
+  ├─────────┼────────────────────────────────────────────────────────────────┤
+  │ PHASE 5 │ UI PANEL                                                       │
+  │         │ - MCPPanel (sidebar tab)                                       │
+  │         │ - MCPToolCard, MCPToolInput                                    │
+  │         │ - MCPLogViewer (history + undo button)                         │
+  │         │ - MCPServerStatus indicator                                    │
+  │         │ - MCPPipelineBuilder (visual)                                  │
+  │         │ - useMCPTools, useMCPStatus hooks                              │
+  ├─────────┼────────────────────────────────────────────────────────────────┤
+  │ PHASE 6 │ EXTERNAL MCP + MARKETPLACE                                     │
+  │         │ - StdioTransport (Claude Desktop compatibility)                │
+  │         │ - ExternalMCPClient + MCPConfig (.varta/mcp.json)              │
+  │         │ - ServerDiscovery                                              │
+  │         │ - MarketplaceClient + ToolInstaller                            │
+  │         │ - MCPMarketplace UI                                            │
+  │         │ - InstalledTools management                                    │
+  ├─────────┼────────────────────────────────────────────────────────────────┤
+  │ PHASE 7 │ ADVANCED + POLISH                                              │
+  │         │ - WebSocketTransport (remote agents)                           │
+  │         │ - Tool versioning + migration                                  │
+  │         │ - Tool performance metrics                                     │
+  │         │ - schemaBuilder auto-docs generation                           │
+  │         │ - Full E2E testing for all tools                               │
+  │         │ - Security audit                                               │
+  └─────────┴────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TOOL COUNT SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  filesystem   →  12 tools
+  editor       →  12 tools
+  terminal     →   5 tools
+  git          →  13 tools
+  search       →   4 tools
+  workspace    →   4 tools
+  ui           →   6 tools
+  system       →   4 tools
+  ─────────────────────────
+  TOTAL        →  60 tools
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EXTERNAL MCP CONFIG (.varta/mcp.json)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  {
+    "mcpServers": {
+      "database": {
+        "command": "uvx",
+        "args": ["mcp-server-sqlite", "--db-path", "./data.db"],
+        "autoApprove": ["query"]
+      },
+      "browser": {
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-puppeteer"],
+        "disabled": false
+      }
+    }
+  }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  UNIQUE VARTA DIFFERENTIATORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Feature                    Varta   VS Code Copilot   Cursor
+  ─────────────────────────────────────────────────────────────
+  Tool streaming              YES         YES            YES
+  Tool undo/history           YES          NO             NO   ← Unique
+  Path sandboxing             YES         YES            YES
+  External MCP servers        YES          NO            YES
+  Visual pipeline builder     YES          NO             NO   ← Unique
+  Tool marketplace            YES          NO             NO   ← Unique
+  Result caching              YES          NO             NO   ← Unique
+  Confirmation gate           YES         YES            YES
+
+
+================================================================================
+  END OF PLAN
+================================================================================
