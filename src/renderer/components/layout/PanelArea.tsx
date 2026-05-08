@@ -48,7 +48,7 @@ export function PanelArea() {
         border:         'none',
         backgroundColor:'#28242e',
         borderRadius:   '12px 12px 12px 12px',
-        margin:         '8px 8px 0 0',
+        margin:         '0 0 0 0',
       }}
     >
       <Tabs

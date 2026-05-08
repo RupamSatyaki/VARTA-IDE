@@ -43,8 +43,8 @@ export function GitStagedChanges({ changes, onUnstage, onUnstageAll, onOpenFile,
         </Tooltip>
       </div>
 
-      {expanded && changes.map((c) => (
-        <GitChangeItem key={c.path} change={c} staged={true}
+      {expanded && changes.map((c, i) => (
+        <GitChangeItem key={`staged-${c.path}-${i}`} change={c} staged={true}
           onUnstage={() => onUnstage(c.path)}
           onOpenFile={() => onOpenFile(c.path)}
           onOpenDiff={() => onOpenDiff(c.path)}

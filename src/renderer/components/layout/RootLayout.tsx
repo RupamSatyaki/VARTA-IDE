@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { TitleBar }         from './TitleBar'
 import { ActivityBar }      from './ActivityBar'
 import { Sidebar }          from './Sidebar'
@@ -15,13 +15,19 @@ export function RootLayout() {
     setSidebarWidth, setPanelHeight,
   } = useUIStore()
 
-  const onSidebarResize = useCallback((delta: number) => {
+  const [secondaryWidth, setSecondaryWidth] = useState(320)
+
+  const onSidebarResize   = useCallback((delta: number) => {
     setSidebarWidth(useUIStore.getState().sidebarWidth + delta)
   }, [setSidebarWidth])
 
-  const onPanelResize = useCallback((delta: number) => {
+  const onPanelResize     = useCallback((delta: number) => {
     setPanelHeight(useUIStore.getState().panelHeight - delta)
   }, [setPanelHeight])
+
+  const onSecondaryResize = useCallback((delta: number) => {
+    setSecondaryWidth(w => Math.max(240, Math.min(600, w - delta)))
+  }, [])
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden bg-[#1a1620]">
@@ -51,12 +57,17 @@ export function RootLayout() {
           )}
         </div>
 
-        {/* Secondary sidebar — AI Chat */}
+        {/* Secondary sidebar — AI Chat (resizable) */}
         {secondarySidebarVisible && (
-          <div className="flex flex-col shrink-0 overflow-hidden rounded-xl ml-2"
-            style={{ width: 320, backgroundColor: '#28242e' }}>
-            <AIChatPanel />
-          </div>
+          <>
+            <ResizableDivider orientation="vertical" onResize={onSecondaryResize} />
+            <div
+              className="flex flex-col shrink-0 overflow-hidden rounded-xl ml-0"
+              style={{ width: secondaryWidth, backgroundColor: '#28242e' }}
+            >
+              <AIChatPanel />
+            </div>
+          </>
         )}
       </div>
 

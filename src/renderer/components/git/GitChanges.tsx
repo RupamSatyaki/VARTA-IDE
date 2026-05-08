@@ -58,8 +58,8 @@ export function GitChanges({ changes, untracked, onStage, onStageAll, onDiscard,
         </div>
       </div>
 
-      {expanded && all.map((c) => (
-        <GitChangeItem key={c.path} change={c} staged={false}
+      {expanded && all.map((c, i) => (
+        <GitChangeItem key={`unstaged-${c.path}-${i}`} change={c} staged={false}
           onStage={() => onStage(c.path)}
           onDiscard={c.status !== 'untracked' ? () => onDiscard(c.path) : undefined}
           onOpenFile={() => onOpenFile(c.path)}
