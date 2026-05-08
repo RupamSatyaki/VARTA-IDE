@@ -10,14 +10,7 @@ export interface SearchResultMatchProps {
   onClick:   () => void
 }
 
-export function SearchResultMatch({
-  match,
-  filePath,
-  queryText,
-  isRegex,
-  onClick,
-}: SearchResultMatchProps) {
-  // Build highlighted line: split at match start/end
+export function SearchResultMatch({ match, onClick }: SearchResultMatchProps) {
   const { lineText, matchStart, matchEnd, lineNumber } = match
   const before  = lineText.slice(0, matchStart).trimStart()
   const matched = lineText.slice(matchStart, matchEnd)
@@ -30,25 +23,25 @@ export function SearchResultMatch({
       onClick={onClick}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       className={cn(
-        'flex items-start gap-2 px-3 py-0.5 cursor-pointer select-none',
-        'hover:bg-[#2a2d2e] focus:outline-none focus:bg-[#2a2d2e]',
-        'group text-xs',
+        'flex items-center gap-2 cursor-pointer select-none group',
+        'hover:bg-[#7c3aed]/10 focus:outline-none',
+        'text-[11px] py-0.5',
       )}
-      style={{ paddingLeft: 36 }}
+      style={{ paddingLeft: 40, paddingRight: 12 }}
       title={lineText.trim()}
     >
       {/* Line number */}
-      <span className="shrink-0 text-[#6e6e6e] w-8 text-right font-mono">
+      <span className="shrink-0 text-[#4a3a5a] w-7 text-right font-mono tabular-nums">
         {lineNumber}
       </span>
 
-      {/* Line content with match highlighted */}
-      <span className="flex-1 min-w-0 truncate font-mono text-[#d4d4d4]">
-        <span className="text-[#6e6e6e]">{before}</span>
-        <span className="font-semibold text-[#d4d4d4] bg-[#264f78] rounded-sm px-0.5">
+      {/* Line content */}
+      <span className="flex-1 min-w-0 truncate font-mono">
+        <span className="text-[#5a4a6a]">{before}</span>
+        <span className="text-[#e0c0ff] bg-[#7c3aed]/30 rounded-sm px-0.5 font-semibold">
           {matched}
         </span>
-        <span className="text-[#6e6e6e]">{after}</span>
+        <span className="text-[#5a4a6a]">{after}</span>
       </span>
     </div>
   )

@@ -1,25 +1,21 @@
 import React from 'react'
 import { cn } from '../../utils/cn'
 import { FileIcon } from '../filetree/FileIcon'
-import { Badge } from '../ui/Badge'
 import { SearchResultMatch } from './SearchResultMatch'
 import { useSearchStore } from '../../store/searchStore'
 import { useFileTreeStore } from '../../store/fileTreeStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import type { SearchResultFile as SearchResultFileType } from '../../../shared/types/search.types'
 
 export interface SearchResultFileProps {
-  file:      SearchResultFileType
-  queryText: string
-  isRegex:   boolean
+  file:         SearchResultFileType
+  queryText:    string
+  isRegex:      boolean
   onMatchClick: (filePath: string, lineNumber: number, column: number, matchLength: number) => void
 }
 
-export function SearchResultFile({
-  file,
-  queryText,
-  isRegex,
-  onMatchClick,
-}: SearchResultFileProps) {
+export function SearchResultFile({ file, queryText, isRegex, onMatchClick }: SearchResultFileProps) {
   const { expandedFiles, toggleFileExpanded } = useSearchStore()
   const { rootPath } = useFileTreeStore()
 
@@ -38,29 +34,31 @@ export function SearchResultFile({
         onClick={() => toggleFileExpanded(file.filePath)}
         onKeyDown={(e) => e.key === 'Enter' && toggleFileExpanded(file.filePath)}
         className={cn(
-          'flex items-center gap-2 px-3 py-1 cursor-pointer select-none',
-          'hover:bg-[#2a2d2e] focus:outline-none focus:bg-[#2a2d2e]',
-          'sticky top-0 bg-[#252526] z-10',
+          'flex items-center gap-2 px-3 py-1.5 cursor-pointer select-none',
+          'hover:bg-white/5 focus:outline-none',
+          'sticky top-0 bg-[#28242e] z-10 border-b border-[#2a1f30]/50',
         )}
       >
         {/* Chevron */}
-        <svg
-          width="10" height="10" viewBox="0 0 10 10" fill="currentColor"
-          className={cn('shrink-0 text-[#6e6e6e] transition-transform', isExpanded ? 'rotate-90' : '')}
-        >
-          <path d="M3 1l4 4-4 4V1z"/>
-        </svg>
+        <FontAwesomeIcon
+          icon={isExpanded ? faChevronDown : faChevronRight}
+          style={{ fontSize: 9 }}
+          className="shrink-0 text-[#5a4a6a]"
+        />
 
-        {/* File icon + name */}
+        {/* File icon */}
         <FileIcon filename={filename} size={14} className="shrink-0" />
-        <span className="text-xs text-[#d4d4d4] truncate flex-1" title={file.filePath}>
+
+        {/* Path */}
+        <span className="text-[12px] text-[#cccccc] truncate flex-1 min-w-0" title={file.filePath}>
           {relPath}
         </span>
 
         {/* Match count badge */}
-        <Badge variant="info" className="shrink-0 text-[10px]">
+        <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium
+          bg-[#7c3aed]/20 text-[#c084fc] border border-[#7c3aed]/30">
           {file.matchCount}
-        </Badge>
+        </span>
       </div>
 
       {/* Matches */}

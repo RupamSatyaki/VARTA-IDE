@@ -1,7 +1,8 @@
 import React from 'react'
 import { cn } from '../../utils/cn'
-import { Button } from '../ui/Button'
 import { useSearchStore } from '../../store/searchStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons'
 
 export interface ReplaceInputProps {
   onReplaceAll: () => void
@@ -10,36 +11,40 @@ export interface ReplaceInputProps {
 
 export function ReplaceInput({ onReplaceAll, isReplacing }: ReplaceInputProps) {
   const { replaceText, setReplaceText, results } = useSearchStore()
-
   const count = results?.totalMatches ?? 0
 
   return (
-    <div className="px-3 pb-2 border-b border-[#333333]">
-      <div className="flex items-center gap-1.5">
-        <input
-          value={replaceText}
-          onChange={(e) => setReplaceText(e.target.value)}
-          placeholder="Replace"
-          spellCheck={false}
-          className={cn(
-            'flex-1 h-7 px-2 text-xs bg-[#3c3c3c] text-[#d4d4d4]',
-            'border border-[#3c3c3c] focus:border-[#569cd6] rounded outline-none',
-            'placeholder:text-[#6e6e6e]',
-          )}
-        />
-        <Button
-          variant="default"
-          size="sm"
+    <div className="px-3 pb-2 border-b border-[#2a1f30]">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center rounded-lg border border-[#3a2f45] bg-[#1e1a24] focus-within:border-[#7c3aed] transition-all duration-150">
+          <span className="pl-2.5 text-[#5a4a6a] shrink-0">
+            <FontAwesomeIcon icon={faArrowRightArrowLeft} style={{ fontSize: 10 }} />
+          </span>
+          <input
+            value={replaceText}
+            onChange={(e) => setReplaceText(e.target.value)}
+            placeholder="Replace with…"
+            spellCheck={false}
+            className="flex-1 h-7 px-2 bg-transparent text-[12px] text-[#cccccc] placeholder:text-[#4a3a5a] outline-none"
+          />
+        </div>
+
+        <button
           onClick={onReplaceAll}
           disabled={count === 0 || isReplacing}
-          loading={isReplacing}
-          className="shrink-0 text-xs"
+          className={cn(
+            'shrink-0 px-3 h-7 text-[11px] font-medium rounded-lg transition-all duration-150',
+            count > 0 && !isReplacing
+              ? 'bg-[#7c3aed]/30 border border-[#7c3aed]/40 text-[#c084fc] hover:bg-[#7c3aed]/50 hover:text-white'
+              : 'bg-[#1e1a24] border border-[#3a2f45] text-[#4a3a5a] cursor-not-allowed',
+          )}
         >
-          Replace All
-        </Button>
+          {isReplacing ? 'Replacing…' : 'Replace All'}
+        </button>
       </div>
+
       {count > 0 && (
-        <p className="text-[10px] text-[#6e6e6e] mt-1">
+        <p className="text-[10px] text-[#6e5a7a] mt-1.5 px-1">
           {count} replacement{count !== 1 ? 's' : ''} will be made
         </p>
       )}

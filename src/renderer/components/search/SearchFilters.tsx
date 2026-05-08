@@ -1,50 +1,65 @@
 import React, { useState } from 'react'
 import { cn } from '../../utils/cn'
-import { Input } from '../ui/Input'
 import { useSearchStore } from '../../store/searchStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronRight, faFilter } from '@fortawesome/free-solid-svg-icons'
 
 export function SearchFilters() {
   const [open, setOpen] = useState(false)
   const { query, setQuery } = useSearchStore()
 
   return (
-    <div className="border-b border-[#333333]">
-      {/* Toggle button */}
+    <div className="border-b border-[#2a1f30]">
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 w-full px-3 py-1 text-[10px] text-[#6e6e6e] hover:text-[#d4d4d4] transition-colors"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] text-[#6e5a7a] hover:text-[#cccccc] transition-colors"
       >
-        <svg
-          width="8" height="8" viewBox="0 0 8 8" fill="currentColor"
-          className={cn('transition-transform', open ? 'rotate-90' : '')}
-        >
-          <path d="M2 1l4 3-4 3V1z"/>
-        </svg>
-        <span>Search Filters</span>
+        <FontAwesomeIcon
+          icon={faChevronRight}
+          style={{ fontSize: 8 }}
+          className={cn('transition-transform duration-150', open ? 'rotate-90' : '')}
+        />
+        <FontAwesomeIcon icon={faFilter} style={{ fontSize: 9 }} />
+        <span>Filters</span>
+        {(query.includePattern || query.excludePattern) && (
+          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#c084fc]" />
+        )}
       </button>
 
       {open && (
-        <div className="px-3 pb-2 flex flex-col gap-1.5">
-          <div>
-            <label className="text-[10px] text-[#6e6e6e] block mb-0.5">Files to include</label>
-            <Input
-              value={query.includePattern ?? ''}
-              onChange={(e) => setQuery({ includePattern: e.target.value })}
-              placeholder="e.g. **/*.ts, src/**"
-              className="text-xs h-6"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-[#6e6e6e] block mb-0.5">Files to exclude</label>
-            <Input
-              value={query.excludePattern ?? ''}
-              onChange={(e) => setQuery({ excludePattern: e.target.value })}
-              placeholder="e.g. node_modules, dist"
-              className="text-xs h-6"
-            />
-          </div>
+        <div className="px-3 pb-3 flex flex-col gap-2">
+          <FilterField
+            label="Include"
+            placeholder="**/*.ts, src/**"
+            value={query.includePattern ?? ''}
+            onChange={(v) => setQuery({ includePattern: v })}
+          />
+          <FilterField
+            label="Exclude"
+            placeholder="node_modules, dist"
+            value={query.excludePattern ?? ''}
+            onChange={(v) => setQuery({ excludePattern: v })}
+          />
         </div>
       )}
+    </div>
+  )
+}
+
+function FilterField({ label, placeholder, value, onChange }: {
+  label: string; placeholder: string; value: string; onChange: (v: string) => void
+}) {
+  return (
+    <div>
+      <label className="text-[10px] text-[#5a4a6a] block mb-1">{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full h-6 px-2 text-[11px] rounded-md
+          bg-[#1e1a24] border border-[#3a2f45] focus:border-[#7c3aed]
+          text-[#cccccc] placeholder:text-[#4a3a5a] outline-none transition-colors"
+      />
     </div>
   )
 }
