@@ -53,7 +53,7 @@ export function RootLayout() {
 
         {/* Secondary sidebar — AI Chat */}
         {secondarySidebarVisible && (
-          <div className="flex flex-col shrink-0 overflow-hidden rounded-xl ml-2 my-2"
+          <div className="flex flex-col shrink-0 overflow-hidden rounded-xl ml-2"
             style={{ width: 320, backgroundColor: '#28242e' }}>
             <AIChatPanel />
           </div>
