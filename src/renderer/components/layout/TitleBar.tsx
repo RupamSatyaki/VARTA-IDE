@@ -4,8 +4,7 @@ import { useTabStore }  from '../../store/tabStore'
 import { useFileTreeStore } from '../../store/fileTreeStore'
 import { FontAwesomeIcon }  from '@fortawesome/react-fontawesome'
 import {
-  faMagnifyingGlass, faTableColumns, faTableList,
-  faRectangleList, faToggleOn,
+  faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons'
 
 // ── Menu data ─────────────────────────────────────────────────────────────────
@@ -284,20 +283,36 @@ export function TitleBar() {
         className="flex items-center gap-0.5 pr-1 shrink-0"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        {/* Toggle Primary Sidebar */}
+        {/* Toggle All Layout */}
+        <LayoutBtn
+          tooltip="Toggle All Panels"
+          active={sidebarVisible && panelVisible && secondarySidebarVisible}
+          onClick={() => {
+            const ui = useUIStore.getState()
+            const allOpen = ui.sidebarVisible && ui.panelVisible && ui.secondarySidebarVisible
+            if (allOpen) {
+              ui.setSidebarVisible(false); ui.setPanelVisible(false); ui.setSecondarySidebarVisible(false)
+            } else {
+              ui.setSidebarVisible(true); ui.setPanelVisible(true); ui.setSecondarySidebarVisible(true)
+            }
+          }}
+          icon={<PrimarySidebarIcon active={sidebarVisible && panelVisible && secondarySidebarVisible} />}
+        />
+
+        {/* Toggle Primary Sidebar (left) */}
         <LayoutBtn
           tooltip="Toggle Primary Sidebar (Ctrl+B)"
           active={sidebarVisible}
           onClick={toggleSidebar}
-          icon={faTableList}
+          icon={<SecondarySidebarIcon active={sidebarVisible} />}
         />
 
-        {/* Toggle Panel */}
+        {/* Toggle Panel (terminal) */}
         <LayoutBtn
           tooltip="Toggle Panel (Ctrl+J)"
           active={panelVisible}
           onClick={togglePanel}
-          icon={faRectangleList}
+          icon={<PanelIcon active={panelVisible} />}
         />
 
         {/* Toggle Secondary Sidebar (AI Chat) */}
@@ -305,15 +320,7 @@ export function TitleBar() {
           tooltip="Toggle AI Chat Panel"
           active={secondarySidebarVisible}
           onClick={toggleSecondarySidebar}
-          icon={faToggleOn}
-        />
-
-        {/* Customize Layout */}
-        <LayoutBtn
-          tooltip="Customize Layout"
-          active={false}
-          onClick={() => {}}
-          icon={faTableColumns}
+          icon={<ChatIcon active={secondarySidebarVisible} />}
         />
 
         {/* Separator */}
@@ -339,7 +346,7 @@ export function TitleBar() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function LayoutBtn({ tooltip, active, onClick, icon }: {
-  tooltip: string; active: boolean; onClick: () => void; icon: any
+  tooltip: string; active: boolean; onClick: () => void; icon: React.ReactNode
 }) {
   return (
     <button
@@ -350,10 +357,54 @@ function LayoutBtn({ tooltip, active, onClick, icon }: {
           ? 'text-[#c084fc] bg-[#7c3aed]/20'
           : 'text-[#5a4a6a] hover:text-[#cccccc] hover:bg-white/5'}`}
     >
-      <FontAwesomeIcon icon={icon} style={{ fontSize: 13 }} />
+      {icon}
     </button>
   )
 }
+
+// ── Layout SVG Icons (matching the image exactly) ─────────────────────────────
+
+/** Icon 1: All panels toggle — active: all 3 sections filled */
+const PrimarySidebarIcon = ({ active }: { active: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2"/>
+    <path d="M9 3v18"/>
+    <path d="M9 12h12"/>
+    {active && <>
+      {/* left panel */}
+      <path d="M3 3h6v18H3z" fill="currentColor" fillOpacity="0.9" stroke="none"/>
+      {/* top-right */}
+      <path d="M9 3h12v9H9z"  fill="currentColor" fillOpacity="0.9" stroke="none"/>
+      {/* bottom-right */}
+      <path d="M9 12h12v9H9z" fill="currentColor" fillOpacity="0.9" stroke="none"/>
+    </>}
+  </svg>
+)
+
+/** Icon 2: Primary sidebar — active: left box filled */
+const SecondarySidebarIcon = ({ active }: { active: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2"/>
+    <path d="M3 3h6v18H3z" fill="currentColor" fillOpacity={active ? 0.9 : 0.3}/>
+    <path d="M9 3v18"/>
+  </svg>
+)
+
+/** Icon 3: Panel — active: bottom box filled */
+const PanelIcon = ({ active }: { active: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2"/>
+    <path d="M3 15h18v6H3z" fill="currentColor" fillOpacity={active ? 0.9 : 0.3}/>
+    <path d="M3 15h18"/>
+  </svg>
+)
+
+/** Icon 4: Chat bubble — active: fully filled */
+const ChatIcon = ({ active }: { active: boolean }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+)
 
 function WinBtn({ onClick, label, icon, danger = false }: {
   onClick: () => void; label: string; icon: React.ReactNode; danger?: boolean
