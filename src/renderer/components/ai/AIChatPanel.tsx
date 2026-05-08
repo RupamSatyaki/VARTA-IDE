@@ -13,7 +13,6 @@ export function AIChatPanel() {
   const { sendMessage, cancelStream } = useAI()
   const [contextLabel, setContextLabel] = useState<string | undefined>()
 
-  // Ensure a conversation exists
   useEffect(() => {
     if (!hasApiKey) { return }
     if (!activeConversationId || !conversations.has(activeConversationId)) {
@@ -22,7 +21,6 @@ export function AIChatPanel() {
     }
   }, [hasApiKey, activeConversationId, conversations, createConversation, settings.ai.model])
 
-  // Listen for AI actions from editor context menu
   useEffect(() => {
     const handler = (e: Event) => {
       const { action, selectedText } = (e as CustomEvent).detail ?? {}
@@ -40,18 +38,6 @@ export function AIChatPanel() {
     return () => window.removeEventListener('varta:ai-action', handler)
   }, [])
 
-  // Listen for apply action
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { code } = (e as CustomEvent).detail ?? {}
-      window.dispatchEvent(new CustomEvent('varta:reveal-in-editor', {
-        detail: { applyCode: code },
-      }))
-    }
-    window.addEventListener('varta:ai-apply', handler)
-    return () => window.removeEventListener('varta:ai-apply', handler)
-  }, [])
-
   const handleSend = useCallback((text: string) => {
     if (!activeConversationId) { return }
     sendMessage(text, activeConversationId)
@@ -64,7 +50,6 @@ export function AIChatPanel() {
 
   const handleClearChat = useCallback(() => {
     if (!activeConversationId) { return }
-    // Reset conversation messages
     useAIStore.setState((s) => {
       const conv = s.conversations.get(activeConversationId)
       if (conv) {
@@ -76,11 +61,10 @@ export function AIChatPanel() {
     })
   }, [activeConversationId])
 
-  // No API key → show prompt
   if (!hasApiKey) {
     return (
-      <div className="flex flex-col h-full bg-[#252526]">
-        <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] border-b border-[#333333]">
+      <div className="flex flex-col h-full bg-[#28242e]">
+        <div className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-[#5a4a6a] border-b border-[#2a1f30]">
           Varta Intelligence
         </div>
         <APIKeyPrompt onKeySet={() => {}} />
@@ -89,17 +73,11 @@ export function AIChatPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#252526]">
-      <AIChatToolbar
-        onNewChat={handleNewChat}
-        onClearChat={handleClearChat}
-      />
+    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
+      <AIChatToolbar onNewChat={handleNewChat} onClearChat={handleClearChat} />
 
       {activeConversationId && (
-        <AIChatMessages
-          conversationId={activeConversationId}
-          onQuickAction={handleSend}
-        />
+        <AIChatMessages conversationId={activeConversationId} onQuickAction={handleSend} />
       )}
 
       <AIChatInput

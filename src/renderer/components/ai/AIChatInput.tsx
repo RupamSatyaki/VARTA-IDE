@@ -1,27 +1,26 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { cn } from '../../utils/cn'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPaperPlane, faStop, faXmark } from '@fortawesome/free-solid-svg-icons'
 
 export interface AIChatInputProps {
-  onSend:       (text: string) => void
-  onCancel:     () => void
-  isStreaming:  boolean
-  contextLabel?: string
+  onSend:          (text: string) => void
+  onCancel:        () => void
+  isStreaming:     boolean
+  contextLabel?:   string
   onClearContext?: () => void
-  disabled?:    boolean
+  disabled?:       boolean
 }
 
-export function AIChatInput({
-  onSend, onCancel, isStreaming, contextLabel, onClearContext, disabled,
-}: AIChatInputProps) {
+export function AIChatInput({ onSend, onCancel, isStreaming, contextLabel, onClearContext, disabled }: AIChatInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current
     if (!el) { return }
     el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 200) + 'px'
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   }, [text])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -30,9 +29,7 @@ export function AIChatInput({
       if (isStreaming) { onCancel(); return }
       if (text.trim()) { handleSend() }
     }
-    if (e.key === 'Escape' && isStreaming) {
-      onCancel()
-    }
+    if (e.key === 'Escape' && isStreaming) { onCancel() }
   }
 
   const handleSend = () => {
@@ -40,44 +37,43 @@ export function AIChatInput({
     if (!trimmed) { return }
     onSend(trimmed)
     setText('')
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    if (textareaRef.current) { textareaRef.current.style.height = 'auto' }
   }
 
   return (
-    <div className="border-t border-[#333333] bg-[#252526]">
-      {/* Context preview */}
+    <div className="border-t border-[#2a1f30] bg-[#28242e] px-3 py-2.5">
+      {/* Context label */}
       {contextLabel && (
-        <div className="flex items-center gap-1.5 px-3 pt-2">
-          <span className="text-[10px] text-[#6e6e6e] bg-[#3c3c3c] px-2 py-0.5 rounded flex items-center gap-1">
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="flex items-center gap-1 text-[10px] text-[#6e5a7a] bg-[#1e1a24]
+            border border-[#3a2f45] px-2 py-0.5 rounded-full">
             📄 {contextLabel}
             {onClearContext && (
-              <button
-                onClick={onClearContext}
-                className="ml-1 text-[#6e6e6e] hover:text-[#d4d4d4]"
-              >
-                ×
+              <button onClick={onClearContext} className="ml-1 hover:text-[#f87171] transition-colors">
+                <FontAwesomeIcon icon={faXmark} style={{ fontSize: 9 }} />
               </button>
             )}
           </span>
         </div>
       )}
 
-      <div className="flex items-end gap-2 px-3 py-2">
+      {/* Input area */}
+      <div className={cn(
+        'flex items-end gap-2 rounded-xl border transition-all duration-150 bg-[#1e1a24]',
+        text.length > 0 ? 'border-[#7c3aed]/50' : 'border-[#3a2f45] focus-within:border-[#7c3aed]/50',
+      )}>
         <textarea
           ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isStreaming ? 'Streaming… (Esc to cancel)' : 'Ask Varta anything…'}
+          placeholder={isStreaming ? 'Streaming… (Esc to cancel)' : 'Ask anything…'}
           disabled={disabled}
           rows={1}
           className={cn(
-            'flex-1 resize-none bg-[#3c3c3c] text-sm text-[#d4d4d4]',
-            'border border-[#3c3c3c] focus:border-[#569cd6] rounded-lg outline-none',
-            'px-3 py-2 placeholder:text-[#6e6e6e] leading-relaxed',
-            'min-h-[36px] max-h-[200px] overflow-y-auto',
+            'flex-1 resize-none bg-transparent text-[12px] text-[#cccccc]',
+            'outline-none px-3 py-2.5 placeholder:text-[#4a3a5a] leading-relaxed',
+            'min-h-[38px] max-h-[160px] overflow-y-auto',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         />
@@ -86,27 +82,21 @@ export function AIChatInput({
           onClick={isStreaming ? onCancel : handleSend}
           disabled={!isStreaming && (!text.trim() || disabled)}
           className={cn(
-            'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+            'w-7 h-7 mb-1.5 mr-1.5 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150',
             isStreaming
-              ? 'bg-[#f44747] hover:bg-[#e03030] text-white'
-              : 'bg-[#0e639c] hover:bg-[#1177bb] text-white disabled:opacity-40 disabled:cursor-not-allowed',
+              ? 'bg-[#f87171]/20 border border-[#f87171]/40 text-[#f87171] hover:bg-[#f87171]/30'
+              : text.trim()
+                ? 'bg-[#7c3aed]/30 border border-[#7c3aed]/50 text-[#c084fc] hover:bg-[#7c3aed]/50 hover:text-white'
+                : 'bg-transparent border border-[#3a2f45] text-[#3a2f45] cursor-not-allowed',
           )}
           title={isStreaming ? 'Cancel (Esc)' : 'Send (Enter)'}
         >
-          {isStreaming ? (
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <rect x="2" y="2" width="8" height="8" rx="1"/>
-            </svg>
-          ) : (
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <path d="M1 6l10-5-5 10V7H1V6z"/>
-            </svg>
-          )}
+          <FontAwesomeIcon icon={isStreaming ? faStop : faPaperPlane} style={{ fontSize: 11 }} />
         </button>
       </div>
 
-      <p className="px-3 pb-1.5 text-[10px] text-[#4e4e4e]">
-        Enter to send · Shift+Enter for new line · Esc to cancel
+      <p className="mt-1.5 text-[10px] text-[#3a2f45] text-center">
+        Enter to send · Shift+Enter for new line
       </p>
     </div>
   )

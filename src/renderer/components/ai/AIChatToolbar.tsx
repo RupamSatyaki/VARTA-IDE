@@ -1,8 +1,10 @@
 import React from 'react'
-import { IconButton } from '../ui/IconButton'
 import { Select } from '../ui/Select'
 import { useAIStore } from '../../store/aiStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faWandMagicSparkles, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { Tooltip } from '../ui/Tooltip'
 
 const MODEL_OPTIONS = [
   { value: 'claude-opus-4-5',                    label: 'Claude Opus 4.5' },
@@ -23,25 +25,27 @@ export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
   const { settings, update } = useSettingsStore()
 
   return (
-    <div className="flex items-center justify-between px-3 h-9 border-b border-[#333333] shrink-0">
-      <div className="flex items-center gap-1.5">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="text-[#569cd6]">
-          <path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/>
-        </svg>
-        <span className="text-xs font-semibold text-[#d4d4d4]">Varta Intelligence</span>
+    <div className="flex items-center justify-between px-3 h-10 border-b border-[#2a1f30] shrink-0">
+      {/* Left: icon + title + streaming */}
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-lg flex items-center justify-center
+          bg-gradient-to-br from-[#7c3aed] to-[#a855f7]">
+          <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 10 }} className="text-white" />
+        </div>
+        <span className="text-[12px] font-semibold text-[#cccccc]">Varta AI</span>
 
         {isStreaming && (
           <div className="flex items-center gap-0.5 ml-1">
             {[0, 1, 2].map((i) => (
-              <span key={i} className="w-1 h-1 rounded-full bg-[#569cd6] animate-bounce"
+              <span key={i} className="w-1 h-1 rounded-full bg-[#c084fc] animate-bounce"
                 style={{ animationDelay: `${i * 150}ms` }} />
             ))}
           </div>
         )}
       </div>
 
+      {/* Right: model selector + actions */}
       <div className="flex items-center gap-1">
-        {/* Model selector */}
         <Select
           value={settings.ai.model}
           options={MODEL_OPTIONS}
@@ -50,20 +54,24 @@ export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
             update({ ai: { ...settings.ai, model: v } })
             window.varta.settings.set({ ai: { model: v } }).catch(() => {})
           }}
-          className="h-6 text-[10px] w-40 border-transparent bg-transparent"
+          className="h-6 text-[10px] w-36 border-transparent bg-transparent text-[#6e5a7a]"
         />
 
-        <IconButton tooltip="New Chat" size="sm" onClick={onNewChat} aria-label="New chat">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M11 5H7V1H5v4H1v2h4v4h2V7h4z"/>
-          </svg>
-        </IconButton>
+        <Tooltip content="New Chat" placement="bottom">
+          <button onClick={onNewChat} aria-label="New chat"
+            className="w-6 h-6 flex items-center justify-center rounded-md
+              text-[#5a4a6a] hover:text-[#cccccc] hover:bg-white/5 transition-all">
+            <FontAwesomeIcon icon={faPlus} style={{ fontSize: 11 }} />
+          </button>
+        </Tooltip>
 
-        <IconButton tooltip="Clear Chat" size="sm" onClick={onClearChat} aria-label="Clear chat">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M8 2h2v1H2V2h2V1h4v1zM3 4h6l-.5 7h-5L3 4zm1 1l.4 5h.2L5 5H4zm2 0v5h1V5H6zm2 0-.4 5h.2L8.6 5H8z"/>
-          </svg>
-        </IconButton>
+        <Tooltip content="Clear Chat" placement="bottom">
+          <button onClick={onClearChat} aria-label="Clear chat"
+            className="w-6 h-6 flex items-center justify-center rounded-md
+              text-[#5a4a6a] hover:text-[#f87171] hover:bg-white/5 transition-all">
+            <FontAwesomeIcon icon={faTrash} style={{ fontSize: 11 }} />
+          </button>
+        </Tooltip>
       </div>
     </div>
   )
