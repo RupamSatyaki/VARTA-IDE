@@ -1,19 +1,21 @@
 import React, { useState, useRef } from 'react'
 import { cn } from '../../utils/cn'
-import { Button } from '../ui/Button'
-import { Spinner } from '../ui/Spinner'
 import { useGitStore } from '../../store/gitStore'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faWandMagicSparkles, faCheck, faArrowUp } from '@fortawesome/free-solid-svg-icons'
 
 export interface GitCommitBoxProps {
   stagedCount:  number
   onCommit:     (message: string) => Promise<void>
+  onCommitPush: (message: string) => Promise<void>
   onGenerateAI: () => Promise<void>
   hasApiKey:    boolean
 }
 
-export function GitCommitBox({ stagedCount, onCommit, onGenerateAI, hasApiKey }: GitCommitBoxProps) {
+export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI, hasApiKey }: GitCommitBoxProps) {
   const [message, setMessage]       = useState('')
   const [committing, setCommitting] = useState(false)
+  const [pushing, setPushing]       = useState(false)
   const [generating, setGenerating] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -21,99 +23,106 @@ export function GitCommitBox({ stagedCount, onCommit, onGenerateAI, hasApiKey }:
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && canCommit) {
-      e.preventDefault()
-      handleCommit()
+      e.preventDefault(); handleCommit()
     }
   }
 
   const handleCommit = async () => {
     if (!canCommit) { return }
     setCommitting(true)
-    try {
-      await onCommit(message.trim())
-      setMessage('')
-    } finally {
-      setCommitting(false)
-    }
+    try { await onCommit(message.trim()); setMessage('') }
+    finally { setCommitting(false) }
+  }
+
+  const handleCommitPush = async () => {
+    if (!canCommit) { return }
+    setPushing(true)
+    try { await onCommitPush(message.trim()); setMessage('') }
+    finally { setPushing(false) }
   }
 
   const handleGenerateAI = async () => {
     setGenerating(true)
-    try {
-      await onGenerateAI()
-      // Message will be set by parent via gitStore
-    } finally {
-      setGenerating(false)
-    }
+    try { await onGenerateAI() }
+    finally { setGenerating(false) }
   }
 
-  // Sync generated message from store
   const { generatedMessage } = useGitStore()
   React.useEffect(() => {
-    if (generatedMessage) {
-      setMessage(generatedMessage)
-      textareaRef.current?.focus()
-    }
+    if (generatedMessage) { setMessage(generatedMessage); textareaRef.current?.focus() }
   }, [generatedMessage])
 
   return (
-    <div className="px-2 py-2 border-b border-[#333333]">
-      <textarea
-        ref={textareaRef}
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Message (Ctrl+Enter to commit)"
-        rows={3}
-        spellCheck={false}
-        className={cn(
-          'w-full px-2 py-1.5 text-xs bg-[#3c3c3c] text-[#d4d4d4]',
-          'border border-[#3c3c3c] focus:border-[#569cd6] rounded outline-none resize-none',
-          'placeholder:text-[#6e6e6e]',
-        )}
-      />
+    <div className="px-3 py-2.5 border-b border-[#2a1f30]">
+      {/* Textarea */}
+      <div className={cn(
+        'rounded-lg border transition-all duration-150 bg-[#1e1a24]',
+        message.length > 0 ? 'border-[#7c3aed]/50' : 'border-[#3a2f45] focus-within:border-[#7c3aed]/50',
+      )}>
+        <textarea
+          ref={textareaRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Commit message (Ctrl+Enter to commit)"
+          rows={3}
+          spellCheck={false}
+          className="w-full px-2.5 py-2 text-[12px] bg-transparent text-[#cccccc]
+            outline-none resize-none placeholder:text-[#4a3a5a] leading-relaxed"
+        />
+      </div>
 
-      <div className="flex items-center gap-1.5 mt-1.5">
-        {/* AI generate button */}
-        {hasApiKey && (
-          <button
-            onClick={handleGenerateAI}
-            disabled={generating}
-            className="flex items-center gap-1 text-[10px] text-[#569cd6] hover:text-[#4fc1ff] disabled:opacity-40 transition-colors"
-            title="Generate commit message with AI"
-          >
-            {generating ? <Spinner size="sm" /> : <SparkleIcon />}
-            Generate
-          </button>
-        )}
+      {/* AI generate */}
+      {hasApiKey && (
+        <button
+          onClick={handleGenerateAI}
+          disabled={generating}
+          className="flex items-center gap-1.5 text-[10px] text-[#7c3aed] hover:text-[#c084fc]
+            disabled:opacity-40 transition-colors mt-1.5"
+        >
+          <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 10 }}
+            className={generating ? 'animate-pulse' : ''} />
+          {generating ? 'Generating…' : 'Generate with AI'}
+        </button>
+      )}
 
+      {/* Buttons row */}
+      <div className="flex items-center gap-2 mt-2">
+        {stagedCount > 0 && (
+          <span className="text-[10px] text-[#5a4a6a]">{stagedCount} staged</span>
+        )}
         <div className="flex-1" />
 
-        {/* Staged count */}
-        {stagedCount > 0 && (
-          <span className="text-[10px] text-[#6e6e6e]">
-            {stagedCount} file{stagedCount !== 1 ? 's' : ''}
-          </span>
-        )}
-
-        {/* Commit button */}
-        <Button
-          variant="primary"
-          size="sm"
+        {/* Commit only */}
+        <button
           onClick={handleCommit}
-          disabled={!canCommit}
-          loading={committing}
-          className="text-xs"
+          disabled={!canCommit || committing || pushing}
+          className={cn(
+            'flex items-center gap-1.5 px-3 h-7 text-[11px] font-medium rounded-lg transition-all duration-150',
+            canCommit && !committing && !pushing
+              ? 'bg-[#7c3aed]/20 border border-[#7c3aed]/40 text-[#c084fc] hover:bg-[#7c3aed]/40 hover:text-white'
+              : 'bg-[#1e1a24] border border-[#3a2f45] text-[#4a3a5a] cursor-not-allowed',
+          )}
         >
-          Commit
-        </Button>
+          <FontAwesomeIcon icon={faCheck} style={{ fontSize: 10 }} />
+          {committing ? 'Committing…' : 'Commit'}
+        </button>
+
+        {/* Commit & Push */}
+        <button
+          onClick={handleCommitPush}
+          disabled={!canCommit || committing || pushing}
+          className={cn(
+            'flex items-center gap-1.5 px-3 h-7 text-[11px] font-medium rounded-lg transition-all duration-150',
+            canCommit && !committing && !pushing
+              ? 'bg-[#7c3aed]/40 border border-[#7c3aed]/60 text-white hover:bg-[#7c3aed]/60'
+              : 'bg-[#1e1a24] border border-[#3a2f45] text-[#4a3a5a] cursor-not-allowed',
+          )}
+        >
+          <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: 10 }} />
+          {pushing ? 'Pushing…' : 'Commit & Push'}
+        </button>
       </div>
     </div>
   )
 }
-
-const SparkleIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
-    <path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z"/>
-  </svg>
-)
