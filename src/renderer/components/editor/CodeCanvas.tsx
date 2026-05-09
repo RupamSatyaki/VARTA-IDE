@@ -121,6 +121,16 @@ export function CodeCanvas({
     // Register Varta Dark theme
     ensureTheme()
 
+    // ── Set model for the current tab (may have been created before mount) ──
+    const normalizedPath = normalizePath(path)
+    const uri = monaco.Uri.parse(`file://${normalizedPath}`)
+    let model = monaco.editor.getModel(uri)
+    if (!model) {
+      model = monaco.editor.createModel(content, language, uri)
+    }
+    editor.setModel(model)
+    previousTabId.current = tabId
+
     // Restore cursor for the initial tab
     const saved = getCursorState(tabId)
     if (saved?.position) {
@@ -296,7 +306,18 @@ export function CodeCanvas({
   // ── Tab switch: save old cursor, swap model, restore new cursor ───────────
   useEffect(() => {
     const editor = editorRef.current
-    if (!editor) { return }
+
+    // Build URI and model regardless of editor mount state
+    const normalizedPath = normalizePath(path)
+    const uri = monaco.Uri.parse(`file://${normalizedPath}`)
+
+    // Always ensure model exists with correct content
+    let model = monaco.editor.getModel(uri)
+    if (!model) {
+      model = monaco.editor.createModel(content, language, uri)
+    }
+
+    if (!editor) { return }  // editor not mounted yet — model created, will be set on mount
 
     // 1. Save cursor state of the tab we're leaving
     if (previousTabId.current && previousTabId.current !== tabId) {
@@ -307,24 +328,12 @@ export function CodeCanvas({
     }
     previousTabId.current = tabId
 
-    // 2. Build URI — ALWAYS use this format for consistency
-    const normalizedPath = normalizePath(path)
-    const uri = monaco.Uri.parse(`file://${normalizedPath}`)
-
-    // 3. Get or create model — ONLY set content on creation, never overwrite
-    let model = monaco.editor.getModel(uri)
-    if (!model) {
-      model = monaco.editor.createModel(content, language, uri)
-    }
-    // NOTE: we do NOT call model.setValue(content) here
-    // Monaco owns the content after creation — overwriting destroys undo history
-
-    // 4. Swap model only if different
+    // 2. Swap model only if different
     if (editor.getModel()?.uri.toString() !== uri.toString()) {
       editor.setModel(model)
     }
 
-    // 5. Restore cursor state for the new tab
+    // 3. Restore cursor state for the new tab
     const saved = getCursorState(tabId)
     if (saved?.position) {
       requestAnimationFrame(() => {
@@ -336,7 +345,7 @@ export function CodeCanvas({
       editor.setPosition({ lineNumber: 1, column: 1 })
       editor.focus()
     }
-  }, [path, tabId]) // ← ONLY path and tabId — NOT content (that would overwrite)
+  }, [path, tabId])
 
   // ── Sync editor options when settings change ──────────────────────────────
   useEffect(() => {
