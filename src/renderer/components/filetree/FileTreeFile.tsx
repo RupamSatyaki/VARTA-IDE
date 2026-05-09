@@ -15,29 +15,40 @@ export interface FileTreeFileProps {
   onContextMenu: (e: React.MouseEvent) => void
 }
 
-const GIT_BADGE: Record<GitFileStatus, { label: string; color: string }> = {
-  modified:   { label: 'M', color: '#e2c08d' },
-  added:      { label: 'A', color: '#73c991' },
-  deleted:    { label: 'D', color: '#f44747' },
-  renamed:    { label: 'R', color: '#e2c08d' },
-  copied:     { label: 'C', color: '#73c991' },
-  untracked:  { label: 'U', color: '#73c991' },
-  conflicted: { label: '!', color: '#f44747' },
-  ignored:    { label: 'I', color: '#6e6e6e' },
+// Git status → color + letter badge (VS Code style)
+const GIT_STATUS: Record<GitFileStatus, { label: string; color: string }> = {
+  modified:   { label: 'M', color: '#e2c08d' },  // yellow
+  added:      { label: 'A', color: '#73c991' },  // green
+  deleted:    { label: 'D', color: '#f44747' },  // red
+  renamed:    { label: 'R', color: '#e2c08d' },  // yellow
+  copied:     { label: 'C', color: '#73c991' },  // green
+  untracked:  { label: 'U', color: '#73c991' },  // green
+  conflicted: { label: '!', color: '#e2c08d' },  // yellow-orange
+  ignored:    { label: 'I', color: '#6e6e6e' },  // grey
   unmodified: { label: '',  color: 'transparent' },
 }
 
+// Filename color based on git status
+function getFileNameColor(gitChange?: GitFileChange): string {
+  if (!gitChange) { return '#cccccc' }
+  switch (gitChange.status) {
+    case 'added':
+    case 'untracked':  return '#73c991'  // green — new file
+    case 'modified':
+    case 'renamed':
+    case 'copied':     return '#e2c08d'  // yellow — modified
+    case 'deleted':    return '#6e6e6e'  // grey — deleted
+    case 'conflicted': return '#e2c08d'  // yellow-orange
+    default:           return '#cccccc'
+  }
+}
+
 export function FileTreeFile({
-  node,
-  depth,
-  isSelected,
-  isDirty = false,
-  gitChange,
-  onClick,
-  onDoubleClick,
-  onContextMenu,
+  node, depth, isSelected, isDirty = false, gitChange,
+  onClick, onDoubleClick, onContextMenu,
 }: FileTreeFileProps) {
-  const badge = gitChange ? GIT_BADGE[gitChange.status] : null
+  const badge = gitChange ? GIT_STATUS[gitChange.status] : null
+  const nameColor = getFileNameColor(gitChange)
 
   return (
     <div
@@ -56,43 +67,34 @@ export function FileTreeFile({
     >
       {/* Indent guide lines */}
       {Array.from({ length: depth }).map((_, i) => (
-        <span
-          key={i}
-          className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
-          style={{ left: i * 16 + 14 }}
-        />
+        <span key={i} className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
+          style={{ left: i * 16 + 14 }} />
       ))}
 
-      {/* File icon — size 18 */}
+      {/* File icon */}
       <FileIcon filename={node.name} size={20} className="mr-2 shrink-0" />
 
-      {/* Filename */}
+      {/* Filename — colored by git status */}
       <span
         className={cn(
           'flex-1 min-w-0 truncate text-[13px]',
-          gitChange?.status === 'deleted'
-            ? 'line-through text-[#6e6e6e]'
-            : gitChange
-              ? 'text-[#e2c08d]'
-              : 'text-[#cccccc]',
+          gitChange?.status === 'deleted' && 'line-through opacity-60',
         )}
+        style={{ color: nameColor }}
       >
         {node.name}
       </span>
 
       {/* Dirty dot */}
       {isDirty && (
-        <span
-          className="w-1.5 h-1.5 rounded-full bg-[#cccccc] shrink-0 ml-1.5 opacity-70"
-          title="Unsaved changes"
-          aria-label="Unsaved changes"
-        />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#cccccc] shrink-0 ml-1.5 opacity-70"
+          title="Unsaved changes" />
       )}
 
-      {/* Git badge */}
+      {/* Git letter badge */}
       {badge && badge.label && (
         <span
-          className="text-[11px] font-semibold ml-1.5 shrink-0 opacity-90"
+          className="text-[11px] font-bold ml-1.5 shrink-0"
           style={{ color: badge.color }}
           title={`Git: ${gitChange?.status}`}
         >

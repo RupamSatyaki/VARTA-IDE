@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState, useEffect } from 'react'
 import { VirtualList }         from '../ui/VirtualList'
 import { FileTreeItem }        from './FileTreeItem'
 import { NewFileInput }        from './NewFileInput'
 import { useFileTreeStore }    from '../../store/fileTreeStore'
 import { useTabStore }         from '../../store/tabStore'
 import { useGitStore }         from '../../store/gitStore'
+import { isIPCSuccess }        from '../../../shared/ipc'
 import type { FileTreeNode }   from '../../../shared/types/file.types'
 import type { GitFileChange }  from '../../../shared/types/git.types'
 
@@ -63,19 +64,58 @@ export function FileTree({
 }: FileTreeProps) {
   const { rootPath, nodes, expandedPaths, selectedPath, setSelected } = useFileTreeStore()
   const { tabs }              = useTabStore()
-  const { status: gitStatus } = useGitStore()
+  const { status: gitStatus, setStatus } = useGitStore()
 
   const [newItem, setNewItem] = useState<NewItemState | null>(null)
 
-  // Git change map
+  // Auto-refresh git status every 3 seconds
+  useEffect(() => {
+    if (!rootPath) { return }
+    const refresh = async () => {
+      const res = await window.varta.git.status().catch(() => null)
+      if (res && isIPCSuccess(res)) { setStatus(res.data) }
+    }
+    refresh() // immediate on mount
+    const timer = setInterval(refresh, 3000)
+    return () => clearInterval(timer)
+  }, [rootPath, setStatus])
+
+  // Git change map — normalize relative git paths to absolute + folder propagation
   const gitChangeMap = useMemo(() => {
     const map = new Map<string, GitFileChange>()
-    if (!gitStatus) { return map }
-    for (const c of [...gitStatus.staged, ...gitStatus.unstaged, ...gitStatus.untracked]) {
+    if (!gitStatus || !rootPath) { return map }
+
+    const root = rootPath.replace(/\\/g, '/')
+    const allChanges = [...gitStatus.staged, ...gitStatus.unstaged, ...gitStatus.untracked, ...gitStatus.conflicted]
+
+    // Convert relative git path → absolute normalized path
+    const toAbs = (relPath: string) => {
+      const rel = relPath.replace(/\\/g, '/')
+      if (rel.startsWith('/') || /^[A-Za-z]:/.test(rel)) { return rel }
+      return `${root}/${rel}`
+    }
+
+    const normalized = allChanges.map(c => ({ ...c, path: toAbs(c.path) }))
+
+    // Map files
+    for (const c of normalized) {
       map.set(c.path, c)
     }
+
+    // Propagate up to parent dirs
+    for (const c of normalized) {
+      const parts = c.path.split('/')
+      for (let i = parts.length - 1; i > 0; i--) {
+        const dirPath = parts.slice(0, i).join('/')
+        if (!dirPath || dirPath === root) { continue }
+        if (!map.has(dirPath)) {
+          map.set(dirPath, { ...c, path: dirPath })
+        }
+      }
+    }
+
     return map
-  }, [gitStatus])
+  }, [gitStatus, rootPath])
 
   // Dirty paths from open tabs
   const dirtyPaths = useMemo(
@@ -115,7 +155,7 @@ export function FileTree({
         isExpanded={expandedPaths.has(row.node.path)}
         isSelected={selectedPath === row.node.path}
         isDirty={dirtyPaths.has(row.node.path)}
-        gitChange={gitChangeMap.get(row.node.path)}
+        gitChange={gitChangeMap.get(row.node.path.replace(/\\/g, '/'))}
         onFileClick={(node, preview) => { setSelected(node.path); onFileOpen(node.path, preview) }}
         onFolderClick={(node) => { setSelected(node.path); onFolderToggle(node.path) }}
         onNewFile={(parentPath) => setNewItem({ parentPath, type: 'file' })}

@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronRight, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 import type { FileTreeNode } from '../../../shared/types/file.types'
-import type { GitFileChange } from '../../../shared/types/git.types'
+import type { GitFileChange, GitFileStatus } from '../../../shared/types/git.types'
 
 export interface FileTreeFolderProps {
   node:          FileTreeNode
@@ -15,15 +15,36 @@ export interface FileTreeFolderProps {
   onContextMenu: (e: React.MouseEvent) => void
 }
 
+// Folder name color — if any child is new → green, modified → yellow
+function getFolderColor(gitChange?: GitFileChange): string {
+  if (!gitChange) { return '#cccccc' }
+  switch (gitChange.status) {
+    case 'added':
+    case 'untracked':  return '#73c991'  // green
+    case 'modified':
+    case 'renamed':    return '#e2c08d'  // yellow
+    case 'deleted':    return '#6e6e6e'
+    case 'conflicted': return '#e2c08d'
+    default:           return '#cccccc'
+  }
+}
+
+// Badge letter for folder
+const FOLDER_BADGE: Partial<Record<GitFileStatus, string>> = {
+  modified:  'M',
+  added:     'A',
+  untracked: 'U',
+  deleted:   'D',
+  conflicted:'!',
+}
+
 export function FileTreeFolder({
-  node,
-  depth,
-  isExpanded,
-  isSelected,
-  gitChange,
-  onClick,
-  onContextMenu,
+  node, depth, isExpanded, isSelected, gitChange, onClick, onContextMenu,
 }: FileTreeFolderProps) {
+  const nameColor  = getFolderColor(gitChange)
+  const badgeLetter = gitChange ? FOLDER_BADGE[gitChange.status] : null
+  const badgeColor  = nameColor !== '#cccccc' ? nameColor : undefined
+
   return (
     <div
       role="treeitem"
@@ -41,34 +62,32 @@ export function FileTreeFolder({
     >
       {/* Indent guide lines */}
       {Array.from({ length: depth }).map((_, i) => (
-        <span
-          key={i}
-          className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
-          style={{ left: i * 16 + 14 }}
-        />
+        <span key={i} className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
+          style={{ left: i * 16 + 14 }} />
       ))}
 
-      {/* FA Chevron — amber color matching folder */}
+      {/* Chevron */}
       <span className="w-4 h-4 flex items-center justify-center shrink-0 text-[#c09553]">
-        <FontAwesomeIcon
-          icon={isExpanded ? faChevronDown : faChevronRight}
-          style={{ fontSize: 10 }}
-        />
+        <FontAwesomeIcon icon={isExpanded ? faChevronDown : faChevronRight} style={{ fontSize: 10 }} />
       </span>
 
-      {/* Folder name */}
+      {/* Folder name — colored by git status */}
       <span
-        className={cn(
-          'flex-1 min-w-0 truncate text-[13px] font-medium',
-          gitChange ? 'text-[#e2c08d]' : 'text-[#cccccc]',
-        )}
+        className="flex-1 min-w-0 truncate text-[13px] font-medium"
+        style={{ color: nameColor }}
       >
         {node.name}
       </span>
 
       {/* Git badge */}
-      {gitChange && (
-        <span className="text-[11px] font-semibold text-[#e2c08d] ml-1.5 shrink-0">M</span>
+      {badgeLetter && badgeColor && (
+        <span
+          className="text-[11px] font-bold ml-1.5 shrink-0"
+          style={{ color: badgeColor }}
+          title={`Git: ${gitChange?.status}`}
+        >
+          {badgeLetter}
+        </span>
       )}
     </div>
   )
