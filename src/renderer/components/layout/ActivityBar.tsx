@@ -2,6 +2,7 @@ import React from 'react'
 import { cn } from '../../utils/cn'
 import { Tooltip } from '../ui/Tooltip'
 import { useUIStore, type SidebarPanel } from '../../store/uiStore'
+import { useGitStore } from '../../store/gitStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faMagnifyingGlass,
@@ -36,6 +37,12 @@ const TOP_ITEMS: ActivityItem[] = [
 
 export function ActivityBar() {
   const { activeSidebarPanel, sidebarVisible, setActiveSidebarPanel, toggleSidebar, openSettings } = useUIStore()
+  const { status: gitStatus } = useGitStore()
+
+  // Total changed files count
+  const gitChangesCount = gitStatus
+    ? gitStatus.staged.length + gitStatus.unstaged.length + gitStatus.untracked.length
+    : 0
 
   const handleClick = (id: SidebarPanel) => {
     if (activeSidebarPanel === id && sidebarVisible) {
@@ -61,6 +68,7 @@ export function ActivityBar() {
             item={item}
             active={activeSidebarPanel === item.id && sidebarVisible}
             onClick={() => handleClick(item.id)}
+            badge={item.id === 'git' && gitChangesCount > 0 ? gitChangesCount : undefined}
           />
         ))}
       </div>
@@ -122,8 +130,8 @@ function GlassActive() {
   )
 }
 
-function ActivityBarItem({ item, active, onClick }: {
-  item: ActivityItem; active: boolean; onClick: () => void
+function ActivityBarItem({ item, active, onClick, badge }: {
+  item: ActivityItem; active: boolean; onClick: () => void; badge?: number
 }) {
   return (
     <Tooltip content={item.label} placement="right">
@@ -134,7 +142,7 @@ function ActivityBarItem({ item, active, onClick }: {
         className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
         style={{ color: active ? '#b38dceff' : 'var(--varta-activitybar-icon)' }}
       >
-        {/* Hover glass — only when not active */}
+        {/* Hover glass */}
         {!active && <GlassHover />}
 
         {/* Active glass */}
@@ -156,6 +164,16 @@ function ActivityBarItem({ item, active, onClick }: {
           className={cn('relative z-10 transition-colors duration-300', !active && 'group-hover:text-white')}
           style={{ fontSize: 17 }}
         />
+
+        {/* Badge */}
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute top-0.5 right-0.5 z-20 min-w-[16px] h-[16px] px-1
+            flex items-center justify-center rounded-full
+            bg-[#7e509f] text-white text-[9px] font-bold leading-none
+            shadow-[0_0_6px_rgba(126,80,159,0.6)]">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
       </button>
     </Tooltip>
   )
