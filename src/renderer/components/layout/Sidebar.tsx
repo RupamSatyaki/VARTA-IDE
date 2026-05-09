@@ -43,7 +43,7 @@ function ExplorerPanel() {
   const {
     openFolder, toggleFolder,
     createFile, createFolder,
-    deleteItem, renameItem,
+    deleteItem, renameItem, moveItem,
     refreshNode, collapseAll,
   } = useFileTree()
 
@@ -69,6 +69,7 @@ function ExplorerPanel() {
           onNewFolder={createFolder}
           onRename={renameItem}
           onDelete={deleteItem}
+          onMove={moveItem}
           onGitStage={(p) => window.varta.git.stage([p]).catch(() => {})}
           onGitDiscard={(p) => window.varta.git.discard([p]).catch(() => {})}
         />

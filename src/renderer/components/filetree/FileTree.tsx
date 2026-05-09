@@ -19,6 +19,7 @@ export interface FileTreeProps {
   onNewFolder:   (parentPath: string, name: string) => void
   onRename:      (oldPath: string, newName: string) => void
   onDelete:      (path: string, isDir: boolean) => void
+  onMove:        (sourcePath: string, targetDirPath: string) => void
   onGitStage?:   (path: string) => void
   onGitDiscard?: (path: string) => void
 }
@@ -52,22 +53,17 @@ function flattenTree(nodes: FileTreeNode[], expandedPaths: Set<string>, depth = 
 }
 
 export function FileTree({
-  onOpenFolder,
-  onFileOpen,
-  onFolderToggle,
-  onNewFile,
-  onNewFolder,
-  onRename,
-  onDelete,
-  onGitStage,
-  onGitDiscard,
+  onOpenFolder, onFileOpen, onFolderToggle,
+  onNewFile, onNewFolder, onRename, onDelete, onMove,
+  onGitStage, onGitDiscard,
 }: FileTreeProps) {
   const { rootPath, nodes, expandedPaths, selectedPath, setSelected } = useFileTreeStore()
   const { tabs }              = useTabStore()
   const { status: gitStatus, setStatus } = useGitStore()
 
-  const [newItem, setNewItem] = useState<NewItemState | null>(null)
+  const [newItem, setNewItem]       = useState<NewItemState | null>(null)
   const [ignoredPaths, setIgnoredPaths] = useState<Set<string>>(new Set())
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null)
 
   // Load and parse .gitignore
   useEffect(() => {
@@ -176,9 +172,10 @@ export function FileTree({
   }, [rows, selectedPath, expandedPaths, setSelected, onFileOpen, onFolderToggle])
 
   const renderRow = useCallback((row: FlatRow) => {
-    const nodePath = row.node.path.replace(/\\/g, '/')
+    const nodePath  = row.node.path.replace(/\\/g, '/')
     const isIgnored = ignoredPaths.has(nodePath) ||
       Array.from(ignoredPaths).some(p => nodePath.startsWith(p + '/') || nodePath.startsWith(p + '\\'))
+    const isDragOver = dragOverPath === row.node.path
 
     return (
       <FileTreeItem
@@ -189,21 +186,25 @@ export function FileTree({
         isDirty={dirtyPaths.has(row.node.path)}
         gitChange={gitChangeMap.get(nodePath)}
         isIgnored={isIgnored}
+        isDragOver={isDragOver}
         onFileClick={(node, preview) => { setSelected(node.path); onFileOpen(node.path, preview) }}
         onFolderClick={(node) => { setSelected(node.path); onFolderToggle(node.path) }}
         onNewFile={(parentPath) => setNewItem({ parentPath, type: 'file' })}
         onNewFolder={(parentPath) => setNewItem({ parentPath, type: 'folder' })}
         onRename={(node, newName) => onRename(node.path, newName)}
         onDelete={(node) => onDelete(node.path, node.type === 'directory')}
+        onMove={onMove}
+        onDragOver={(path) => setDragOverPath(path)}
+        onDragLeave={() => setDragOverPath(null)}
         onGitStage={onGitStage   ? (node) => onGitStage(node.path)   : undefined}
         onGitDiscard={onGitDiscard ? (node) => onGitDiscard(node.path) : undefined}
         rootPath={rootPath ?? ''}
       />
     )
   }, [
-    expandedPaths, selectedPath, dirtyPaths, gitChangeMap, ignoredPaths,
+    expandedPaths, selectedPath, dirtyPaths, gitChangeMap, ignoredPaths, dragOverPath,
     setSelected, onFileOpen, onFolderToggle, onNewFile, onNewFolder,
-    onRename, onDelete, onGitStage, onGitDiscard, rootPath,
+    onRename, onDelete, onMove, onGitStage, onGitDiscard, rootPath,
   ])
 
   // Empty state

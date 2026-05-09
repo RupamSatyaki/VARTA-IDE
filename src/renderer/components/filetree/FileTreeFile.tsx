@@ -11,6 +11,7 @@ export interface FileTreeFileProps {
   isDirty?:    boolean
   gitChange?:  GitFileChange
   isIgnored?:  boolean
+  dragProps?:  React.HTMLAttributes<HTMLDivElement>
   onClick:     (e: React.MouseEvent) => void
   onDoubleClick: (e: React.MouseEvent) => void
   onContextMenu: (e: React.MouseEvent) => void
@@ -45,7 +46,7 @@ function getFileNameColor(gitChange?: GitFileChange): string {
 }
 
 export function FileTreeFile({
-  node, depth, isSelected, isDirty = false, gitChange, isIgnored,
+  node, depth, isSelected, isDirty = false, gitChange, isIgnored, dragProps,
   onClick, onDoubleClick, onContextMenu,
 }: FileTreeFileProps) {
   const badge = gitChange ? GIT_STATUS[gitChange.status] : null
@@ -59,8 +60,9 @@ export function FileTreeFile({
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
+      {...dragProps}
       className={cn(
-        'relative flex items-center h-[26px] pr-3 cursor-pointer select-none group',
+        'relative flex items-center h-[26px] pr-3 cursor-grab select-none group',
         'hover:bg-[#2a2d2e] focus:outline-none',
         isSelected ? 'bg-[#352f3d] hover:bg-[#352f3d]' : 'hover:bg-[#2a2d2e]',
       )}

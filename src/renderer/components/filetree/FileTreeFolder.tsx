@@ -12,6 +12,8 @@ export interface FileTreeFolderProps {
   isSelected:    boolean
   gitChange?:    GitFileChange
   isIgnored?:    boolean
+  isDragOver?:   boolean
+  dragProps?:    React.HTMLAttributes<HTMLDivElement>
   onClick:       (e: React.MouseEvent) => void
   onContextMenu: (e: React.MouseEvent) => void
 }
@@ -40,7 +42,8 @@ const FOLDER_BADGE: Partial<Record<GitFileStatus, string>> = {
 }
 
 export function FileTreeFolder({
-  node, depth, isExpanded, isSelected, gitChange, isIgnored, onClick, onContextMenu,
+  node, depth, isExpanded, isSelected, gitChange, isIgnored, isDragOver,
+  dragProps, onClick, onContextMenu,
 }: FileTreeFolderProps) {
   const nameColor   = isIgnored ? '#6e6e6e' : getFolderColor(gitChange)
   const badgeLetter = !isIgnored && gitChange ? FOLDER_BADGE[gitChange.status] : null
@@ -54,9 +57,11 @@ export function FileTreeFolder({
       tabIndex={isSelected ? 0 : -1}
       onClick={onClick}
       onContextMenu={onContextMenu}
+      {...dragProps}
       className={cn(
         'relative flex items-center h-[26px] pr-3 cursor-pointer select-none group',
         isSelected ? 'bg-[#352f3d] hover:bg-[#352f3d]' : 'hover:bg-[#2a2d2e]',
+        isDragOver && 'bg-[#7c3aed]/20 outline outline-1 outline-[#7c3aed]/60',
         'focus:outline-none',
       )}
       style={{ paddingLeft: depth * 16 + 8 }}
