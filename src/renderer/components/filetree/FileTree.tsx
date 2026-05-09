@@ -67,6 +67,34 @@ export function FileTree({
   const { status: gitStatus, setStatus } = useGitStore()
 
   const [newItem, setNewItem] = useState<NewItemState | null>(null)
+  const [ignoredPaths, setIgnoredPaths] = useState<Set<string>>(new Set())
+
+  // Load and parse .gitignore
+  useEffect(() => {
+    if (!rootPath) { return }
+    const loadGitignore = async () => {
+      const gitignorePath = `${rootPath.replace(/\\/g, '/')}/.gitignore`
+      const res = await window.varta.fs.readFile(gitignorePath).catch(() => null)
+      if (!res || !res.success) { return }
+
+      const root = rootPath.replace(/\\/g, '/')
+      const lines = res.data.content
+        .split('\n')
+        .map((l: string) => l.trim())
+        .filter((l: string) => l && !l.startsWith('#'))
+
+      // Build set of ignored absolute paths by matching patterns
+      const ignored = new Set<string>()
+      const addIgnored = (pattern: string) => {
+        // Simple patterns: node_modules, dist, out, build, .next etc.
+        const clean = pattern.replace(/^\//, '').replace(/\/$/, '')
+        ignored.add(`${root}/${clean}`)
+      }
+      lines.forEach(addIgnored)
+      setIgnoredPaths(ignored)
+    }
+    loadGitignore()
+  }, [rootPath])
 
   // Auto-refresh git status every 3 seconds
   useEffect(() => {
@@ -148,6 +176,10 @@ export function FileTree({
   }, [rows, selectedPath, expandedPaths, setSelected, onFileOpen, onFolderToggle])
 
   const renderRow = useCallback((row: FlatRow) => {
+    const nodePath = row.node.path.replace(/\\/g, '/')
+    const isIgnored = ignoredPaths.has(nodePath) ||
+      Array.from(ignoredPaths).some(p => nodePath.startsWith(p + '/') || nodePath.startsWith(p + '\\'))
+
     return (
       <FileTreeItem
         node={row.node}
@@ -155,7 +187,8 @@ export function FileTree({
         isExpanded={expandedPaths.has(row.node.path)}
         isSelected={selectedPath === row.node.path}
         isDirty={dirtyPaths.has(row.node.path)}
-        gitChange={gitChangeMap.get(row.node.path.replace(/\\/g, '/'))}
+        gitChange={gitChangeMap.get(nodePath)}
+        isIgnored={isIgnored}
         onFileClick={(node, preview) => { setSelected(node.path); onFileOpen(node.path, preview) }}
         onFolderClick={(node) => { setSelected(node.path); onFolderToggle(node.path) }}
         onNewFile={(parentPath) => setNewItem({ parentPath, type: 'file' })}
@@ -168,7 +201,7 @@ export function FileTree({
       />
     )
   }, [
-    expandedPaths, selectedPath, dirtyPaths, gitChangeMap,
+    expandedPaths, selectedPath, dirtyPaths, gitChangeMap, ignoredPaths,
     setSelected, onFileOpen, onFolderToggle, onNewFile, onNewFolder,
     onRename, onDelete, onGitStage, onGitDiscard, rootPath,
   ])

@@ -13,6 +13,7 @@ export interface FileTreeItemProps {
   isSelected:    boolean
   isDirty?:      boolean
   gitChange?:    GitFileChange
+  isIgnored?:    boolean
   onFileClick:        (node: FileTreeNode, preview: boolean) => void
   onFolderClick:      (node: FileTreeNode) => void
   onNewFile:          (parentPath: string) => void
@@ -25,21 +26,9 @@ export interface FileTreeItemProps {
 }
 
 export function FileTreeItem({
-  node,
-  depth,
-  isExpanded,
-  isSelected,
-  isDirty,
-  gitChange,
-  onFileClick,
-  onFolderClick,
-  onNewFile,
-  onNewFolder,
-  onRename,
-  onDelete,
-  onGitStage,
-  onGitDiscard,
-  rootPath,
+  node, depth, isExpanded, isSelected, isDirty, gitChange, isIgnored,
+  onFileClick, onFolderClick, onNewFile, onNewFolder,
+  onRename, onDelete, onGitStage, onGitDiscard, rootPath,
 }: FileTreeItemProps) {
   const [renaming, setRenaming] = useState(false)
   const isDir = node.type === 'directory'
@@ -91,13 +80,9 @@ export function FileTreeItem({
     return (
       <FileTreeContextMenu {...contextMenuProps}>
         <FileTreeFolder
-          node={node}
-          depth={depth}
-          isExpanded={isExpanded}
-          isSelected={isSelected}
-          gitChange={gitChange}
-          onClick={() => onFolderClick(node)}
-          onContextMenu={() => {}}  // ContextMenu handles this via wrapper
+          node={node} depth={depth} isExpanded={isExpanded}
+          isSelected={isSelected} gitChange={gitChange} isIgnored={isIgnored}
+          onClick={() => onFolderClick(node)} onContextMenu={() => {}}
         />
       </FileTreeContextMenu>
     )
@@ -106,13 +91,10 @@ export function FileTreeItem({
   return (
     <FileTreeContextMenu {...contextMenuProps}>
       <FileTreeFile
-        node={node}
-        depth={depth}
-        isSelected={isSelected}
-        isDirty={isDirty}
-        gitChange={gitChange}
+        node={node} depth={depth} isSelected={isSelected}
+        isDirty={isDirty} gitChange={gitChange} isIgnored={isIgnored}
         onClick={(e) => onFileClick(node, !e.detail || e.detail === 1)}
-        onDoubleClick={(e) => onFileClick(node, false)}
+        onDoubleClick={() => onFileClick(node, false)}
         onContextMenu={() => {}}
       />
     </FileTreeContextMenu>

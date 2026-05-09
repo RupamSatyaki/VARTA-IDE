@@ -10,6 +10,7 @@ export interface FileTreeFileProps {
   isSelected:  boolean
   isDirty?:    boolean
   gitChange?:  GitFileChange
+  isIgnored?:  boolean
   onClick:     (e: React.MouseEvent) => void
   onDoubleClick: (e: React.MouseEvent) => void
   onContextMenu: (e: React.MouseEvent) => void
@@ -44,11 +45,11 @@ function getFileNameColor(gitChange?: GitFileChange): string {
 }
 
 export function FileTreeFile({
-  node, depth, isSelected, isDirty = false, gitChange,
+  node, depth, isSelected, isDirty = false, gitChange, isIgnored,
   onClick, onDoubleClick, onContextMenu,
 }: FileTreeFileProps) {
   const badge = gitChange ? GIT_STATUS[gitChange.status] : null
-  const nameColor = getFileNameColor(gitChange)
+  const nameColor = isIgnored ? '#6e6e6e' : getFileNameColor(gitChange)
 
   return (
     <div
@@ -74,10 +75,11 @@ export function FileTreeFile({
       {/* File icon */}
       <FileIcon filename={node.name} size={20} className="mr-2 shrink-0" />
 
-      {/* Filename — colored by git status */}
+      {/* Filename — colored by git status, dimmed if ignored */}
       <span
         className={cn(
           'flex-1 min-w-0 truncate text-[13px]',
+          isIgnored && 'opacity-50 italic',
           gitChange?.status === 'deleted' && 'line-through opacity-60',
         )}
         style={{ color: nameColor }}

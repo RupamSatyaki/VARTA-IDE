@@ -11,6 +11,7 @@ export interface FileTreeFolderProps {
   isExpanded:    boolean
   isSelected:    boolean
   gitChange?:    GitFileChange
+  isIgnored?:    boolean
   onClick:       (e: React.MouseEvent) => void
   onContextMenu: (e: React.MouseEvent) => void
 }
@@ -39,11 +40,11 @@ const FOLDER_BADGE: Partial<Record<GitFileStatus, string>> = {
 }
 
 export function FileTreeFolder({
-  node, depth, isExpanded, isSelected, gitChange, onClick, onContextMenu,
+  node, depth, isExpanded, isSelected, gitChange, isIgnored, onClick, onContextMenu,
 }: FileTreeFolderProps) {
-  const nameColor  = getFolderColor(gitChange)
-  const badgeLetter = gitChange ? FOLDER_BADGE[gitChange.status] : null
-  const badgeColor  = nameColor !== '#cccccc' ? nameColor : undefined
+  const nameColor   = isIgnored ? '#6e6e6e' : getFolderColor(gitChange)
+  const badgeLetter = !isIgnored && gitChange ? FOLDER_BADGE[gitChange.status] : null
+  const badgeColor  = nameColor !== '#cccccc' && nameColor !== '#6e6e6e' ? nameColor : undefined
 
   return (
     <div
@@ -71,9 +72,12 @@ export function FileTreeFolder({
         <FontAwesomeIcon icon={isExpanded ? faChevronDown : faChevronRight} style={{ fontSize: 10 }} />
       </span>
 
-      {/* Folder name — colored by git status */}
+      {/* Folder name — dimmed if ignored */}
       <span
-        className="flex-1 min-w-0 truncate text-[13px] font-medium"
+        className={cn(
+          'flex-1 min-w-0 truncate text-[13px] font-medium',
+          isIgnored && 'opacity-50 italic',
+        )}
         style={{ color: nameColor }}
       >
         {node.name}
