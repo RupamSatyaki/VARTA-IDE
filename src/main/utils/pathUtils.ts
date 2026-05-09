@@ -1,6 +1,7 @@
 import path from 'path'
 import os   from 'os'
 import fs   from 'fs'
+import { app } from 'electron'
 
 /** Normalize a path to forward slashes (consistent across platforms) */
 export function normalizePath(p: string): string {
@@ -43,6 +44,41 @@ export function joinPath(...segments: string[]): string {
 /** Get relative path from base to target */
 export function relativePath(base: string, target: string): string {
   return path.relative(base, target)
+}
+
+/**
+ * Get the path to the Ripgrep (rg) binary.
+ * Handles dev vs prod (asar) paths.
+ */
+export function getRipgrepPath(): string {
+  // @vscode/ripgrep provides a variable 'rgPath' but it's relative to the package.
+  // We need to resolve it to an absolute path that works in both dev and prod.
+  
+  const isProd = app.isPackaged
+  const binName = process.platform === 'win32' ? 'rg.exe' : 'rg'
+  
+  if (!isProd) {
+    // In development, search in node_modules
+    // The actual binary is in the platform-specific package
+    const platformPkg = `@vscode/ripgrep-${process.platform}-${process.arch}`
+    const devPath = path.join(app.getAppPath(), 'node_modules', platformPkg, 'bin', binName)
+    if (fs.existsSync(devPath)) return devPath
+    
+    // Fallback for some versions or if arch-specific isn't found
+    const fallbackPath = path.join(app.getAppPath(), 'node_modules', '@vscode', 'ripgrep', 'bin', binName)
+    return fallbackPath
+  }
+
+  // In production, binaries are unpacked to app.asar.unpacked
+  const prodPath = path.join(
+    process.resourcesPath,
+    'app.asar.unpacked',
+    'node_modules',
+    `@vscode/ripgrep-${process.platform}-${process.arch}`,
+    'bin',
+    binName
+  )
+  return prodPath
 }
 
 /**

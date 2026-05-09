@@ -22,6 +22,7 @@ files:
 
 asarUnpack:
   - "node_modules/node-pty/**/*"
+  - "node_modules/@vscode/ripgrep-*/**/*"
 
 win:
   target:
