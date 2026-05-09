@@ -2,7 +2,7 @@
 
 A modern desktop code editor built with Electron, React, and TypeScript. Varta combines a fast Monaco-powered editor with an integrated terminal, git panel, and AI assistant — all in a single, focused application.
 
-//![Varta IDE Screenshot](docs/assets/screenshot.png)
+![Varta IDE Screenshot](docs/assets/screenshot.png)
 
 > Screenshot placeholder — replace with an actual screenshot after first launch.
 
