@@ -38,7 +38,7 @@ export function useFileTree() {
   tabStoreRef.current = tabStore
   notifyRef.current   = notify
 
-  // ── Load one directory level (non-recursive) ──────────────────────────────
+  // ── Load one directory level — preserves expanded children ──────────────
 
   const loadDir = useCallback(async (folderPath: string): Promise<void> => {
     const { setNodes, setLoading } = storeRef.current
@@ -46,15 +46,27 @@ export function useFileTree() {
     try {
       const res = await window.varta.fs.readDir({
         path:       folderPath,
-        recursive:  false,   // LAZY — only load one level at a time
+        recursive:  false,
         showHidden: false,
       })
       if (isIPCSuccess(res)) {
-        setNodes(res.data)
+        // Re-attach previously loaded children for expanded folders
+        const { nodes: oldNodes, expandedPaths } = storeRef.current
+        const merged = res.data.map((newNode) => {
+          if (newNode.type !== 'directory') { return newNode }
+          if (!expandedPaths.has(newNode.path)) { return newNode }
+          // Folder was expanded — find old node and keep its children
+          const old = findNode(oldNodes, newNode.path)
+          if (old?.children && old.children.length > 0) {
+            return { ...newNode, children: old.children }
+          }
+          return newNode
+        })
+        setNodes(merged)
       } else {
         notifyRef.current({ type: 'error', message: `Failed to read folder: ${res.error.message}` })
       }
-    } catch (e) {
+    } catch {
       notifyRef.current({ type: 'error', message: 'Failed to load file tree' })
     } finally {
       setLoading(false)
@@ -108,12 +120,42 @@ export function useFileTree() {
     toggleExpanded(folderPath)
   }, [loadChildren])
 
-  // ── Refresh ───────────────────────────────────────────────────────────────
+  // ── Refresh — surgical: only reload the affected folder ─────────────────
 
   const refreshNode = useCallback(async (folderPath: string) => {
     const { rootPath } = storeRef.current
     if (!rootPath) { return }
-    await loadDir(rootPath)
+
+    // Root level reload
+    if (folderPath === rootPath) {
+      await loadDir(rootPath)
+      return
+    }
+
+    // Always read fresh nodes from store at call time
+    const { expandedPaths } = storeRef.current
+
+    if (!expandedPaths.has(folderPath)) {
+      // Not expanded — just clear children so next expand reloads fresh
+      storeRef.current.setNodes(
+        patchChildren(storeRef.current.nodes, folderPath, [])
+      )
+      return
+    }
+
+    // Expanded — reload children surgically
+    try {
+      const res = await window.varta.fs.readDir({
+        path:       folderPath,
+        recursive:  false,
+        showHidden: false,
+      })
+      if (!isIPCSuccess(res)) { return }
+      // Read nodes AGAIN after async — they may have changed
+      storeRef.current.setNodes(
+        patchChildren(storeRef.current.nodes, folderPath, res.data)
+      )
+    } catch { /* ignore */ }
   }, [loadDir])
 
   // ── Open file ─────────────────────────────────────────────────────────────
@@ -228,6 +270,10 @@ export function useFileTree() {
 
   // ── Watcher setup ─────────────────────────────────────────────────────────
 
+  // Keep refreshNode in a ref so watcher always calls latest version
+  const refreshNodeRef = useRef(refreshNode)
+  refreshNodeRef.current = refreshNode
+
   const setupWatcher = useCallback((folderPath: string) => {
     if (watchCleanup) { watchCleanup(); watchCleanup = null }
 
@@ -236,16 +282,17 @@ export function useFileTree() {
 
     const offWatch = window.varta.fs.onWatchEvent((_id, event) => {
       if (_id !== watchId) { return }
-      if (['add', 'unlink', 'addDir', 'unlinkDir'].includes(event.type)) {
-        refreshNode(dirname(event.path))
-      }
+      if (event.type === 'change') { return }  // content change, not structural
+
+      const parentDir = dirname(event.path)
+      refreshNodeRef.current(parentDir)
     })
 
     watchCleanup = () => {
       offWatch()
       window.varta.fs.stopWatch(watchId).catch(() => {})
     }
-  }, [refreshNode])
+  }, [])  // no deps — uses ref
 
   // ── Collapse all ──────────────────────────────────────────────────────────
 
@@ -255,6 +302,17 @@ export function useFileTree() {
       setExpanded(p, false)
     }
     if (rootPath) { storeRef.current.setExpanded(rootPath, true) }
+  }, [])
+
+  // ── Auto-refresh every 2 seconds ─────────────────────────────────────────
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const { rootPath } = storeRef.current
+      if (!rootPath) { return }
+      refreshNodeRef.current(rootPath)
+    }, 2000)
+    return () => clearInterval(timer)
   }, [])
 
   // ── Cleanup on unmount ────────────────────────────────────────────────────
