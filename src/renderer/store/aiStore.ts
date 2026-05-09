@@ -3,12 +3,19 @@ import type { AIConversation, AIMessage, AIStreamChunk, AIStreamEnd } from '../.
 
 // No immer — Map has proxy issues with immer outside produce()
 
+export interface AIContextItem {
+  type: 'file' | 'selection' | 'terminal' | 'structure'
+  label: string
+  id: string
+}
+
 export interface AIState {
   conversations:           Map<string, AIConversation>
   activeConversationId:    string | null
   isStreaming:             boolean
   streamingConversationId: string | null
   hasApiKey:               boolean
+  currentContext:          AIContextItem[]
 }
 
 export interface AIActions {
@@ -19,6 +26,9 @@ export interface AIActions {
   finalizeStream:        (event: AIStreamEnd) => void
   setStreamError:        (conversationId: string, messageId: string, errorCode: string) => void
   setHasApiKey:          (v: boolean) => void
+  addContextItem:        (item: AIContextItem) => void
+  removeContextItem:     (id: string) => void
+  clearContext:          () => void
   reset:                 () => void
 }
 
@@ -28,6 +38,7 @@ export const useAIStore = create<AIState & AIActions>()((set, get) => ({
   isStreaming:             false,
   streamingConversationId: null,
   hasApiKey:               false,
+  currentContext:          [],
 
   createConversation: (id, model) => {
     const next = new Map(get().conversations)
@@ -97,5 +108,25 @@ export const useAIStore = create<AIState & AIActions>()((set, get) => ({
   },
 
   setHasApiKey: (v) => set({ hasApiKey: v }),
-  reset:        ()  => set({ conversations: new Map(), activeConversationId: null, isStreaming: false, streamingConversationId: null, hasApiKey: false }),
+
+  addContextItem: (item) => {
+    const exists = get().currentContext.find((c) => c.id === item.id)
+    if (exists) return
+    set((s) => ({ currentContext: [...s.currentContext, item] }))
+  },
+
+  removeContextItem: (id) => set((s) => ({
+    currentContext: s.currentContext.filter((c) => c.id !== id)
+  })),
+
+  clearContext: () => set({ currentContext: [] }),
+
+  reset:        ()  => set({ 
+    conversations: new Map(), 
+    activeConversationId: null, 
+    isStreaming: false, 
+    streamingConversationId: null, 
+    hasApiKey: false,
+    currentContext: []
+  }),
 }))

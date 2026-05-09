@@ -1,17 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { AIChatToolbar }  from './AIChatToolbar'
-import { AIChatMessages } from './AIChatMessages'
-import { AIChatInput }    from './AIChatInput'
+import { MessageList }    from './Chat/MessageList'
+import { ChatInput }       from './Input/ChatInput'
 import { APIKeyPrompt }   from './APIKeyPrompt'
 import { useAIStore }     from '../../store/aiStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useAI }          from '../../hooks/useAI'
 
 export function AIChatPanel() {
-  const { hasApiKey, conversations, activeConversationId, createConversation } = useAIStore()
+  const { 
+    hasApiKey, 
+    conversations, 
+    activeConversationId, 
+    createConversation, 
+    isStreaming,
+    addContextItem
+  } = useAIStore()
   const { settings } = useSettingsStore()
   const { sendMessage, cancelStream } = useAI()
-  const [contextLabel, setContextLabel] = useState<string | undefined>()
 
   useEffect(() => {
     if (!hasApiKey) { return }
@@ -23,7 +29,16 @@ export function AIChatPanel() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const { action, selectedText } = (e as CustomEvent).detail ?? {}
+      const { action, selectedText, fileName } = (e as CustomEvent).detail ?? {}
+      
+      // Auto-add context if selection or file is involved
+      if (fileName) {
+        addContextItem({ type: 'file', label: fileName, id: `file-${fileName}` })
+      }
+      if (selectedText) {
+        addContextItem({ type: 'selection', label: 'Selected Code', id: 'selection-current' })
+      }
+
       const prompts: Record<string, string> = {
         explain:  `Explain this code:\n\`\`\`\n${selectedText}\n\`\`\``,
         fix:      `Fix any errors in this code:\n\`\`\`\n${selectedText}\n\`\`\``,
@@ -36,7 +51,7 @@ export function AIChatPanel() {
     }
     window.addEventListener('varta:ai-action', handler)
     return () => window.removeEventListener('varta:ai-action', handler)
-  }, [])
+  }, [addContextItem])
 
   const handleSend = useCallback((text: string) => {
     if (!activeConversationId) { return }
@@ -63,29 +78,29 @@ export function AIChatPanel() {
 
   if (!hasApiKey) {
     return (
-      <div className="flex flex-col h-full bg-[#28242e]">
-        <div className="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-[#5a4a6a] border-b border-[#2a1f30]">
+      <div className="flex flex-col h-full bg-[#1a1620]">
+        <div className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[#7c5a9a] border-b border-[#2a1f30] bg-[#1a1620]/50 backdrop-blur-xl">
           Varta Intelligence
         </div>
-        <APIKeyPrompt onKeySet={() => {}} />
+        <div className="flex-1 overflow-y-auto">
+          <APIKeyPrompt onKeySet={() => {}} />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
+    <div className="flex flex-col h-full overflow-hidden bg-[#1a1620] shadow-2xl">
       <AIChatToolbar onNewChat={handleNewChat} onClearChat={handleClearChat} />
 
       {activeConversationId && (
-        <AIChatMessages conversationId={activeConversationId} onQuickAction={handleSend} />
+        <MessageList conversationId={activeConversationId} onQuickAction={handleSend} />
       )}
 
-      <AIChatInput
+      <ChatInput
         onSend={handleSend}
         onCancel={() => activeConversationId && cancelStream(activeConversationId)}
-        isStreaming={useAIStore.getState().isStreaming}
-        contextLabel={contextLabel}
-        onClearContext={() => setContextLabel(undefined)}
+        isStreaming={isStreaming}
       />
     </div>
   )

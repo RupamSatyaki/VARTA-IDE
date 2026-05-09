@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react'
-import { cn } from '../../utils/cn'
 import { useNotificationStore } from '../../store/notificationStore'
 import { useTerminalStore }     from '../../store/terminalStore'
 import { useFileTreeStore }     from '../../store/fileTreeStore'
 import { FontAwesomeIcon }      from '@fortawesome/react-fontawesome'
-import { faCopy, faPlay, faFileCirclePlus, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons'
+import { faCopy, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons'
 import type { AIMessage } from '../../../shared/types/ai.types'
+import { CodeBlock } from './Shared/CodeBlock'
 
 export interface AIChatMessageProps {
   message:     AIMessage
@@ -73,9 +73,9 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
   // User message
   if (isUser) {
     return (
-      <div className="flex justify-end px-3 py-2">
-        <div className="max-w-[88%] bg-[#7c3aed]/20 border border-[#7c3aed]/30 rounded-2xl rounded-tr-sm
-          px-3.5 py-2.5 text-[12px] text-[#e0d0ff] whitespace-pre-wrap break-words leading-relaxed">
+      <div className="flex justify-end px-3 py-2 animate-in slide-in-from-right-2 duration-300">
+        <div className="max-w-[88%] bg-[#7c3aed]/15 border border-[#7c3aed]/30 rounded-2xl rounded-tr-sm
+          px-4 py-2.5 text-[13px] text-[#e0d0ff] whitespace-pre-wrap break-words leading-relaxed shadow-sm shadow-[#7c3aed]/5">
           {message.content}
         </div>
       </div>
@@ -84,17 +84,17 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
 
   // Assistant message
   return (
-    <div className="px-3 py-2.5 group">
+    <div className="px-3 py-3 group animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0
-          bg-gradient-to-br from-[#7c3aed] to-[#a855f7]">
-          <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 9 }} className="text-white" />
+      <div className="flex items-center gap-2.5 mb-2.5 ml-1">
+        <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0
+          bg-gradient-to-br from-[#7c3aed] to-[#a855f7] shadow-lg shadow-[#7c3aed]/20">
+          <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 10 }} className="text-white" />
         </div>
-        <span className="text-[10px] font-semibold text-[#7c5a9a]">Varta AI</span>
+        <span className="text-[11px] font-bold text-[#8e7a9a] uppercase tracking-wider">Varta Intelligence</span>
         <button
           onClick={() => handleCopy(message.content)}
-          className="opacity-0 group-hover:opacity-100 ml-auto text-[#5a4a6a] hover:text-[#cccccc] transition-all"
+          className="opacity-0 group-hover:opacity-100 ml-auto text-[#5a4a6a] hover:text-[#cccccc] transition-all p-1"
           title="Copy message"
         >
           <FontAwesomeIcon icon={faCopy} style={{ fontSize: 10 }} />
@@ -102,86 +102,42 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
       </div>
 
       {/* Content */}
-      <div className="text-[12px] text-[#cccccc] space-y-2.5 ml-7">
+      <div className="text-[13px] text-[#cccccc] space-y-3 ml-8">
         {parts?.map((part, i) => {
           if (part.type === 'text') {
             return (
-              <div key={i} className="leading-relaxed"
+              <div key={i} className="leading-relaxed opacity-90"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(part.content) }} />
             )
           }
 
-          if (part.type === 'code' || part.type === 'replace' || part.type === 'newfile') {
-            return (
-              <div key={i} className="rounded-xl border border-[#3a2f45] overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e1a24] border-b border-[#2a1f30]">
-                  <span className="text-[10px] text-[#6e5a7a] font-mono">
-                    {part.type === 'newfile' ? part.path : (part.lang || 'code')}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <CodeBtn onClick={() => handleCopy(part.content)} icon={faCopy} label="Copy" />
-                    {part.type === 'replace' && (
-                      <CodeBtn onClick={() => handleApply(part.content)} icon={faPlay} label="Apply" accent />
-                    )}
-                    {part.type === 'newfile' && part.path && (
-                      <CodeBtn onClick={() => handleCreateFile(part.path!, part.content)} icon={faFileCirclePlus} label="Create" accent />
-                    )}
-                  </div>
-                </div>
-                <pre className="px-3 py-2.5 text-[11px] font-mono text-[#cccccc] bg-[#12101a] overflow-x-auto whitespace-pre leading-relaxed">
-                  {part.content}
-                </pre>
-              </div>
-            )
-          }
-
-          if (part.type === 'terminal') {
-            return (
-              <div key={i} className="rounded-xl border border-[#3a2f45] overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e1a24] border-b border-[#2a1f30]">
-                  <span className="text-[10px] text-[#6e5a7a]">terminal</span>
-                  <CodeBtn onClick={() => handleRun(part.content)} icon={faPlay} label="Run" accent />
-                </div>
-                <pre className="px-3 py-2.5 text-[11px] font-mono text-[#a6e3a1] bg-[#12101a]">
-                  $ {part.content}
-                </pre>
-              </div>
-            )
-          }
-          return null
+          return (
+            <CodeBlock
+              key={i}
+              content={part.content}
+              lang={part.lang}
+              type={part.type as any}
+              path={part.path}
+              onCopy={handleCopy}
+              onApply={handleApply}
+              onCreateFile={handleCreateFile}
+              onRunTerminal={handleRun}
+            />
+          )
         })}
 
         {/* Streaming cursor */}
         {isStreaming && message.status === 'streaming' && (
-          <span className="inline-block w-1.5 h-4 bg-[#c084fc] animate-pulse ml-0.5 align-middle rounded-sm" />
+          <span className="inline-block w-1.5 h-4 bg-[#c084fc] animate-pulse ml-1 align-middle rounded-sm shadow-[0_0_8px_rgba(192,132,252,0.5)]" />
         )}
 
         {/* Error */}
         {message.status === 'error' && (
-          <p className="text-[11px] text-[#f87171] bg-[#f87171]/10 border border-[#f87171]/20 rounded-lg px-3 py-2">
+          <p className="text-[11px] font-medium text-[#f87171] bg-[#f87171]/5 border border-[#f87171]/20 rounded-xl px-4 py-2.5 shadow-sm">
             ⚠ {message.errorCode ?? 'Request failed'}
           </p>
         )}
       </div>
     </div>
-  )
-}
-
-function CodeBtn({ onClick, icon, label, accent }: {
-  onClick: () => void; icon: any; label: string; accent?: boolean
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border transition-all duration-150',
-        accent
-          ? 'border-[#7c3aed]/50 text-[#c084fc] hover:bg-[#7c3aed]/20'
-          : 'border-[#3a2f45] text-[#5a4a6a] hover:text-[#cccccc] hover:border-[#5a4a6a]',
-      )}
-    >
-      <FontAwesomeIcon icon={icon} style={{ fontSize: 9 }} />
-      {label}
-    </button>
   )
 }

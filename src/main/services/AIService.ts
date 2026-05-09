@@ -1,6 +1,6 @@
 import Anthropic        from '@anthropic-ai/sdk'
 import axios            from 'axios'
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, app } from 'electron'
 import { AIChannel }    from '../../shared/ipc'
 import type {
   AISendMessagePayload, AIInlineHintPayload,
@@ -8,6 +8,8 @@ import type {
 } from '../../shared/types/ai.types'
 import { VartaError, VartaErrorCode } from '../../shared/errors'
 import { logger } from '../utils/logger'
+import { contextManager } from './ai/ContextManager'
+import { promptEngine }   from './ai/PromptEngine'
 
 // ── Detect provider from baseUrl ──────────────────────────────────────────────
 function isNvidiaEndpoint(baseUrl?: string): boolean {
@@ -20,21 +22,6 @@ function isOpenAICompatible(baseUrl?: string): boolean {
   if (baseUrl.includes('anthropic.com')) { return false }
   // Everything else with a custom baseUrl → treat as OpenAI-compatible
   return true
-}
-
-// ── Build system prompt ───────────────────────────────────────────────────────
-function buildSystemPrompt(context: AISendMessagePayload['context']): string {
-  const lines = [
-    'You are Varta Intelligence, a coding assistant in the Varta code editor.',
-    'Be concise. No filler phrases.',
-    'For code replacements use <varta:replace> tags.',
-    'For new files use <varta:newfile path="..."> tags.',
-    'For terminal commands use <varta:terminal> tags.',
-  ]
-  if (context?.activeFilePath) lines.push(`File: ${context.activeFilePath} | Lang: ${context.language}`)
-  if (context?.selectedText)   lines.push(`Selected:\n${context.selectedText.slice(0, 500)}`)
-  if (context?.diagnostics?.length) lines.push(`Errors: ${context.diagnostics.slice(0,3).map(d=>d.message).join('; ')}`)
-  return lines.join('\n')
 }
 
 export class AIService {
@@ -64,10 +51,22 @@ export class AIService {
       throw new VartaError(VartaErrorCode.AI_NO_API_KEY, 'No API key configured')
     }
 
+    // 1. Gather rich context
+    const rootPath = (app as any).varta_workspaceRoot ?? process.cwd()
+    const ideContext = await contextManager.gatherContext(
+      rootPath,
+      payload.context?.activeFilePath,
+      payload.context?.selectedText
+    )
+
+    // 2. Build perfect system prompt
+    const systemPrompt = promptEngine.buildSystemPrompt(ideContext)
+    
+    // 3. Delegate to specific provider
     if (isOpenAICompatible(baseUrl)) {
-      return this.sendMessageOpenAI(payload, apiKey, webContents, baseUrl!)
+      return this.sendMessageOpenAI(payload, apiKey, webContents, systemPrompt, baseUrl!)
     }
-    return this.sendMessageAnthropic(payload, apiKey, webContents, baseUrl)
+    return this.sendMessageAnthropic(payload, apiKey, webContents, systemPrompt, baseUrl)
   }
 
   // ── Anthropic streaming ───────────────────────────────────────────────────
@@ -76,15 +75,15 @@ export class AIService {
     payload:     AISendMessagePayload,
     apiKey:      string,
     webContents: Electron.WebContents,
+    systemPrompt: string,
     baseUrl?:    string,
   ): Promise<void> {
     const clientOptions: ConstructorParameters<typeof Anthropic>[0] = { apiKey }
     if (baseUrl?.trim()) { clientOptions.baseURL = baseUrl.trim() }
     const client = new Anthropic(clientOptions)
 
-    const { conversationId, message, context } = payload
+    const { conversationId, message } = payload
     this.cancelledIds.delete(conversationId)
-    const systemPrompt = buildSystemPrompt(context)
 
     try {
       const stream = await client.messages.stream({
@@ -93,6 +92,7 @@ export class AIService {
         system:     systemPrompt,
         messages:   [{ role: 'user', content: message }],
       })
+// ... rest of the logic ...
 
       for await (const chunk of stream) {
         if (this.cancelledIds.has(conversationId)) { break }
