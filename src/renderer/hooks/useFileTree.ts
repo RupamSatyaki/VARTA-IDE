@@ -47,7 +47,7 @@ export function useFileTree() {
       const res = await window.varta.fs.readDir({
         path:       folderPath,
         recursive:  false,
-        showHidden: false,
+        showHidden: true,   // show dotfiles like .env, .gitignore
       })
       if (isIPCSuccess(res)) {
         // Re-attach previously loaded children for expanded folders
@@ -80,7 +80,7 @@ export function useFileTree() {
       const res = await window.varta.fs.readDir({
         path:       folderPath,
         recursive:  false,
-        showHidden: false,
+        showHidden: true,   // show dotfiles
       })
       if (!isIPCSuccess(res)) { return }
 
@@ -148,7 +148,7 @@ export function useFileTree() {
       const res = await window.varta.fs.readDir({
         path:       folderPath,
         recursive:  false,
-        showHidden: false,
+        showHidden: true,
       })
       if (!isIPCSuccess(res)) { return }
       // Read nodes AGAIN after async — they may have changed

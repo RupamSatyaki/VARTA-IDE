@@ -204,6 +204,8 @@ export class FileService {
     const nodes: FileTreeNode[] = []
 
     for (const entry of entries) {
+      // Always hide .git directory — too large and not useful in file tree
+      if (entry.name === '.git') { continue }
       if (!showHidden && entry.name.startsWith('.')) { continue }
 
       const fullPath = path.join(dirPath, entry.name)
