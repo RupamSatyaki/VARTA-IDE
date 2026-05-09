@@ -47,9 +47,9 @@ export function SettingsInput({
       min={min}
       max={max}
       className={cn(
-        'w-44 h-7 px-2 text-xs bg-[#3c3c3c] text-[#d4d4d4]',
-        'border border-[#3c3c3c] focus:border-[#569cd6] rounded outline-none',
-        'placeholder:text-[#6e6e6e]',
+        'w-56 h-9 px-4 text-[13px] bg-[#12101a] text-[#e0e0e0]',
+        'border border-[#2a1f30] focus:border-[#7c3aed]/50 rounded-xl outline-none',
+        'placeholder:text-[#4a3a5a] transition-all duration-300 shadow-inner',
         className,
       )}
     />

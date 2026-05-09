@@ -12,7 +12,7 @@ export interface SettingsSliderProps {
 
 export function SettingsSlider({ value, min, max, step = 1, onChange, unit }: SettingsSliderProps) {
   return (
-    <div className="flex items-center gap-2 w-44">
+    <div className="flex items-center gap-4 w-56">
       <input
         type="range"
         min={min}
@@ -20,9 +20,12 @@ export function SettingsSlider({ value, min, max, step = 1, onChange, unit }: Se
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="flex-1 h-1 rounded-full appearance-none cursor-pointer bg-[#3c3c3c] accent-[#569cd6]"
+        className={cn(
+          "flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-[#12101a] border border-[#2a1f30] shadow-inner",
+          "accent-[#7c3aed]"
+        )}
       />
-      <span className="text-xs text-[#6e6e6e] w-10 text-right shrink-0">
+      <span className="text-[11px] font-mono font-bold text-[#c084fc] min-w-[32px] text-right">
         {value}{unit ?? ''}
       </span>
     </div>

@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../utils/cn'
 import { SettingsSidebar }  from './SettingsSidebar'
 import { SettingsSearch }   from './SettingsSearch'
-import { SettingsSection }  from './SettingsSection'
-import { SettingsItem }     from './SettingsItem'
-import { SettingsToggle }   from './SettingsToggle'
-import { SettingsSelect }   from './SettingsSelect'
-import { SettingsInput }    from './SettingsInput'
-import { SettingsSlider }   from './SettingsSlider'
+import { AutomatedSettings } from './AutomatedSettings'
 import { ThemeSelector }    from './ThemeSelector'
 import { Button }           from '../ui/Button'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore }       from '../../store/uiStore'
 import { useSettings }      from '../../hooks/useSettings'
 import { isIPCSuccess }     from '../../../shared/ipc'
+import { FontAwesomeIcon }  from '@fortawesome/react-fontawesome'
+import { faXmark, faCircleInfo, faKeyboard, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
 
 export function SettingsPanel() {
   const { settingsOpen, closeSettings } = useUIStore()
   const { settings } = useSettingsStore()
-  const { updateSetting, resetSettings, exportSettings, importSettings } = useSettings()
+  const { resetSettings, exportSettings, importSettings } = useSettings()
 
   const [search,        setSearch]        = useState('')
   const [activeSection, setActiveSection] = useState('editor')
@@ -27,7 +25,6 @@ export function SettingsPanel() {
   const [baseUrlInput,  setBaseUrlInput]  = useState('')
   const [baseUrlStatus, setBaseUrlStatus] = useState<'idle' | 'saved' | 'none'>('idle')
   const [appVersion,    setAppVersion]    = useState('')
-  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!settingsOpen) { return }
@@ -43,7 +40,6 @@ export function SettingsPanel() {
     }).catch(() => {})
   }, [settingsOpen])
 
-  // Close on Escape
   useEffect(() => {
     if (!settingsOpen) { return }
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') { closeSettings() } }
@@ -52,8 +48,6 @@ export function SettingsPanel() {
   }, [settingsOpen, closeSettings])
 
   if (!settingsOpen) { return null }
-
-  const u = (path: string, value: unknown) => updateSetting(path, value)
 
   const handleSaveApiKey = async () => {
     if (!apiKeyInput.trim()) { return }
@@ -67,227 +61,152 @@ export function SettingsPanel() {
     if (isIPCSuccess(res)) { setBaseUrlStatus('saved'); setBaseUrlInput('') }
   }
 
-  const handleClearBaseUrl = async () => {
-    await window.varta.ai.clearBaseUrl()
-    setBaseUrlStatus('none')
-  }
-
-  const modelOptions = [
-    { value: 'claude-opus-4-5',                    label: 'Claude Opus 4.5' },
-    { value: 'claude-sonnet-4-5',                  label: 'Claude Sonnet 4.5' },
-    { value: 'claude-haiku-3-5',                   label: 'Claude Haiku 3.5' },
-    { value: 'moonshotai/kimi-k2.6',               label: 'Kimi K2.6 (NVIDIA NIM)' },
-    { value: 'meta/llama-3.1-405b-instruct',       label: 'Llama 3.1 405B (NVIDIA NIM)' },
-    { value: 'mistralai/mistral-large-2-instruct', label: 'Mistral Large 2 (NVIDIA NIM)' },
-  ]
-
   return (
     <div
-      className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 md:p-8"
       onClick={(e) => { if (e.target === e.currentTarget) { closeSettings() } }}
     >
-      <div className="flex flex-col w-[800px] max-w-[95vw] h-[85vh] max-h-[700px] rounded-lg border border-[#333333] bg-[#1e1e1e] shadow-2xl overflow-hidden animate-fade-in">
-
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="flex flex-col w-full max-w-5xl h-full max-h-[800px] rounded-3xl border border-[#2a1f30] bg-[#1a1620]/95 backdrop-blur-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#333333] shrink-0">
-          <h1 className="text-sm font-semibold text-[#d4d4d4]">Settings</h1>
+        <div className="flex items-center justify-between px-8 py-6 shrink-0">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-xl font-bold text-[#e0e0e0] tracking-tight">Settings</h1>
+            <p className="text-[11px] text-[#4a3a5a] font-bold uppercase tracking-[0.2em]">Configure your development experience</p>
+          </div>
           <button
             onClick={closeSettings}
-            className="text-[#6e6e6e] hover:text-[#d4d4d4] transition-colors"
-            aria-label="Close settings"
+            className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[#1e1a24] text-[#4a3a5a] hover:bg-[#f87171]/10 hover:text-[#f87171] transition-all duration-300"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 7.293L12.646 2.646l.708.708L8.707 8l4.647 4.646-.708.708L8 8.707l-4.646 4.647-.708-.708L7.293 8 2.646 3.354l.708-.708L8 7.293z"/>
-            </svg>
+            <FontAwesomeIcon icon={faXmark} />
           </button>
-        </div>
-
-        {/* Search */}
-        <div className="px-4 py-2 border-b border-[#333333] shrink-0">
-          <SettingsSearch value={search} onChange={setSearch} />
         </div>
 
         {/* Body */}
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          {/* Sidebar */}
           <SettingsSidebar activeSection={activeSection} onSelect={setActiveSection} />
 
-          {/* Content */}
-          <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 flex flex-col min-w-0 bg-[#1e1a24]/30">
+            {/* Search Top Bar */}
+            <div className="px-10 py-4 border-b border-[#2a1f30] bg-[#1e1a24]/50">
+              <SettingsSearch value={search} onChange={setSearch} />
+            </div>
 
-            {/* ── Editor ─────────────────────────────────────────────────── */}
-            <SettingsSection id="editor" title="Editor">
-              <SettingsItem label="Font Family" description="Editor font family"
-                control={<SettingsInput value={settings.editor.fontFamily} onChange={(v) => u('editor', { ...settings.editor, fontFamily: v })} />} />
-              <SettingsItem label="Font Size" description="Editor font size (10–24)"
-                control={<SettingsSlider value={settings.editor.fontSize} min={10} max={24} onChange={(v) => u('editor', { ...settings.editor, fontSize: v })} unit="px" />} />
-              <SettingsItem label="Tab Size" description="Number of spaces per tab"
-                control={<SettingsSlider value={settings.editor.tabSize} min={1} max={8} onChange={(v) => u('editor', { ...settings.editor, tabSize: v })} />} />
-              <SettingsItem label="Word Wrap" description="Wrap long lines"
-                control={<SettingsToggle value={settings.editor.wordWrap !== 'off'} onChange={(v) => u('editor', { ...settings.editor, wordWrap: v ? 'on' : 'off' })} />} />
-              <SettingsItem label="Minimap" description="Show code minimap"
-                control={<SettingsToggle value={settings.editor.showMinimap} onChange={(v) => u('editor', { ...settings.editor, showMinimap: v })} />} />
-              <SettingsItem label="Line Numbers" description="Show line numbers"
-                control={<SettingsToggle value={settings.editor.showLineNumbers} onChange={(v) => u('editor', { ...settings.editor, showLineNumbers: v })} />} />
-              <SettingsItem label="Format on Save" description="Auto-format file when saving"
-                control={<SettingsToggle value={settings.editor.formatOnSave} onChange={(v) => u('editor', { ...settings.editor, formatOnSave: v })} />} />
-              <SettingsItem label="Render Whitespace" description="Show whitespace characters"
-                control={<SettingsSelect value={settings.editor.renderWhitespace} options={[
-                  { value: 'none',      label: 'None' },
-                  { value: 'selection', label: 'Selection' },
-                  { value: 'all',       label: 'All' },
-                ]} onChange={(v) => u('editor', { ...settings.editor, renderWhitespace: v as any })} />} />
-              <SettingsItem label="Cursor Style"
-                control={<SettingsSelect value={settings.editor.cursorStyle} options={[
-                  { value: 'line',       label: 'Line' },
-                  { value: 'block',      label: 'Block' },
-                  { value: 'underline',  label: 'Underline' },
-                ]} onChange={(v) => u('editor', { ...settings.editor, cursorStyle: v as any })} />} />
-              <SettingsItem label="Cursor Blinking"
-                control={<SettingsSelect value={settings.editor.cursorBlinking} options={[
-                  { value: 'blink',   label: 'Blink' },
-                  { value: 'smooth',  label: 'Smooth' },
-                  { value: 'solid',   label: 'Solid' },
-                  { value: 'phase',   label: 'Phase' },
-                  { value: 'expand',  label: 'Expand' },
-                ]} onChange={(v) => u('editor', { ...settings.editor, cursorBlinking: v as any })} />} />
-            </SettingsSection>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-10 py-8 scrollbar-thin scrollbar-thumb-[#2a1f30]">
+              <div className="max-w-2xl mx-auto pb-20">
+                <AnimatePresence mode="wait">
+                  {activeSection === 'workbench' && !search && (
+                    <motion.div 
+                      key="theme-section"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="mb-12"
+                    >
+                      <SectionTitle icon={faDisplay} title="Interface Theme" />
+                      <ThemeSelector
+                        activeThemeId={settings.workbench.theme}
+                        onSelect={(id) => window.varta.settings.set({ workbench: { theme: id } })}
+                      />
+                    </motion.div>
+                  )}
 
-            {/* ── Auto Save ──────────────────────────────────────────────── */}
-            <SettingsSection id="autosave" title="Auto Save">
-              <SettingsItem label="Auto Save" description="Automatically save files"
-                control={<SettingsSelect value={settings.workbench.autoSave} options={[
-                  { value: 'off',            label: 'Off' },
-                  { value: 'afterDelay',     label: 'After Delay' },
-                  { value: 'onFocusChange',  label: 'On Focus Change' },
-                  { value: 'onWindowChange', label: 'On Window Change' },
-                ]} onChange={(v) => u('workbench', { ...settings.workbench, autoSave: v as any })} />} />
-              <SettingsItem
-                label="Auto Save Delay"
-                description="Delay in milliseconds before auto-save"
-                hidden={settings.workbench.autoSave !== 'afterDelay'}
-                control={<SettingsSlider value={settings.workbench.autoSaveDelay} min={500} max={5000} step={100} onChange={(v) => u('workbench', { ...settings.workbench, autoSaveDelay: v })} unit="ms" />}
-              />
-            </SettingsSection>
+                  {activeSection === 'ai' && !search && (
+                    <motion.div 
+                      key="ai-keys"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="mb-12 space-y-8"
+                    >
+                      <SectionTitle icon={faShieldHalved} title="Secure API Access" />
+                      <div className="p-6 rounded-2xl bg-[#7c3aed]/5 border border-[#7c3aed]/10 space-y-6">
+                        <div>
+                          <label className="block text-xs font-bold text-[#7c5a9a] uppercase tracking-wider mb-2">Claude API Key</label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="password" 
+                              value={apiKeyInput}
+                              onChange={(e) => setApiKeyInput(e.target.value)}
+                              placeholder={apiKeyStatus === 'saved' ? '••••••••••••••••' : 'Enter API Key...'}
+                              className="flex-1 bg-[#12101a] border border-[#2a1f30] rounded-xl px-4 py-2.5 text-sm text-[#e0e0e0] outline-none focus:border-[#7c3aed]/50 transition-all"
+                            />
+                            <Button variant="primary" onClick={handleSaveApiKey} disabled={!apiKeyInput.trim()}>Save</Button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-[#7c5a9a] uppercase tracking-wider mb-2">Custom Base URL (Optional)</label>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text" 
+                              value={baseUrlInput}
+                              onChange={(e) => setBaseUrlInput(e.target.value)}
+                              placeholder="https://api.anthropic.com"
+                              className="flex-1 bg-[#12101a] border border-[#2a1f30] rounded-xl px-4 py-2.5 text-sm text-[#e0e0e0] outline-none focus:border-[#7c3aed]/50 transition-all"
+                            />
+                            <Button variant="primary" onClick={handleSaveBaseUrl} disabled={!baseUrlInput.trim()}>Save</Button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
 
-            {/* ── Terminal ───────────────────────────────────────────────── */}
-            <SettingsSection id="terminal" title="Terminal">
-              <SettingsItem label="Font Family"
-                control={<SettingsInput value={settings.terminal.fontFamily} onChange={(v) => u('terminal', { ...settings.terminal, fontFamily: v })} />} />
-              <SettingsItem label="Font Size"
-                control={<SettingsSlider value={settings.terminal.fontSize} min={10} max={20} onChange={(v) => u('terminal', { ...settings.terminal, fontSize: v })} unit="px" />} />
-              <SettingsItem label="Scrollback Lines" description="Number of lines to keep in scrollback"
-                control={<SettingsSlider value={settings.terminal.scrollback} min={100} max={10000} step={100} onChange={(v) => u('terminal', { ...settings.terminal, scrollback: v })} />} />
-              <SettingsItem label="Cursor Style"
-                control={<SettingsSelect value={settings.terminal.cursorStyle} options={[
-                  { value: 'block',     label: 'Block' },
-                  { value: 'underline', label: 'Underline' },
-                  { value: 'bar',       label: 'Bar' },
-                ]} onChange={(v) => u('terminal', { ...settings.terminal, cursorStyle: v as any })} />} />
-              <SettingsItem label="Cursor Blink"
-                control={<SettingsToggle value={settings.terminal.cursorBlinking === 'blink'} onChange={(v) => u('terminal', { ...settings.terminal, cursorBlinking: v ? 'blink' : 'solid' })} />} />
-            </SettingsSection>
+                  <AutomatedSettings activeSection={search ? 'all' : activeSection} search={search} />
 
-            {/* ── Appearance ─────────────────────────────────────────────── */}
-            <SettingsSection id="appearance" title="Appearance">
-              <SettingsItem label="Theme" description="Color theme for the editor"
-                control={<span className="text-xs text-[#6e6e6e]">Select below</span>} />
-              <ThemeSelector
-                activeThemeId={settings.workbench.theme}
-                onSelect={(id) => u('workbench', { ...settings.workbench, theme: id })}
-              />
-            </SettingsSection>
+                  {activeSection === 'about' && !search && (
+                    <motion.div 
+                      key="about-section"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="mt-12 pt-12 border-t border-[#2a1f30] space-y-8"
+                    >
+                      <SectionTitle icon={faCircleInfo} title="Varta IDE Information" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <AboutCard label="Version" value={appVersion || '0.1.0'} />
+                        <AboutCard label="Electron" value={(window as any).vartaVersions?.electron ?? '—'} />
+                        <AboutCard label="Node.js" value={(window as any).vartaVersions?.node ?? '—'} />
+                        <AboutCard label="Engine" value="Ripgrep Powered" />
+                      </div>
 
-            {/* ── Git ────────────────────────────────────────────────────── */}
-            <SettingsSection id="git" title="Git">
-              <SettingsItem label="Auto Fetch" description="Automatically fetch from remote"
-                control={<SettingsToggle value={settings.git.autofetch} onChange={(v) => u('git', { ...settings.git, autofetch: v })} />} />
-              <SettingsItem label="Auto Fetch Interval" description="Seconds between auto-fetches"
-                hidden={!settings.git.autofetch}
-                control={<SettingsSlider value={settings.git.autofetchPeriod} min={30} max={300} step={30} onChange={(v) => u('git', { ...settings.git, autofetchPeriod: v })} unit="s" />} />
-              <SettingsItem label="Confirm Discard" description="Ask before discarding changes"
-                control={<SettingsToggle value={settings.git.confirmSync} onChange={(v) => u('git', { ...settings.git, confirmSync: v })} />} />
-              <SettingsItem label="Show Decorations" description="Show git status in file tree"
-                control={<SettingsToggle value={settings.git.decorations} onChange={(v) => u('git', { ...settings.git, decorations: v })} />} />
-            </SettingsSection>
-
-            {/* ── AI ─────────────────────────────────────────────────────── */}
-            <SettingsSection id="ai" title="AI / Varta Intelligence">
-              <SettingsItem label="Claude API Key" description="API key — Anthropic (sk-ant-...) or NVIDIA NIM (nvapi-...)"
-                control={
-                  <div className="flex flex-col gap-1.5 w-64">
-                    <div className="flex gap-1.5">
-                      <SettingsInput value={apiKeyInput} onChange={setApiKeyInput} type="password" placeholder="API key (sk-ant-... or nvapi-...)" className="flex-1 w-auto" />
-                      <Button variant="primary" size="sm" onClick={handleSaveApiKey} disabled={!apiKeyInput.trim()}>Save</Button>
-                    </div>
-                    <p className={cn('text-[10px]', apiKeyStatus === 'saved' ? 'text-[#4ec9b0]' : 'text-[#6e6e6e]')}>
-                      {apiKeyStatus === 'saved' ? '✓ API key saved' : apiKeyStatus === 'none' ? '✗ No key set' : ''}
-                    </p>
-                  </div>
-                }
-              />
-              <SettingsItem label="Base URL" description="Custom API base URL (optional — leave blank for default Anthropic endpoint)"
-                control={
-                  <div className="flex flex-col gap-1.5 w-64">
-                    <div className="flex gap-1.5">
-                      <SettingsInput value={baseUrlInput} onChange={setBaseUrlInput} type="text" placeholder="https://api.anthropic.com" className="flex-1 w-auto" />
-                      <Button variant="primary" size="sm" onClick={handleSaveBaseUrl} disabled={!baseUrlInput.trim()}>Save</Button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className={cn('text-[10px]', baseUrlStatus === 'saved' ? 'text-[#4ec9b0]' : 'text-[#6e6e6e]')}>
-                        {baseUrlStatus === 'saved' ? '✓ Base URL saved' : baseUrlStatus === 'none' ? 'Using default endpoint' : ''}
-                      </p>
-                      {baseUrlStatus === 'saved' && (
-                        <button onClick={handleClearBaseUrl} className="text-[10px] text-[#f44747] hover:text-[#ff6b6b] transition-colors">Clear</button>
-                      )}
-                    </div>
-                  </div>
-                }
-              />
-              <SettingsItem label="Model" description="Claude model to use"
-                control={<SettingsSelect value={settings.ai.model} options={modelOptions} onChange={(v) => u('ai', { ...settings.ai, model: v })} />} />
-              <SettingsItem label="Inline Hints" description="Show AI code hints while typing"
-                control={<SettingsToggle value={settings.ai.inlineHints} onChange={(v) => u('ai', { ...settings.ai, inlineHints: v })} />} />
-              <SettingsItem label="Hint Delay" description="Delay before showing inline hints"
-                hidden={!settings.ai.inlineHints}
-                control={<SettingsSlider value={settings.ai.inlineHintsDelay} min={300} max={2000} step={100} onChange={(v) => u('ai', { ...settings.ai, inlineHintsDelay: v })} unit="ms" />} />
-              <SettingsItem label="Max Tokens" description="Maximum tokens per AI response"
-                control={<SettingsSlider value={settings.ai.maxTokens} min={256} max={4096} step={256} onChange={(v) => u('ai', { ...settings.ai, maxTokens: v })} />} />
-            </SettingsSection>
-
-            {/* ── About ──────────────────────────────────────────────────── */}
-            <SettingsSection id="about" title="About">
-              <div className="space-y-3 py-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#6e6e6e]">Version</span>
-                  <span className="text-[#d4d4d4] font-mono">{appVersion || '0.1.0'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#6e6e6e]">Electron</span>
-                  <span className="text-[#d4d4d4] font-mono">{(window as any).vartaVersions?.electron ?? '—'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#6e6e6e]">Node.js</span>
-                  <span className="text-[#d4d4d4] font-mono">{(window as any).vartaVersions?.node ?? '—'}</span>
-                </div>
+                      <div className="flex flex-wrap gap-3 pt-6">
+                        <Button variant="default" onClick={exportSettings}>Export Config</Button>
+                        <Button variant="default" onClick={importSettings}>Import Config</Button>
+                        <Button variant="danger" onClick={resetSettings}>Factory Reset</Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-[#333333]">
-                <Button variant="default" size="sm" onClick={exportSettings}>Export Settings</Button>
-                <Button variant="default" size="sm" onClick={importSettings}>Import Settings</Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={resetSettings}
-                >
-                  Reset All Settings
-                </Button>
-              </div>
-            </SettingsSection>
-
+            </div>
           </div>
         </div>
+      </motion.div>
+    </div>
+  )
+}
+
+function SectionTitle({ icon, title }: { icon: any, title: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <div className="w-10 h-10 rounded-2xl bg-[#7c3aed]/10 text-[#c084fc] flex items-center justify-center">
+        <FontAwesomeIcon icon={icon} style={{ fontSize: 14 }} />
       </div>
+      <h3 className="text-sm font-bold text-[#e0e0e0] tracking-wide uppercase">{title}</h3>
+    </div>
+  )
+}
+
+function AboutCard({ label, value }: { label: string, value: string }) {
+  return (
+    <div className="p-4 rounded-2xl bg-[#1e1a24] border border-[#2a1f30]">
+      <div className="text-[10px] font-bold text-[#4a3a5a] uppercase tracking-widest mb-1">{label}</div>
+      <div className="text-sm font-mono text-[#c084fc]">{value}</div>
     </div>
   )
 }

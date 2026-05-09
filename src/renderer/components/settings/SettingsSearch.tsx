@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 import { cn } from '../../utils/cn'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMagnifyingGlass, faXmark } from '@fortawesome/free-solid-svg-icons'
 
 export interface SettingsSearchProps {
   value:    string
@@ -14,32 +16,27 @@ export function SettingsSearch({ value, onChange }: SettingsSearchProps) {
   }, [])
 
   return (
-    <div className="relative">
-      <svg
-        width="14" height="14" viewBox="0 0 16 16" fill="currentColor"
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6e6e6e] pointer-events-none"
-      >
-        <path d="M6.5 1C3.467 1 1 3.467 1 6.5S3.467 12 6.5 12c1.322 0 2.538-.466 3.489-1.237l3.373 3.374.708-.707-3.374-3.373A5.47 5.47 0 0012 6.5C12 3.467 9.533 1 6.5 1zm0 1C9.033 2 11 3.967 11 6.5S9.033 11 6.5 11 2 9.033 2 6.5 3.967 2 6.5 2z"/>
-      </svg>
+    <div className="relative group">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4a3a5a] pointer-events-none group-focus-within:text-[#7c3aed] transition-colors duration-300">
+        <FontAwesomeIcon icon={faMagnifyingGlass} style={{ fontSize: 13 }} />
+      </div>
       <input
         ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search settings…"
+        placeholder="Search for settings, shortcuts, or themes..."
         className={cn(
-          'w-full h-9 pl-9 pr-3 text-sm bg-[#3c3c3c] text-[#d4d4d4]',
-          'border border-[#3c3c3c] focus:border-[#569cd6] rounded outline-none',
-          'placeholder:text-[#6e6e6e]',
+          'w-full h-11 pl-11 pr-10 text-[13px] bg-[#12101a] text-[#e0e0e0]',
+          'border border-[#2a1f30] focus:border-[#7c3aed]/50 rounded-2xl outline-none shadow-inner transition-all duration-300',
+          'placeholder:text-[#4a3a5a] placeholder:font-medium',
         )}
       />
       {value && (
         <button
           onClick={() => onChange('')}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6e6e6e] hover:text-[#d4d4d4]"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-[#f87171]/10 text-[#4a3a5a] hover:text-[#f87171] transition-all duration-200"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M6 5.293L9.646 1.646l.708.708L6.707 6l3.647 3.646-.708.708L6 6.707 2.354 10.354l-.708-.708L5.293 6 1.646 2.354l.708-.708L6 5.293z"/>
-          </svg>
+          <FontAwesomeIcon icon={faXmark} style={{ fontSize: 11 }} />
         </button>
       )}
     </div>
