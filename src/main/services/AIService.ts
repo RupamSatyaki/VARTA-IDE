@@ -135,7 +135,7 @@ export class AIService {
             if (!webContents.isDestroyed()) {
               webContents.send(AIChannel.STREAM_CHUNK, { 
                 conversationId, 
-                delta: `\n> ⚙️ **Executing**: ${block.name}...\n`, 
+                delta: `\n<varta:tool_start name="${block.name}" input='${JSON.stringify(block.input).replace(/'/g, "&apos;")}'/>\n`, 
                 messageId: '' 
               })
             }
@@ -144,19 +144,19 @@ export class AIService {
             
             // Stream result to UI immediately
             if (!webContents.isDestroyed()) {
-              const statusEmoji = toolResult.isError ? '❌' : '✅'
-              const statusText = toolResult.isError ? 'Failed' : 'Completed'
-              let detailText = ''
-              
-              if (block.name === 'create_file' && !toolResult.isError) {
-                detailText = `\n<varta:created path="${block.input.path}"/>\n`
-              }
-
               webContents.send(AIChannel.STREAM_CHUNK, { 
                 conversationId, 
-                delta: `\n> ${statusEmoji} **${statusText}**: ${block.name}${detailText}\n`, 
+                delta: `\n<varta:tool_end name="${block.name}" status="${toolResult.isError ? 'error' : 'success'}" result='${JSON.stringify(toolResult.content).replace(/'/g, "&apos;")}'/>\n`, 
                 messageId: '' 
               })
+              
+              if (block.name === 'create_file' && !toolResult.isError) {
+                webContents.send(AIChannel.STREAM_CHUNK, { 
+                  conversationId, 
+                  delta: `\n<varta:created path="${block.input.path}"/>\n`, 
+                  messageId: '' 
+                })
+              }
             }
 
             toolResults.push({
@@ -313,7 +313,7 @@ export class AIService {
                 if (!webContents.isDestroyed()) {
                   webContents.send(AIChannel.STREAM_CHUNK, { 
                     conversationId, 
-                    delta: `\n> ⚙️ **Executing**: ${tc.name}...\n`, 
+                    delta: `\n<varta:tool_start name="${tc.name}" input='${tc.args.replace(/'/g, "&apos;")}'/>\n`, 
                     messageId: '' 
                   })
                 }
@@ -324,19 +324,19 @@ export class AIService {
 
                 // Stream result
                 if (!webContents.isDestroyed()) {
-                  const statusEmoji = result.isError ? '❌' : '✅'
-                  const statusText = result.isError ? 'Failed' : 'Completed'
-                  let detailText = ''
-                  
-                  if (tc.name === 'create_file' && !result.isError) {
-                    detailText = `\n<varta:created path="${args.path}"/>\n`
-                  }
-
                   webContents.send(AIChannel.STREAM_CHUNK, { 
                     conversationId, 
-                    delta: `\n> ${statusEmoji} **${statusText}**: ${tc.name}${detailText}\n`, 
+                    delta: `\n<varta:tool_end name="${tc.name}" status="${result.isError ? 'error' : 'success'}" result='${JSON.stringify(result.content).replace(/'/g, "&apos;")}'/>\n`, 
                     messageId: '' 
                   })
+                  
+                  if (tc.name === 'create_file' && !result.isError) {
+                    webContents.send(AIChannel.STREAM_CHUNK, { 
+                      conversationId, 
+                      delta: `\n<varta:created path="${args.path}"/>\n`, 
+                      messageId: '' 
+                    })
+                  }
                 }
 
                 messages.push({
