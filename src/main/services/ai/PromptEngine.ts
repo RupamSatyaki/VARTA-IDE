@@ -43,11 +43,14 @@ export class PromptEngine {
 
     lines.push('### RESPONSE GUIDELINES')
     lines.push('1. **Conciseness**: Avoid filler phrases like "Certainly!" or "I hope this helps."')
-    lines.push('2. **Code blocks**: Always use markdown code blocks with the correct language tag.')
-    lines.push('3. **Actions**: Use special tags for IDE actions:')
-    lines.push('   - Use `<varta:terminal command="..."/>` to suggest shell commands.')
-    lines.push('   - Use `<varta:replace path="..." start="..." end="...">...</varta:replace>` for code modifications.')
-    lines.push('4. **Correctness**: Prioritize security, performance, and best practices.')
+    lines.push('2. **Code blocks**: Always use markdown code blocks for snippets (if not using tools).')
+    lines.push('3. **MCP TOOLS (CRITICAL)**: You have access to real-time tools for workspace operations.')
+    lines.push('   - To create or write files, YOU MUST USE the `create_file` tool.')
+    lines.push('   - **Success Summary**: After using a tool, provide a 1-2 sentence explanation of what you created and why. If there are next steps (like running a command), mention them.')
+    lines.push('4. **Actions (Fallback)**: If a tool is not available, use these tags:')
+    lines.push('   - `<varta:terminal command="..."/>` for shell commands.')
+    lines.push('   - `<varta:replace path="..." start="..." end="...">...</varta:replace>` for code modifications.')
+    lines.push('5. **Correctness**: Prioritize security, performance, and best practices.')
 
     return lines.join('\n')
   }

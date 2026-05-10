@@ -10,6 +10,7 @@ import { VartaError, VartaErrorCode } from '../../shared/errors'
 import { logger } from '../utils/logger'
 import { contextManager } from './ai/ContextManager'
 import { promptEngine }   from './ai/PromptEngine'
+import { toolRegistry }   from '../mcp/registry/ToolRegistry'
 
 // ── Detect provider from baseUrl ──────────────────────────────────────────────
 function isNvidiaEndpoint(baseUrl?: string): boolean {
@@ -82,40 +83,104 @@ export class AIService {
     if (baseUrl?.trim()) { clientOptions.baseURL = baseUrl.trim() }
     const client = new Anthropic(clientOptions)
 
-    const { conversationId, message } = payload
+    const { conversationId, message, history = [] } = payload
     this.cancelledIds.delete(conversationId)
 
     try {
+      // 1. Tool Definitions
+      const tools = toolRegistry.getToolDefinitions().map(t => ({
+        name: t.name,
+        description: t.description,
+        input_schema: t.inputSchema as any
+      }))
+
+      // 2. Map History
+      const messages: any[] = history.map(m => ({ role: m.role, content: m.content }))
+      messages.push({ role: 'user', content: message })
+
+      // 3. Stream
       const stream = await client.messages.stream({
         model:      payload.model ?? 'claude-sonnet-4-5',
-        max_tokens: 4096,
+        max_tokens: 8192, // Increased for large projects
         system:     systemPrompt,
-        messages:   [{ role: 'user', content: message }],
+        tools,
+        messages,
       })
-// ... rest of the logic ...
 
       for await (const chunk of stream) {
         if (this.cancelledIds.has(conversationId)) { break }
-        if (
-          chunk.type === 'content_block_delta' &&
-          chunk.delta.type === 'text_delta'
-        ) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
           if (!webContents.isDestroyed()) {
-            webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: chunk.delta.text })
+            webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: chunk.delta.text, messageId: '' })
           }
         }
       }
 
-      if (!this.cancelledIds.has(conversationId)) {
-        const final = await stream.finalMessage()
-        if (!webContents.isDestroyed()) {
-          webContents.send(AIChannel.STREAM_END, {
-            conversationId,
-            messageId:   '',
-            totalTokens: final.usage.output_tokens,
-            stopReason:  final.stop_reason ?? 'end_turn',
+      const finalMessage = await stream.finalMessage()
+      
+      // 4. Recursive Tool Handling
+      if (finalMessage.stop_reason === 'tool_use') {
+        const toolUseBlock = finalMessage.content.find(c => c.type === 'tool_use') as any
+        if (toolUseBlock) {
+          logger.info('AIService', `Executing tool: ${toolUseBlock.name}`)
+          const toolResult = await toolRegistry.executeTool(toolUseBlock.name, toolUseBlock.input)
+          
+          // MANUALLY INJECT TAG FOR UI
+          if (toolUseBlock.name === 'create_file' && !toolResult.isError) {
+            if (!webContents.isDestroyed()) {
+              webContents.send(AIChannel.STREAM_CHUNK, { 
+                conversationId, 
+                delta: `\n<varta:created path="${toolUseBlock.input.path}"/>\n`, 
+                messageId: '' 
+              })
+            }
+          }
+
+          messages.push({ role: 'assistant', content: finalMessage.content })
+          messages.push({
+            role: 'user',
+            content: [{
+              type: 'tool_result',
+              tool_use_id: toolUseBlock.id,
+              content: toolResult.content
+            }]
           })
+// ... rest ...
+
+          const secondStream = await client.messages.stream({
+            model:      payload.model ?? 'claude-sonnet-4-5',
+            max_tokens: 4096,
+            system:     systemPrompt,
+            tools,
+            messages,
+          })
+
+          for await (const chunk of secondStream) {
+            if (this.cancelledIds.has(conversationId)) { break }
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              if (!webContents.isDestroyed()) {
+                webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: chunk.delta.text, messageId: '' })
+              }
+            }
+          }
+
+          const secondFinal = await secondStream.finalMessage()
+          if (!this.cancelledIds.has(conversationId) && !webContents.isDestroyed()) {
+            webContents.send(AIChannel.STREAM_END, {
+              conversationId,
+              messageId:   '',
+              totalTokens: secondFinal.usage.output_tokens,
+              stopReason:  secondFinal.stop_reason ?? 'end_turn',
+            })
+          }
         }
+      } else if (!this.cancelledIds.has(conversationId) && !webContents.isDestroyed()) {
+        webContents.send(AIChannel.STREAM_END, {
+          conversationId,
+          messageId:   '',
+          totalTokens: finalMessage.usage.output_tokens,
+          stopReason:  finalMessage.stop_reason ?? 'end_turn',
+        })
       }
     } catch (e) {
       const err = VartaError.from(e, VartaErrorCode.AI_REQUEST_FAILED)
@@ -128,38 +193,45 @@ export class AIService {
     }
   }
 
-  // ── OpenAI-compatible streaming (NVIDIA NIM, OpenRouter, etc.) ────────────
+  // ── OpenAI-compatible streaming ────────────────────────────────────────────
 
   private async sendMessageOpenAI(
     payload:     AISendMessagePayload,
     apiKey:      string,
     webContents: Electron.WebContents,
+    systemPrompt: string,
     baseUrl:     string,
   ): Promise<void> {
-    const { conversationId, message, context } = payload
+    const { conversationId, message, history = [] } = payload
     this.cancelledIds.delete(conversationId)
-    const systemPrompt = buildSystemPrompt(context)
 
-    // Build correct URL
     const base = baseUrl.replace(/\/+$/, '')
-    const url  = base.endsWith('/chat/completions')
-      ? base
-      : `${base}/chat/completions`
+    const url  = base.endsWith('/chat/completions') ? base : `${base}/chat/completions`
 
-    logger.info('AIService', `OpenAI-compat POST → ${url} | model: ${payload.model ?? 'moonshotai/kimi-k2.6'}`)
+    const tools = toolRegistry.getToolDefinitions().map(t => ({
+      type: 'function',
+      function: {
+        name: t.name,
+        description: t.description,
+        parameters: t.inputSchema
+      }
+    }))
+
+    const messages: any[] = [
+      { role: 'system', content: systemPrompt },
+      ...history.map(m => ({ role: m.role, content: m.content })),
+      { role: 'user', content: message }
+    ]
 
     try {
       const response = await axios.post(
         url,
         {
           model:       payload.model ?? 'moonshotai/kimi-k2.6',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user',   content: message },
-          ],
-          max_tokens:  4096,
+          messages,
+          tools:       tools.length > 0 ? tools : undefined,
+          max_tokens:  8192, // Increased limit
           temperature: 0.6,
-          top_p:       0.95,
           stream:      true,
         },
         {
@@ -169,12 +241,13 @@ export class AIService {
             'Content-Type': 'application/json',
           },
           responseType: 'stream',
-          timeout:      60000,   // 60s timeout
+          timeout:      120000, // 2m timeout
         },
       )
 
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>(async (resolve, reject) => {
         let buffer = ''
+        let toolCalls: any[] = []
 
         response.data.on('data', (chunk: Buffer) => {
           if (this.cancelledIds.has(conversationId)) {
@@ -189,27 +262,68 @@ export class AIService {
 
           for (const line of lines) {
             const trimmed = line.trim()
-            if (!trimmed || trimmed === 'data: [DONE]') { continue }
-            if (!trimmed.startsWith('data: ')) { continue }
+            if (!trimmed || trimmed === 'data: [DONE]') continue
+            if (!trimmed.startsWith('data: ')) continue
 
             try {
               const json  = JSON.parse(trimmed.slice(6))
-              const delta = json.choices?.[0]?.delta?.content
-              if (delta && !webContents.isDestroyed()) {
-                webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta })
+              const delta = json.choices?.[0]?.delta
+              const finishReason = json.choices?.[0]?.finish_reason
+              
+              if (delta?.content && !webContents.isDestroyed()) {
+                webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: delta.content, messageId: '' })
+              }
+
+              if (delta?.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  if (!toolCalls[tc.index]) toolCalls[tc.index] = { id: tc.id, name: '', args: '' }
+                  if (tc.id) toolCalls[tc.index].id = tc.id
+                  if (tc.function?.name) toolCalls[tc.index].name += tc.function.name
+                  if (tc.function?.arguments) toolCalls[tc.index].args += tc.function.arguments
+                }
+              }
+
+              if (finishReason === 'length') {
+                logger.warn('AIService', 'OpenAI response truncated')
               }
             } catch { /* skip malformed SSE lines */ }
           }
         })
 
-        response.data.on('end', () => {
+        response.data.on('end', async () => {
+          const activeTool = toolCalls.find(tc => tc.name)
+          if (activeTool && !this.cancelledIds.has(conversationId)) {
+            try {
+              const argsText = activeTool.args.trim()
+              if (!argsText.endsWith('}')) {
+                throw new Error('Response cut off (max_tokens reached)')
+              }
+
+              const args = JSON.parse(argsText)
+              logger.info('AIService', `OpenAI executing tool: ${activeTool.name}`)
+              await toolRegistry.executeTool(activeTool.name, args)
+
+              // MANUALLY INJECT TAG FOR UI
+              if (activeTool.name === 'create_file' && !webContents.isDestroyed()) {
+                webContents.send(AIChannel.STREAM_CHUNK, { 
+                  conversationId, 
+                  delta: `\n<varta:created path="${args.path}"/>\n`, 
+                  messageId: '' 
+                })
+              }
+            } catch (e: any) {
+              logger.error('AIService', `OpenAI tool error: ${e.message}`)
+              if (!webContents.isDestroyed()) {
+                webContents.send(AIChannel.STREAM_CHUNK, { 
+                  conversationId, 
+                  delta: `\n\n⚠️ **Limit Reached**: The file content was too large for the AI to finish. Please try generating smaller sections.\n` 
+                })
+              }
+            }
+          }
+
           if (!webContents.isDestroyed()) {
-            webContents.send(AIChannel.STREAM_END, {
-              conversationId,
-              messageId:   '',
-              totalTokens: 0,
-              stopReason:  'end_turn',
-            })
+            webContents.send(AIChannel.STREAM_END, { conversationId, messageId: '', totalTokens: 0, stopReason: 'end_turn' })
           }
           resolve()
         })
@@ -227,7 +341,7 @@ export class AIService {
     }
   }
 
-  // ── Inline hint ───────────────────────────────────────────────────────────
+  // ── Inline hint ────────────────────────────────────────────────────────────
 
   async inlineHint(payload: AIInlineHintPayload, apiKey: string, baseUrl?: string): Promise<AIInlineHintResult> {
     if (!apiKey?.trim()) {
@@ -264,9 +378,7 @@ export class AIService {
 
   private async inlineHintOpenAI(payload: AIInlineHintPayload, apiKey: string, baseUrl: string): Promise<AIInlineHintResult> {
     const base = baseUrl.replace(/\/+$/, '')
-    const url  = base.endsWith('/chat/completions')
-      ? base
-      : `${base}/chat/completions`
+    const url  = base.endsWith('/chat/completions') ? base : `${base}/chat/completions`
 
     try {
       const response = await axios.post(
@@ -290,8 +402,6 @@ export class AIService {
     }
   }
 
-  // ── Cancel ────────────────────────────────────────────────────────────────
-
   cancelStream(conversationId: string): void {
     this.cancelledIds.add(conversationId)
     logger.info('AIService', `Cancelled stream: ${conversationId}`)
@@ -299,11 +409,9 @@ export class AIService {
 
   getModels() {
     return [
-      // Anthropic models
       { id: 'claude-opus-4-5',        name: 'Claude Opus 4.5',        contextWindow: 200000, maxOutput: 8192,  description: 'Most capable (Anthropic)' },
       { id: 'claude-sonnet-4-5',      name: 'Claude Sonnet 4.5',      contextWindow: 200000, maxOutput: 8192,  description: 'Best balance (Anthropic)' },
       { id: 'claude-haiku-3-5',       name: 'Claude Haiku 3.5',       contextWindow: 200000, maxOutput: 8192,  description: 'Fastest (Anthropic)' },
-      // NVIDIA NIM models
       { id: 'moonshotai/kimi-k2.6',   name: 'Kimi K2.6 (NVIDIA NIM)', contextWindow: 131072, maxOutput: 8192, description: 'Kimi K2 via NVIDIA NIM' },
       { id: 'qwen/qwen3-next-80b-a3b-instruct',   name: 'qwen/qwen3-next-80b-a3b-instruct (NVIDIA NIM)', contextWindow: 8192, maxOutput: 16384, description: 'qwen/qwen3-next-80b-a3b-instruct' },
       { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B',  contextWindow: 128000, maxOutput: 4096,  description: 'Meta Llama via NVIDIA NIM' },

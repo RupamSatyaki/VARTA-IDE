@@ -6,6 +6,7 @@ import { FontAwesomeIcon }      from '@fortawesome/react-fontawesome'
 import { faCopy, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons'
 import type { AIMessage } from '../../../shared/types/ai.types'
 import { CodeBlock } from './Shared/CodeBlock'
+import { ActionCard } from './Shared/ActionCard'
 
 export interface AIChatMessageProps {
   message:     AIMessage
@@ -14,10 +15,10 @@ export interface AIChatMessageProps {
 
 function parseContent(content: string) {
   const parts: Array<{
-    type: 'text' | 'code' | 'replace' | 'newfile' | 'terminal'
+    type: 'text' | 'code' | 'replace' | 'newfile' | 'terminal' | 'created' | 'modified'
     content: string; lang?: string; path?: string
   }> = []
-  const regex = /```(\w*)\n?([\s\S]*?)```|<varta:replace>([\s\S]*?)<\/varta:replace>|<varta:newfile path="([^"]*)">([\s\S]*?)<\/varta:newfile>|<varta:terminal>([\s\S]*?)<\/varta:terminal>/g
+  const regex = /```(\w*)\n?([\s\S]*?)```|<varta:replace>([\s\S]*?)<\/varta:replace>|<varta:newfile path="([^"]*)">([\s\S]*?)<\/varta:newfile>|<varta:terminal>([\s\S]*?)<\/varta:terminal>|<varta:created path="([^"]*)".*?\/>|<varta:modified path="([^"]*)".*?\/>/g
   let lastIndex = 0; let match: RegExpExecArray | null
   while ((match = regex.exec(content)) !== null) {
     if (match.index > lastIndex) parts.push({ type: 'text', content: content.slice(lastIndex, match.index) })
@@ -25,6 +26,8 @@ function parseContent(content: string) {
     else if (match[3] !== undefined) parts.push({ type: 'replace',  content: match[3] })
     else if (match[4] !== undefined) parts.push({ type: 'newfile',  content: match[5], path: match[4] })
     else if (match[6] !== undefined) parts.push({ type: 'terminal', content: match[6].trim() })
+    else if (match[7] !== undefined) parts.push({ type: 'created',  content: '', path: match[7] })
+    else if (match[8] !== undefined) parts.push({ type: 'modified', content: '', path: match[8] })
     lastIndex = match.index + match[0].length
   }
   if (lastIndex < content.length) parts.push({ type: 'text', content: content.slice(lastIndex) })
@@ -109,6 +112,10 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
               <div key={i} className="leading-relaxed opacity-90"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(part.content) }} />
             )
+          }
+
+          if (part.type === 'created' || part.type === 'modified') {
+            return <ActionCard key={i} path={part.path!} type={part.type === 'created' ? 'create_file' : 'modify_file'} />
           }
 
           return (

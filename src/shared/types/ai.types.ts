@@ -34,6 +34,7 @@ export interface AISendMessagePayload {
   model?:         string
   context?:       EditorContext
   systemPrompt?:  string
+  history?:       AIMessage[]
 }
 
 /**

@@ -66,6 +66,8 @@ export function useAI() {
   // ── Send message ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (content: string, conversationId: string) => {
     const context = buildContext()
+    const conv    = aiStore.conversations.get(conversationId)
+    const history = conv ? conv.messages : []
 
     // Add user message
     const userMsg: AIMessage = {
@@ -88,12 +90,13 @@ export function useAI() {
     }
     aiRef.current.addMessage(conversationId, assistantMsg)
 
-    // Send via IPC — always pass current model from settings
+    // Send via IPC — pass history
     const res = await window.varta.ai.sendMessage({
       conversationId,
       message: content,
       model:   modelRef.current,
       context,
+      history,
     })
 
     if (!isIPCSuccess(res)) {
