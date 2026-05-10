@@ -89,22 +89,22 @@ export const CLAUDE_MODELS: AIModel[] = [
   {
     id:            'openrouter/owl-alpha',
     name:          'Owl Alpha (OpenRouter)',
-    contextWindow: 32768,
-    maxOutput:     4096,
-    description:   'Fast and free model via OpenRouter'
+    contextWindow: 128000,
+    maxOutput:     16384,
+    description:   'Fast and free model via OpenRouter with expanded context'
   },
   {
     id:            'claude-sonnet-4-5',
     name:          'Claude Sonnet 4.5',
     contextWindow: 200000,
-    maxOutput:     8192,
+    maxOutput:     16384,
     description:   'Best balance of speed and intelligence'
   },
   {
     id:            'claude-haiku-3-5',
     name:          'Claude Haiku 3.5',
     contextWindow: 200000,
-    maxOutput:     8192,
+    maxOutput:     16384,
     description:   'Fastest model for lightweight tasks'
   }
 ]
