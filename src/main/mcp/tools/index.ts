@@ -1,4 +1,4 @@
-import { createFile } from './filesystem'
+import { createFile, readFile } from './filesystem'
 
 /**
  * Registers ALL tools into the registry.
@@ -6,5 +6,6 @@ import { createFile } from './filesystem'
  */
 export const allTools = [
   createFile,
+  readFile,
   // Add more tools here as they are implemented
 ]
