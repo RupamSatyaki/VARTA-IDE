@@ -1,7 +1,7 @@
 import fsp from 'fs/promises'
 import path from 'path'
 import { MCPToolHandler, MCPToolResult } from '../../../shared/types/mcp.types'
-import { logger } from '../../utils/logger'
+import { logger } from '../../../utils/logger'
 import { PathGuard } from '../../sandbox/PathGuard'
 
 export const createFileTool: MCPToolHandler = {

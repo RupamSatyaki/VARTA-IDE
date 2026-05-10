@@ -1,6 +1,6 @@
-import { MCPToolHandler } from '../../shared/types/mcp.types'
+import { MCPToolHandler } from '../../../shared/types/mcp.types'
 import { allTools } from '../tools'
-import { logger } from '../utils/logger'
+import { logger } from '../../utils/logger'
 
 export class ToolRegistry {
   private tools = new Map<string, MCPToolHandler>()
