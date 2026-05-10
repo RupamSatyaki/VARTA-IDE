@@ -130,17 +130,33 @@ export class AIService {
 
           for (const block of toolUseBlocks) {
             logger.info('AIService', `Executing tool: ${block.name}`)
+            
+            // Notify UI that a tool is starting
+            if (!webContents.isDestroyed()) {
+              webContents.send(AIChannel.STREAM_CHUNK, { 
+                conversationId, 
+                delta: `\n> ⚙️ **Executing**: ${block.name}...\n`, 
+                messageId: '' 
+              })
+            }
+
             const toolResult = await toolRegistry.executeTool(block.name, block.input)
             
-            // UI Tags for specific tools
-            if (block.name === 'create_file' && !toolResult.isError) {
-              if (!webContents.isDestroyed()) {
-                webContents.send(AIChannel.STREAM_CHUNK, { 
-                  conversationId, 
-                  delta: `\n<varta:created path="${block.input.path}"/>\n`, 
-                  messageId: '' 
-                })
+            // Stream result to UI immediately
+            if (!webContents.isDestroyed()) {
+              const statusEmoji = toolResult.isError ? '❌' : '✅'
+              const statusText = toolResult.isError ? 'Failed' : 'Completed'
+              let detailText = ''
+              
+              if (block.name === 'create_file' && !toolResult.isError) {
+                detailText = `\n<varta:created path="${block.input.path}"/>\n`
               }
+
+              webContents.send(AIChannel.STREAM_CHUNK, { 
+                conversationId, 
+                delta: `\n> ${statusEmoji} **${statusText}**: ${block.name}${detailText}\n`, 
+                messageId: '' 
+              })
             }
 
             toolResults.push({
@@ -153,7 +169,7 @@ export class AIService {
 
           messages.push({ role: 'user', content: toolResults })
 
-          // Send back to AI for final response (or further tools)
+          // Recurse with EMPTY message to force the AI to respond to results
           return this.sendMessageAnthropic(
             { ...payload, message: '', history: messages }, 
             apiKey,
@@ -293,18 +309,34 @@ export class AIService {
               })
 
               for (const tc of toolCalls) {
+                // Notify starting
+                if (!webContents.isDestroyed()) {
+                  webContents.send(AIChannel.STREAM_CHUNK, { 
+                    conversationId, 
+                    delta: `\n> ⚙️ **Executing**: ${tc.name}...\n`, 
+                    messageId: '' 
+                  })
+                }
+
                 const args = JSON.parse(tc.args)
                 logger.info('AIService', `OpenAI executing: ${tc.name}`)
                 const result = await toolRegistry.executeTool(tc.name, args)
 
-                if (tc.name === 'create_file' && !result.isError) {
-                  if (!webContents.isDestroyed()) {
-                    webContents.send(AIChannel.STREAM_CHUNK, { 
-                      conversationId, 
-                      delta: `\n<varta:created path="${args.path}"/>\n`, 
-                      messageId: '' 
-                    })
+                // Stream result
+                if (!webContents.isDestroyed()) {
+                  const statusEmoji = result.isError ? '❌' : '✅'
+                  const statusText = result.isError ? 'Failed' : 'Completed'
+                  let detailText = ''
+                  
+                  if (tc.name === 'create_file' && !result.isError) {
+                    detailText = `\n<varta:created path="${args.path}"/>\n`
                   }
+
+                  webContents.send(AIChannel.STREAM_CHUNK, { 
+                    conversationId, 
+                    delta: `\n> ${statusEmoji} **${statusText}**: ${tc.name}${detailText}\n`, 
+                    messageId: '' 
+                  })
                 }
 
                 messages.push({
@@ -315,9 +347,9 @@ export class AIService {
                 })
               }
 
-              // Recursive call
+              // Recursive call with empty message to get final response
               return this.sendMessageOpenAI(
-                { ...payload, message: '', history: messages.slice(1) }, // slice(1) to remove system prompt from history since we re-add it
+                { ...payload, message: '', history: messages.slice(1) }, 
                 apiKey,
                 webContents,
                 systemPrompt,
