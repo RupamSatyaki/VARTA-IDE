@@ -96,12 +96,14 @@ export class AIService {
 
       // 2. Map History
       const messages: any[] = history.map(m => ({ role: m.role, content: m.content }))
-      messages.push({ role: 'user', content: message })
+      if (message?.trim()) {
+        messages.push({ role: 'user', content: message })
+      }
 
       // 3. Stream
       const stream = await client.messages.stream({
         model:      payload.model ?? 'claude-sonnet-4-5',
-        max_tokens: 8192, // Increased for large projects
+        max_tokens: 8192,
         system:     systemPrompt,
         tools,
         messages,
@@ -118,61 +120,47 @@ export class AIService {
 
       const finalMessage = await stream.finalMessage()
       
-      // 4. Recursive Tool Handling
+      // 4. Handle Tool Calls
       if (finalMessage.stop_reason === 'tool_use') {
-        const toolUseBlock = finalMessage.content.find(c => c.type === 'tool_use') as any
-        if (toolUseBlock) {
-          logger.info('AIService', `Executing tool: ${toolUseBlock.name}`)
-          const toolResult = await toolRegistry.executeTool(toolUseBlock.name, toolUseBlock.input)
-          
-          // MANUALLY INJECT TAG FOR UI
-          if (toolUseBlock.name === 'create_file' && !toolResult.isError) {
-            if (!webContents.isDestroyed()) {
-              webContents.send(AIChannel.STREAM_CHUNK, { 
-                conversationId, 
-                delta: `\n<varta:created path="${toolUseBlock.input.path}"/>\n`, 
-                messageId: '' 
-              })
-            }
-          }
-
+        const toolUseBlocks = finalMessage.content.filter(c => c.type === 'tool_use') as any[]
+        
+        if (toolUseBlocks.length > 0) {
           messages.push({ role: 'assistant', content: finalMessage.content })
-          messages.push({
-            role: 'user',
-            content: [{
-              type: 'tool_result',
-              tool_use_id: toolUseBlock.id,
-              content: toolResult.content
-            }]
-          })
-// ... rest ...
+          const toolResults = []
 
-          const secondStream = await client.messages.stream({
-            model:      payload.model ?? 'claude-sonnet-4-5',
-            max_tokens: 4096,
-            system:     systemPrompt,
-            tools,
-            messages,
-          })
-
-          for await (const chunk of secondStream) {
-            if (this.cancelledIds.has(conversationId)) { break }
-            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          for (const block of toolUseBlocks) {
+            logger.info('AIService', `Executing tool: ${block.name}`)
+            const toolResult = await toolRegistry.executeTool(block.name, block.input)
+            
+            // UI Tags for specific tools
+            if (block.name === 'create_file' && !toolResult.isError) {
               if (!webContents.isDestroyed()) {
-                webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: chunk.delta.text, messageId: '' })
+                webContents.send(AIChannel.STREAM_CHUNK, { 
+                  conversationId, 
+                  delta: `\n<varta:created path="${block.input.path}"/>\n`, 
+                  messageId: '' 
+                })
               }
             }
-          }
 
-          const secondFinal = await secondStream.finalMessage()
-          if (!this.cancelledIds.has(conversationId) && !webContents.isDestroyed()) {
-            webContents.send(AIChannel.STREAM_END, {
-              conversationId,
-              messageId:   '',
-              totalTokens: secondFinal.usage.output_tokens,
-              stopReason:  secondFinal.stop_reason ?? 'end_turn',
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: block.id,
+              content: toolResult.content,
+              is_error: toolResult.isError
             })
           }
+
+          messages.push({ role: 'user', content: toolResults })
+
+          // Send back to AI for final response (or further tools)
+          return this.sendMessageAnthropic(
+            { ...payload, message: '', history: messages }, 
+            apiKey,
+            webContents,
+            systemPrompt,
+            baseUrl
+          )
         }
       } else if (!this.cancelledIds.has(conversationId) && !webContents.isDestroyed()) {
         webContents.send(AIChannel.STREAM_END, {
@@ -219,9 +207,11 @@ export class AIService {
 
     const messages: any[] = [
       { role: 'system', content: systemPrompt },
-      ...history.map(m => ({ role: m.role, content: m.content })),
-      { role: 'user', content: message }
+      ...history.map(m => ({ role: m.role, content: m.content }))
     ]
+    if (message?.trim()) {
+      messages.push({ role: 'user', content: message })
+    }
 
     try {
       const response = await axios.post(
@@ -230,7 +220,7 @@ export class AIService {
           model:       payload.model ?? 'moonshotai/kimi-k2.6',
           messages,
           tools:       tools.length > 0 ? tools : undefined,
-          max_tokens:  8192, // Increased limit
+          max_tokens:  8192,
           temperature: 0.6,
           stream:      true,
         },
@@ -241,13 +231,14 @@ export class AIService {
             'Content-Type': 'application/json',
           },
           responseType: 'stream',
-          timeout:      120000, // 2m timeout
+          timeout:      120000,
         },
       )
 
       await new Promise<void>(async (resolve, reject) => {
         let buffer = ''
         let toolCalls: any[] = []
+        let assistantContent = ''
 
         response.data.on('data', (chunk: Buffer) => {
           if (this.cancelledIds.has(conversationId)) {
@@ -268,57 +259,73 @@ export class AIService {
             try {
               const json  = JSON.parse(trimmed.slice(6))
               const delta = json.choices?.[0]?.delta
-              const finishReason = json.choices?.[0]?.finish_reason
               
-              if (delta?.content && !webContents.isDestroyed()) {
-                webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: delta.content, messageId: '' })
+              if (delta?.content) {
+                assistantContent += delta.content
+                if (!webContents.isDestroyed()) {
+                  webContents.send(AIChannel.STREAM_CHUNK, { conversationId, delta: delta.content, messageId: '' })
+                }
               }
 
               if (delta?.tool_calls) {
                 for (const tc of delta.tool_calls) {
-                  if (!toolCalls[tc.index]) toolCalls[tc.index] = { id: tc.id, name: '', args: '' }
+                  if (!toolCalls[tc.index]) toolCalls[tc.index] = { id: '', name: '', args: '' }
                   if (tc.id) toolCalls[tc.index].id = tc.id
                   if (tc.function?.name) toolCalls[tc.index].name += tc.function.name
                   if (tc.function?.arguments) toolCalls[tc.index].args += tc.function.arguments
                 }
               }
-
-              if (finishReason === 'length') {
-                logger.warn('AIService', 'OpenAI response truncated')
-              }
-            } catch { /* skip malformed SSE lines */ }
+            } catch { /* skip */ }
           }
         })
 
         response.data.on('end', async () => {
-          const activeTool = toolCalls.find(tc => tc.name)
-          if (activeTool && !this.cancelledIds.has(conversationId)) {
+          if (toolCalls.length > 0 && !this.cancelledIds.has(conversationId)) {
             try {
-              const argsText = activeTool.args.trim()
-              if (!argsText.endsWith('}')) {
-                throw new Error('Response cut off (max_tokens reached)')
-              }
+              messages.push({ 
+                role: 'assistant', 
+                content: assistantContent || null, 
+                tool_calls: toolCalls.map(tc => ({
+                  id: tc.id,
+                  type: 'function',
+                  function: { name: tc.name, arguments: tc.args }
+                }))
+              })
 
-              const args = JSON.parse(argsText)
-              logger.info('AIService', `OpenAI executing tool: ${activeTool.name}`)
-              await toolRegistry.executeTool(activeTool.name, args)
+              for (const tc of toolCalls) {
+                const args = JSON.parse(tc.args)
+                logger.info('AIService', `OpenAI executing: ${tc.name}`)
+                const result = await toolRegistry.executeTool(tc.name, args)
 
-              // MANUALLY INJECT TAG FOR UI
-              if (activeTool.name === 'create_file' && !webContents.isDestroyed()) {
-                webContents.send(AIChannel.STREAM_CHUNK, { 
-                  conversationId, 
-                  delta: `\n<varta:created path="${args.path}"/>\n`, 
-                  messageId: '' 
+                if (tc.name === 'create_file' && !result.isError) {
+                  if (!webContents.isDestroyed()) {
+                    webContents.send(AIChannel.STREAM_CHUNK, { 
+                      conversationId, 
+                      delta: `\n<varta:created path="${args.path}"/>\n`, 
+                      messageId: '' 
+                    })
+                  }
+                }
+
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: tc.id,
+                  name: tc.name,
+                  content: JSON.stringify(result.content)
                 })
               }
+
+              // Recursive call
+              return this.sendMessageOpenAI(
+                { ...payload, message: '', history: messages.slice(1) }, // slice(1) to remove system prompt from history since we re-add it
+                apiKey,
+                webContents,
+                systemPrompt,
+                baseUrl
+              ).then(resolve).catch(reject)
+
             } catch (e: any) {
-              logger.error('AIService', `OpenAI tool error: ${e.message}`)
-              if (!webContents.isDestroyed()) {
-                webContents.send(AIChannel.STREAM_CHUNK, { 
-                  conversationId, 
-                  delta: `\n\n⚠️ **Limit Reached**: The file content was too large for the AI to finish. Please try generating smaller sections.\n` 
-                })
-              }
+              logger.error('AIService', `OpenAI parallel tool error: ${e.message}`)
             }
           }
 

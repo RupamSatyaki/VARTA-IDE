@@ -4,7 +4,7 @@ import { MCPToolHandler, MCPToolResult } from '../../../shared/types/mcp.types'
 import { logger } from '../../../utils/logger'
 import { PathGuard } from '../../sandbox/PathGuard'
 
-export const createFileTool: MCPToolHandler = {
+export const createFile: MCPToolHandler = {
   definition: {
     name: 'create_file',
     description: 'Creates a new file with the specified content. Automatically creates parent directories if they do not exist.',

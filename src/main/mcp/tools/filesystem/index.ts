@@ -1,1 +1,1 @@
-export * from './FileTools'
+export * from './createFile'
