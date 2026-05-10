@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useNotificationStore } from '../../store/notificationStore'
 import { useTerminalStore }     from '../../store/terminalStore'
 import { useFileTreeStore }     from '../../store/fileTreeStore'
 import { FontAwesomeIcon }      from '@fortawesome/react-fontawesome'
-import { faCopy, faWandMagicSparkles, faCompass } from '@fortawesome/free-solid-svg-icons'
+import { faCopy, faWandMagicSparkles, faCompass, faClock, faMicrochip } from '@fortawesome/free-solid-svg-icons'
 import type { AIMessage } from '../../../shared/types/ai.types'
 import { CodeBlock } from './Shared/CodeBlock'
 import { ActionCard } from './Shared/ActionCard'
@@ -57,6 +57,10 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
   const { rootPath } = useFileTreeStore()
   const isUser = message.role === 'user'
   
+  const timeStr = useMemo(() => {
+    return new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }, [message.timestamp])
+
   // Group tool_start and tool_end for the same tool into one ToolCard
   const rawParts = isUser ? null : parseContent(message.content)
   const parts: typeof rawParts = []
@@ -110,11 +114,17 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
       <motion.div 
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex justify-end px-3 py-2"
+        className="flex flex-col items-end px-3 py-2"
       >
         <div className="max-w-[88%] bg-[#7c3aed]/20 border border-[#7c3aed]/40 rounded-2xl rounded-tr-sm
           px-4 py-3 text-[13px] text-[#e9d5ff] whitespace-pre-wrap break-words leading-relaxed shadow-lg shadow-[#7c3aed]/5">
           {message.content}
+        </div>
+        <div className="flex items-center gap-3 mt-1.5 px-2 text-[10px] text-[#5a4a6a] font-bold uppercase tracking-wider">
+           <span className="flex items-center gap-1">
+             <FontAwesomeIcon icon={faClock} style={{ fontSize: 9 }} />
+             {timeStr}
+           </span>
         </div>
       </motion.div>
     )
@@ -213,6 +223,20 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
             className="inline-block w-2 h-4 bg-[#c084fc] ml-1 align-middle rounded-sm shadow-[0_0_12px_rgba(192,132,252,0.6)]" 
           />
         )}
+
+        {/* Footer info: Time and Tokens */}
+        <div className="flex items-center gap-4 mt-2 text-[10px] text-[#4a3a5a] font-bold uppercase tracking-wider select-none border-t border-[#2a1f30]/30 pt-3">
+          <span className="flex items-center gap-1.5">
+            <FontAwesomeIcon icon={faClock} style={{ fontSize: 9 }} />
+            {timeStr}
+          </span>
+          {message.tokenCount && message.tokenCount > 0 && (
+            <span className="flex items-center gap-1.5 text-[#7c3aed]/60">
+              <FontAwesomeIcon icon={faMicrochip} style={{ fontSize: 9 }} />
+              {message.tokenCount} Tokens
+            </span>
+          )}
+        </div>
 
         {/* Error */}
         {message.status === 'error' && (
