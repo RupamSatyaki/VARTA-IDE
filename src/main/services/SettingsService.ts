@@ -51,13 +51,27 @@ export class SettingsService {
       defaults: {
         settings: DEFAULT_SETTINGS,
         apiKey:   '',
-        baseUrl:  '',
+        baseUrl:  'https://openrouter.ai/api/v1',
       },
     })
 
     // Load and merge with defaults (handles new keys added in updates)
     const saved = this.store.get('settings', DEFAULT_SETTINGS)
     this.cachedSettings = deepMerge(DEFAULT_SETTINGS, saved as Partial<VartaSettings>)
+
+    // Migration: If user is on the old default model, switch to the new one
+    if (this.cachedSettings.ai.model === 'claude-sonnet-4-5') {
+      this.cachedSettings.ai.model = 'openrouter/owl-alpha'
+      this.store.set('settings', this.cachedSettings)
+      logger.info('SettingsService', 'Migrated default model to owl-alpha')
+    }
+
+    // Migration: Force default base URL for OpenRouter
+    const currentBaseUrl = this.store.get('baseUrl', '')
+    if (!currentBaseUrl || currentBaseUrl === '') {
+      this.store.set('baseUrl', 'https://openrouter.ai/api/v1')
+      logger.info('SettingsService', 'Set default base URL to OpenRouter')
+    }
 
     logger.info('SettingsService', 'Initialized')
   }

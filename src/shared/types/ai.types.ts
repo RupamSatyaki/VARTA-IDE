@@ -87,11 +87,11 @@ export interface AIModel {
 /** Available Claude models */
 export const CLAUDE_MODELS: AIModel[] = [
   {
-    id:            'claude-opus-4-5',
-    name:          'Claude Opus 4.5',
-    contextWindow: 200000,
-    maxOutput:     8192,
-    description:   'Most capable model for complex tasks'
+    id:            'openrouter/owl-alpha',
+    name:          'Owl Alpha (OpenRouter)',
+    contextWindow: 32768,
+    maxOutput:     4096,
+    description:   'Fast and free model via OpenRouter'
   },
   {
     id:            'claude-sonnet-4-5',
@@ -109,4 +109,4 @@ export const CLAUDE_MODELS: AIModel[] = [
   }
 ]
 
-export const DEFAULT_AI_MODEL = 'claude-sonnet-4-5'
+export const DEFAULT_AI_MODEL = 'openrouter/owl-alpha'

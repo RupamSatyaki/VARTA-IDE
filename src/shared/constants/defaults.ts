@@ -80,7 +80,7 @@ export const DEFAULT_SETTINGS: VartaSettings = {
 
   ai: {
     enabled:          true,
-    model:            'claude-sonnet-4-5',
+    model:            'openrouter/owl-alpha',
     maxTokens:        4096,
     temperature:      0.7,
     inlineHints:      true,

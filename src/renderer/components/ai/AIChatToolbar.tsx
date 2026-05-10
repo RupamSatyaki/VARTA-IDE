@@ -1,19 +1,9 @@
 import React from 'react'
-import { Select } from '../ui/Select'
+import { AIModelSelector } from './AIModelSelector'
 import { useAIStore } from '../../store/aiStore'
-import { useSettingsStore } from '../../store/settingsStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWandMagicSparkles, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { Tooltip } from '../ui/Tooltip'
-
-const MODEL_OPTIONS = [
-  { value: 'claude-opus-4-5',                    label: 'Claude Opus 4.5' },
-  { value: 'claude-sonnet-4-5',                  label: 'Claude Sonnet 4.5' },
-  { value: 'claude-haiku-3-5',                   label: 'Claude Haiku 3.5' },
-  { value: 'moonshotai/kimi-k2.6',               label: 'Kimi K2.6 (NIM)' },
-  { value: 'meta/llama-3.1-405b-instruct',       label: 'Llama 3.1 405B (NIM)' },
-  { value: 'mistralai/mistral-large-2-instruct', label: 'Mistral Large 2 (NIM)' },
-]
 
 export interface AIChatToolbarProps {
   onNewChat:   () => void
@@ -22,7 +12,6 @@ export interface AIChatToolbarProps {
 
 export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
   const { isStreaming } = useAIStore()
-  const { settings, update } = useSettingsStore()
 
   return (
     <div className="flex items-center justify-between px-3 h-10 border-b border-[#2a1f30] shrink-0">
@@ -46,16 +35,7 @@ export function AIChatToolbar({ onNewChat, onClearChat }: AIChatToolbarProps) {
 
       {/* Right: model selector + actions */}
       <div className="flex items-center gap-1">
-        <Select
-          value={settings.ai.model}
-          options={MODEL_OPTIONS}
-          onChange={(e) => {
-            const v = e.target.value
-            update({ ai: { ...settings.ai, model: v } })
-            window.varta.settings.set({ ai: { model: v } }).catch(() => {})
-          }}
-          className="h-6 text-[10px] w-36 border-transparent bg-transparent text-[#6e5a7a]"
-        />
+        <AIModelSelector />
 
         <Tooltip content="New Chat" placement="bottom">
           <button onClick={onNewChat} aria-label="New chat"

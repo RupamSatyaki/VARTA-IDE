@@ -448,13 +448,11 @@ export class AIService {
 
   getModels() {
     return [
-      { id: 'claude-opus-4-5',        name: 'Claude Opus 4.5',        contextWindow: 200000, maxOutput: 8192,  description: 'Most capable (Anthropic)' },
+      { id: 'openrouter/owl-alpha',   name: 'Owl Alpha (Free)',       contextWindow: 32768,  maxOutput: 4096,  description: 'Fast and free model via OpenRouter' },
+      { id: 'google/gemini-2.0-flash-lite-preview-02-05:free', name: 'Gemini 2.0 Flash Lite (Free)', contextWindow: 1000000, maxOutput: 8192, description: 'Google Gemini via OpenRouter' },
       { id: 'claude-sonnet-4-5',      name: 'Claude Sonnet 4.5',      contextWindow: 200000, maxOutput: 8192,  description: 'Best balance (Anthropic)' },
-      { id: 'claude-haiku-3-5',       name: 'Claude Haiku 3.5',       contextWindow: 200000, maxOutput: 8192,  description: 'Fastest (Anthropic)' },
       { id: 'moonshotai/kimi-k2.6',   name: 'Kimi K2.6 (NVIDIA NIM)', contextWindow: 131072, maxOutput: 8192, description: 'Kimi K2 via NVIDIA NIM' },
-      { id: 'qwen/qwen3-next-80b-a3b-instruct',   name: 'qwen/qwen3-next-80b-a3b-instruct (NVIDIA NIM)', contextWindow: 8192, maxOutput: 16384, description: 'qwen/qwen3-next-80b-a3b-instruct' },
       { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B',  contextWindow: 128000, maxOutput: 4096,  description: 'Meta Llama via NVIDIA NIM' },
-      { id: 'mistralai/mistral-large-2-instruct', name: 'Mistral Large 2', contextWindow: 128000, maxOutput: 4096, description: 'Mistral via NVIDIA NIM' },
     ]
   }
 }

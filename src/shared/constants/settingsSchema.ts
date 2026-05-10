@@ -184,10 +184,11 @@ export const SETTINGS_SCHEMA: SettingSchemaItem[] = [
     type: 'select',
     section: 'ai',
     options: [
-      { value: 'claude-opus-4-5', label: 'Claude Opus 4.5' },
+      { value: 'openrouter/owl-alpha', label: 'Owl Alpha (Free)' },
+      { value: 'google/gemini-2.0-flash-lite-preview-02-05:free', label: 'Gemini 2.0 Flash Lite (Free)' },
       { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
-      { value: 'claude-haiku-3-5', label: 'Claude Haiku 3.5' },
       { value: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6 (NVIDIA NIM)' },
+      { value: 'meta/llama-3.1-405b-instruct', label: 'Llama 3.1 405B' },
     ],
   },
   {
