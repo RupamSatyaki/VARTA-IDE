@@ -1,2 +1,5 @@
 export * from './createFile'
 export * from './readFile'
+export * from './writeFile'
+export * from './deleteFile'
+export * from './listDirectory'
