@@ -14,6 +14,7 @@ import type { DialogAPI }   from './api/dialogApi'
 import type { WindowAPI }   from './api/windowApi'
 import type { AIAPI }       from './api/aiApi'
 import type { AppAPI }      from './api/appApi'
+import type { MCPAPI }      from './api/mcpApi'
 
 export interface VartaAPI {
   fs:       FileAPI
@@ -26,6 +27,7 @@ export interface VartaAPI {
   window:   WindowAPI
   ai:       AIAPI
   app:      AppAPI
+  mcp:      MCPAPI
 }
 
 declare global {

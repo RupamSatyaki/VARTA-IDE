@@ -74,6 +74,11 @@ export class WindowManager {
     })
   }
 
+  send(channel: string, ...args: any[]): void {
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) { return }
+    this.mainWindow.webContents.send(channel, ...args)
+  }
+
   private removeIpcHandlers(): void {
     const channels: string[] = [
       WindowChannel.MINIMIZE,

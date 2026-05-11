@@ -126,12 +126,23 @@ export class GitService {
 
   // ── Diff ──────────────────────────────────────────────────────────────────
 
-  async diff(filePath?: string): Promise<string> {
+  async diff(stagedOrPath: boolean | string = false, filePath?: string): Promise<string> {
     const git = this.requireGit()
     try {
-      return filePath
-        ? await git.diff([filePath])
-        : await git.diff()
+      let staged = false
+      let path = filePath
+
+      if (typeof stagedOrPath === 'boolean') {
+        staged = stagedOrPath
+      } else {
+        path = stagedOrPath
+      }
+
+      const args = staged ? ['--cached'] : []
+      if (path) {
+        args.push('--', path)
+      }
+      return await git.diff(args)
     } catch (e) {
       throw new VartaError(VartaErrorCode.GIT_DIFF_FAILED, 'Failed to get diff', e)
     }
@@ -158,6 +169,10 @@ export class GitService {
     } catch (e) {
       throw new VartaError(VartaErrorCode.GIT_STAGE_FAILED, 'Failed to stage files', e)
     }
+  }
+
+  async add(paths: string[]): Promise<void> {
+    return this.stage(paths)
   }
 
   async unstage(paths: string[]): Promise<void> {
@@ -192,9 +207,13 @@ export class GitService {
 
   // ── Commit ────────────────────────────────────────────────────────────────
 
-  async commit(options: CommitOptions): Promise<void> {
+  async commit(optionsOrMessage: CommitOptions | string): Promise<void> {
     const git = this.requireGit()
     try {
+      const options: CommitOptions = typeof optionsOrMessage === 'string'
+        ? { message: optionsOrMessage }
+        : optionsOrMessage
+
       const args: string[] = []
       if (options.amend)   { args.push('--amend') }
       if (options.signOff) { args.push('--signoff') }

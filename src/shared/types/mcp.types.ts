@@ -3,6 +3,7 @@
 export interface MCPToolDefinition {
   name: string
   description: string
+  dangerous?: boolean
   inputSchema: {
     type: 'object'
     properties: Record<string, any>

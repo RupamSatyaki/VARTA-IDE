@@ -12,6 +12,7 @@ import { registerSettingsHandlers, removeSettingsHandlers } from './settingsHand
 import { registerThemeHandlers,    removeThemeHandlers }    from './themeHandlers'
 import { registerAIHandlers,       removeAIHandlers }       from './aiHandlers'
 import { registerAppHandlers,      removeAppHandlers }      from './appHandlers'
+import { registerMCPHandlers,      removeMCPHandlers }      from './mcpHandlers'
 import { logger } from '../utils/logger'
 
 export function registerAllHandlers(mainWindow: BrowserWindow): void {
@@ -24,6 +25,7 @@ export function registerAllHandlers(mainWindow: BrowserWindow): void {
   registerThemeHandlers()
   registerAIHandlers()
   registerAppHandlers()
+  registerMCPHandlers()
   logger.info('IPC', 'All handlers registered')
 }
 
@@ -37,5 +39,6 @@ export function removeAllHandlers(): void {
   removeThemeHandlers()
   removeAIHandlers()
   removeAppHandlers()
+  removeMCPHandlers()
   logger.info('IPC', 'All handlers removed')
 }

@@ -2,6 +2,7 @@ import { exec } from 'child_process'
 import { MCPToolHandler, MCPToolResult } from '../../../../shared/types/mcp.types'
 import { logger } from '../../../utils/logger'
 import { PathGuard } from '../../sandbox/PathGuard'
+import { CommandFilter } from '../../sandbox/CommandFilter'
 
 export const runCommand: MCPToolHandler = {
   definition: {
@@ -21,6 +22,7 @@ export const runCommand: MCPToolHandler = {
 
   execute: async (args: { command: string }): Promise<MCPToolResult> => {
     try {
+      CommandFilter.validate(args.command)
       const root = PathGuard.getRoot()
       logger.info('MCP:TerminalTool', `Executing command: ${args.command}`)
 

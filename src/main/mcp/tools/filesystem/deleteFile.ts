@@ -1,12 +1,15 @@
 import fsp from 'fs/promises'
+import fsp from 'fs/promises'
 import { MCPToolHandler, MCPToolResult } from '../../../../shared/types/mcp.types'
 import { logger } from '../../../utils/logger'
 import { PathGuard } from '../../sandbox/PathGuard'
+import { ConfirmationGate } from '../../sandbox/ConfirmationGate'
 
 export const deleteFile: MCPToolHandler = {
   definition: {
     name: 'delete_file',
-    description: 'Deletes a file from the workspace. Use with caution.',
+    description: 'Deletes a file from the workspace. Requires user confirmation.',
+    dangerous: true,
     inputSchema: {
       type: 'object',
       properties: {
@@ -22,9 +25,21 @@ export const deleteFile: MCPToolHandler = {
   execute: async (args: { path: string }): Promise<MCPToolResult> => {
     try {
       const fullPath = PathGuard.validate(args.path)
-      await fsp.unlink(fullPath)
 
+      const confirmed = await ConfirmationGate.confirm(
+        `Are you sure you want to delete the file: ${args.path}?`,
+        'This action cannot be undone.'
+      )
+
+      if (!confirmed) {
+        return {
+          content: [{ type: 'text', text: 'Operation cancelled by user.' }]
+        }
+      }
+
+      await fsp.unlink(fullPath)
       logger.info('MCP:FileTool', `File deleted: ${args.path}`)
+
 
       return {
         content: [{

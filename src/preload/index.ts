@@ -19,6 +19,7 @@ import { dialogApi }     from './api/dialogApi'
 import { windowApi }     from './api/windowApi'
 import { aiApi }         from './api/aiApi'
 import { appApi }        from './api/appApi'
+import { mcpApi }        from './api/mcpApi'
 
 /**
  * The complete window.varta API surface exposed to the renderer.
@@ -35,6 +36,7 @@ const vartaAPI = {
   window:   windowApi,
   ai:       aiApi,
   app:      appApi,
+  mcp:      mcpApi,
 } as const
 
 contextBridge.exposeInMainWorld('varta', vartaAPI)
