@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { CodeCanvas }            from './CodeCanvas'
+import { DiffEditor }            from './DiffEditor'
 import { EditorTabs }            from './EditorTabs'
 import { EditorBreadcrumb }      from './EditorBreadcrumb'
 import { WelcomeScreen }         from './WelcomeScreen'
@@ -103,7 +104,7 @@ export function EditorPane() {
         Tab switch = model swap inside CodeCanvas via path/tabId props.
         NO key prop here — that would remount Monaco on every switch.
       */}
-      {showEditor && activeTab && (
+      {showEditor && activeTab && !activeTab.diffData && (
         <CodeCanvas
           tabId={activeTab.id}
           path={activeTab.filePath}
@@ -116,6 +117,33 @@ export function EditorPane() {
           onNextTab={handleNextTab}
           onReopenClosed={reopenLastClosed}
         />
+      )}
+
+      {/* Diff View */}
+      {showEditor && activeTab && activeTab.diffData && (
+        <div className="flex-1 min-h-0 min-w-0 flex flex-col">
+          <div className="flex items-center justify-between px-4 py-2 bg-[#1e1a24]/60 border-b border-[#3a2f45]/50">
+            <span className="text-[11px] font-bold text-[#c084fc] uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#7c3aed] animate-pulse" />
+              Review Changes
+            </span>
+            <button 
+              onClick={() => closeTab(activeTab.id)}
+              className="text-[10px] font-bold text-[#6e5a7a] hover:text-white transition-colors"
+            >
+              Close Diff
+            </button>
+          </div>
+          <div className="flex-1 min-h-0">
+            <DiffEditor 
+              path={activeTab.filePath}
+              original={activeTab.diffData.original}
+              modified={activeTab.diffData.modified}
+              language={activeTab.language}
+              readOnly={true}
+            />
+          </div>
+        </div>
       )}
 
       {/* Unsaved changes dialog */}

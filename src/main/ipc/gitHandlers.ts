@@ -157,6 +157,12 @@ export function registerGitHandlers(): void {
     } catch (e) { return handleErr(e) }
   })
 
+  ipcMain.handle(GitChannel.SHOW_FILE, async (_e, filePath: string, revision?: string) => {
+    try {
+      return ipcOk(await gitService.showFile(filePath, revision))
+    } catch (e) { return handleErr(e) }
+  })
+
   logger.info('IPC', 'Git handlers registered')
 }
 

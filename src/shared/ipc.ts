@@ -71,6 +71,7 @@ export const enum GitChannel {
   DISCARD         = 'GIT:DISCARD',
   INIT            = 'GIT:INIT',
   CLONE           = 'GIT:CLONE',
+  SHOW_FILE       = 'GIT:SHOW_FILE',
   CHANGED         = 'GIT:CHANGED',        // main → renderer (push)
 }
 

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 import { useMonaco } from '@monaco-editor/react'
 import type * as Monaco from 'monaco-editor'
+import { ensureMonacoTheme } from '../../utils/monaco'
 
 export interface DiffEditorProps {
   path:     string
@@ -17,6 +18,9 @@ export function DiffEditor({ path, original, modified, language = 'text', readOn
 
   useEffect(() => {
     if (!monaco || !containerRef.current) { return }
+
+    // Register Varta Dark theme
+    ensureMonacoTheme()
 
     const origUri  = monaco.Uri.parse(`diff-original://${path}`)
     const modUri   = monaco.Uri.parse(`diff-modified://${path}`)

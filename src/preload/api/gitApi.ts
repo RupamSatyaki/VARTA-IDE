@@ -72,6 +72,9 @@ export const gitApi = {
   openRepo: (folderPath: string): Promise<IPCResponse<string | null>> =>
     ipcRenderer.invoke(GitChannel.INIT, folderPath),
 
+  showFile: (filePath: string, revision?: string): Promise<IPCResponse<string>> =>
+    ipcRenderer.invoke(GitChannel.SHOW_FILE, filePath, revision),
+
   // ── Push listeners ─────────────────────────────────────────────────────────
 
   /**

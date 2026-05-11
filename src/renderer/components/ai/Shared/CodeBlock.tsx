@@ -1,6 +1,6 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCopy, faPlay, faFileCirclePlus } from '@fortawesome/free-solid-svg-icons'
+import { faCopy, faPlay, faFileCirclePlus, faColumns } from '@fortawesome/free-solid-svg-icons'
 import { cn } from '../../../utils/cn'
 
 interface CodeBlockProps {
@@ -10,6 +10,7 @@ interface CodeBlockProps {
   path?: string
   onCopy: (text: string) => void
   onApply?: (code: string) => void
+  onDiff?: (path: string, code: string) => void
   onCreateFile?: (path: string, code: string) => void
   onRunTerminal?: (cmd: string) => void
 }
@@ -21,6 +22,7 @@ export function CodeBlock({
   path,
   onCopy,
   onApply,
+  onDiff,
   onCreateFile,
   onRunTerminal
 }: CodeBlockProps) {
@@ -33,6 +35,10 @@ export function CodeBlock({
         <div className="flex items-center gap-1.5">
           <CodeBtn onClick={() => onCopy(content)} icon={faCopy} label="Copy" />
           
+          {type === 'replace' && onDiff && path && (
+            <CodeBtn onClick={() => onDiff(path, content)} icon={faColumns} label="Diff" />
+          )}
+
           {type === 'replace' && onApply && (
             <CodeBtn onClick={() => onApply(content)} icon={faPlay} label="Apply" accent />
           )}

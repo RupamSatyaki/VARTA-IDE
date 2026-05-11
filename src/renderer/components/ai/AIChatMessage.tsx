@@ -2,8 +2,9 @@ import React, { useCallback, useMemo } from 'react'
 import { useNotificationStore } from '../../store/notificationStore'
 import { useTerminalStore }     from '../../store/terminalStore'
 import { useFileTreeStore }     from '../../store/fileTreeStore'
+import { useEditor }            from '../../hooks/useEditor'
 import { FontAwesomeIcon }      from '@fortawesome/react-fontawesome'
-import { faCopy, faWandMagicSparkles, faCompass, faClock, faMicrochip, faCheckDouble } from '@fortawesome/free-solid-svg-icons'
+import { faCopy, faWandMagicSparkles, faCompass, faClock, faMicrochip, faCheckDouble, faColumns } from '@fortawesome/free-solid-svg-icons'
 import type { AIMessage } from '../../../shared/types/ai.types'
 import { CodeBlock } from './Shared/CodeBlock'
 import { ActionCard } from './Shared/ActionCard'
@@ -21,20 +22,21 @@ function parseContent(content: string) {
     content: string; lang?: string; path?: string; name?: string; input?: string; status?: 'success' | 'error'; result?: string
   }> = []
   
-  const regex = /```(\w*)\n?([\s\S]*?)```|<varta:replace>([\s\S]*?)<\/varta:replace>|<varta:newfile path="([^"]*)">([\s\S]*?)<\/varta:newfile>|<varta:terminal>([\s\S]*?)<\/varta:terminal>|<varta:created path="([^"]*)".*?\/>|<varta:modified path="([^"]*)".*?\/>|<varta:tool_start name="([^"]*)" input='([^']*)'\/?>|<varta:tool_end name="([^"]*)" status="([^"]*)" result='([^']*)'\/?>/g
+  const regex = /```(\w*)\n?([\s\S]*?)```|<varta:replace path="([^"]*)">([\s\S]*?)<\/varta:replace>|<varta:replace>([\s\S]*?)<\/varta:replace>|<varta:newfile path="([^"]*)">([\s\S]*?)<\/varta:newfile>|<varta:terminal>([\s\S]*?)<\/varta:terminal>|<varta:created path="([^"]*)".*?\/>|<varta:modified path="([^"]*)".*?\/>|<varta:tool_start name="([^"]*)" input='([^']*)'\/?>|<varta:tool_end name="([^"]*)" status="([^"]*)" result='([^']*)'\/?>/g
   
   let lastIndex = 0; let match: RegExpExecArray | null
   while ((match = regex.exec(content)) !== null) {
     if (match.index > lastIndex) parts.push({ type: 'text', content: content.slice(lastIndex, match.index) })
     
     if (match[1] !== undefined)  parts.push({ type: 'code', content: match[2], lang: match[1] || 'text' })
-    else if (match[3] !== undefined) parts.push({ type: 'replace',  content: match[3] })
-    else if (match[4] !== undefined) parts.push({ type: 'newfile',  content: match[5], path: match[4] })
-    else if (match[6] !== undefined) parts.push({ type: 'terminal', content: match[6].trim() })
-    else if (match[7] !== undefined) parts.push({ type: 'created',  content: '', path: match[7] })
-    else if (match[8] !== undefined) parts.push({ type: 'modified', content: '', path: match[8] })
-    else if (match[9] !== undefined) parts.push({ type: 'tool_start', content: '', name: match[9], input: match[10] })
-    else if (match[11] !== undefined) parts.push({ type: 'tool_end', content: '', name: match[11], status: match[12] as any, result: match[13] })
+    else if (match[3] !== undefined) parts.push({ type: 'replace',  content: match[4], path: match[3] })
+    else if (match[5] !== undefined) parts.push({ type: 'replace',  content: match[5] })
+    else if (match[6] !== undefined) parts.push({ type: 'newfile',  content: match[7], path: match[6] })
+    else if (match[8] !== undefined) parts.push({ type: 'terminal', content: match[8].trim() })
+    else if (match[9] !== undefined) parts.push({ type: 'created',  content: '', path: match[9] })
+    else if (match[10] !== undefined) parts.push({ type: 'modified', content: '', path: match[10] })
+    else if (match[11] !== undefined) parts.push({ type: 'tool_start', content: '', name: match[11], input: match[12] })
+    else if (match[13] !== undefined) parts.push({ type: 'tool_end', content: '', name: match[13], status: match[14] as any, result: match[15] })
     
     lastIndex = match.index + match[0].length
   }
@@ -56,6 +58,7 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
   const { success, error: notifyError } = useNotificationStore()
   const { activeTerminalId } = useTerminalStore()
   const { rootPath } = useFileTreeStore()
+  const { openDiff } = useEditor()
   const isUser = message.role === 'user'
   
   const timeStr = useMemo(() => {
@@ -93,6 +96,20 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
     window.dispatchEvent(new CustomEvent('varta:ai-apply', { detail: { code } }))
     success('Applied changes to editor', 1500)
   }, [success])
+
+  const handleDiff = useCallback(async (filePath: string, newContent: string) => {
+    if (!rootPath) { notifyError('Please open a workspace first'); return }
+    const fullPath = filePath.startsWith('/') || /^[A-Za-z]:/.test(filePath) 
+      ? filePath 
+      : `${rootPath}/${filePath}`.replace(/\\/g, '/')
+      
+    const res = await window.varta.fs.readFile(fullPath)
+    if (res.success) {
+      openDiff(fullPath, res.data.content, newContent)
+    } else {
+      openDiff(fullPath, '', newContent)
+    }
+  }, [rootPath, openDiff, notifyError])
 
   const handleRun = useCallback((cmd: string) => {
     if (!activeTerminalId) { notifyError('No active terminal found'); return }
@@ -223,6 +240,7 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
                   path={part.path}
                   onCopy={handleCopy}
                   onApply={handleApply}
+                  onDiff={handleDiff}
                   onCreateFile={handleCreateFile}
                   onRunTerminal={handleRun}
                 />

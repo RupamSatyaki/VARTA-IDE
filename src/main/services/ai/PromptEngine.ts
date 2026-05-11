@@ -68,7 +68,7 @@ export class PromptEngine {
     lines.push('   - **Success Summary**: After using a tool, explain briefly what was achieved.')
     lines.push('4. **Actions (Fallback)**: If a tool is not available, use these tags:')
     lines.push('   - `<varta:terminal command="..."/>` for shell commands.')
-    lines.push('   - `<varta:replace path="..." start="..." end="...">...</varta:replace>` for code modifications.')
+    lines.push('   - `<varta:replace path="...">...</varta:replace>` for code modifications. ALWAYS include the absolute or workspace-relative path.')
     lines.push('5. **Correctness**: Prioritize security, performance, and best practices.')
 
     return lines.join('\n')

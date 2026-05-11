@@ -55,6 +55,10 @@ export interface EditorTab {
   scrollTop?:  number
   cursorLine?: number
   cursorCol?:  number
+  diffData?: {
+    original: string
+    modified: string
+  }
 }
 
 export interface EditorGroup {

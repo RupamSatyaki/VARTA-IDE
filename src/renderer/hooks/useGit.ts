@@ -285,13 +285,22 @@ export function useGit() {
     const tabId    = `diff:${filePath}:${staged ? 'staged' : 'working'}`
     const language = detectLanguage(filePath)
 
-    // Build original and modified content from hunks
-    const original = diff.hunks.length === 0 ? '' : buildOriginal(diff.hunks)
-    const modified = diff.hunks.length === 0 ? '' : buildModified(diff.hunks)
+    // Fetch original content from HEAD (if staged) or from file system (if working tree)
+    // Actually, simple-git's diff already gives us hunks, but we need the FULL content for a side-by-side editor.
+    
+    let original = ''
+    if (staged) {
+      // For staged: compare HEAD vs Index
+      const headRes = await window.varta.git.showFile(filePath, 'HEAD').catch(() => null)
+      original = (headRes && isIPCSuccess(headRes)) ? headRes.data : ''
+    } else {
+      // For unstaged: compare Index vs Working Tree
+      const indexRes = await window.varta.git.showFile(filePath, 'INDEX').catch(() => null)
+      original = (indexRes && isIPCSuccess(indexRes)) ? indexRes.data : ''
+    }
 
-    // Store diff content in a special cache key
-    contentCache.set(`${tabId}:original`, original)
-    contentCache.set(`${tabId}:modified`, modified)
+    const modRes = await window.varta.fs.readFile(filePath)
+    const modified = modRes.success ? modRes.data.content : ''
 
     const { useTabStore } = await import('../store/tabStore')
     const existing = useTabStore.getState().tabs.find((t) => t.id === tabId)
@@ -302,12 +311,13 @@ export function useGit() {
 
     useTabStore.getState().addTab({
       id:        tabId,
-      filePath:  `${filePath} (${staged ? 'Staged' : 'Working Tree'})`,
-      title:     `${filename} ←`,
+      filePath:  filePath,
+      title:     `Diff: ${filename}`,
       language,
       isDirty:   false,
       isPreview: true,
       isPinned:  false,
+      diffData:  { original, modified },
     })
   }, [])
 

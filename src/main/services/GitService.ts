@@ -159,6 +159,18 @@ export class GitService {
     }
   }
 
+  async showFile(filePath: string, revision = 'HEAD'): Promise<string> {
+    const git = this.requireGit()
+    try {
+      // Use ':' for index (unstaged comparison)
+      const target = revision === 'INDEX' ? `:${filePath}` : `${revision}:${filePath}`
+      return await git.show([target])
+    } catch (e) {
+      // If file doesn't exist in that revision (e.g. new untracked file), return empty
+      return ''
+    }
+  }
+
   // ── Stage / Unstage ───────────────────────────────────────────────────────
 
   async stage(paths: string[]): Promise<void> {

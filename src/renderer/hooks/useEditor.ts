@@ -174,8 +174,26 @@ export function useEditor() {
     if (tab) { await openFile(tab.filePath, false) }
   }, [openFile])
 
+  const openDiff = useCallback(async (filePath: string, original: string, modified: string) => {
+    const tabStore = useTabStore.getState()
+    const tabId    = `diff-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const fileName = filePath.replace(/\\/g, '/').split('/').pop() || filePath
+
+    tabStore.addTab({
+      id:        tabId,
+      filePath,
+      title:     `Diff: ${fileName}`,
+      language:  detectLanguage(filePath),
+      isDirty:   false,
+      isPreview: false,
+      isPinned:  false,
+      diffData:  { original, modified },
+    })
+  }, [])
+
   return {
     openFile,
+    openDiff,
     getContent,
     saveFile,
     saveAllFiles,
