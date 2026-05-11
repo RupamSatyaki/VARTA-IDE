@@ -219,10 +219,16 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
 
             if (part.type === 'created' || part.type === 'modified') {
               return (
-                <ActionCard 
-                  key={i} 
-                  path={part.path!} 
-                  type={part.type === 'created' ? 'create_file' : 'modify_file'} 
+                <ActionCard
+                  key={i}
+                  path={part.path!}
+                  type={part.type === 'created' ? 'create_file' : 'accepted_edit'}
+                  onDiff={part.type === 'modified' && part.path
+                    ? () => handleDiff(part.path!, part.content)
+                    : undefined}
+                  onOpen={part.path
+                    ? () => window.dispatchEvent(new CustomEvent('varta:open-file', { detail: { path: part.path } }))
+                    : undefined}
                 />
               )
             }
