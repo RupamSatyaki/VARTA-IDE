@@ -3,7 +3,7 @@ import { useNotificationStore } from '../../store/notificationStore'
 import { useTerminalStore }     from '../../store/terminalStore'
 import { useFileTreeStore }     from '../../store/fileTreeStore'
 import { FontAwesomeIcon }      from '@fortawesome/react-fontawesome'
-import { faCopy, faWandMagicSparkles, faCompass, faClock, faMicrochip } from '@fortawesome/free-solid-svg-icons'
+import { faCopy, faWandMagicSparkles, faCompass, faClock, faMicrochip, faCheckDouble } from '@fortawesome/free-solid-svg-icons'
 import type { AIMessage } from '../../../shared/types/ai.types'
 import { CodeBlock } from './Shared/CodeBlock'
 import { ActionCard } from './Shared/ActionCard'
@@ -47,7 +47,8 @@ function renderMarkdown(text: string): string {
     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#f3e8ff] font-bold">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em class="text-[#d8b4fe] italic">$1</em>')
     .replace(/`([^`]+)`/g, '<code class="bg-[#1e1a24] px-1.5 py-0.5 rounded text-[#c084fc] font-mono text-[12px] border border-[#7c3aed]/20">$1</code>')
-    .replace(/^- (.+)$/gm, '<li class="ml-4 mb-1 list-disc">$1</li>')
+    .replace(/^- (.+)$/gm, '<li class="ml-4 mb-1 list-disc text-[#cbd5e1]">$1</li>')
+    .replace(/^\d\. (.+)$/gm, '<li class="ml-4 mb-1 list-decimal text-[#cbd5e1]">$1</li>')
     .replace(/\n/g, '<br/>')
 }
 
@@ -61,7 +62,6 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
     return new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }, [message.timestamp])
 
-  // Group tool_start and tool_end for the same tool into one ToolCard
   const rawParts = isUser ? null : parseContent(message.content)
   const parts: typeof rawParts = []
   
@@ -108,56 +108,72 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
     else { notifyError(`Error creating file: ${res.error.message}`) }
   }, [rootPath, success, notifyError])
 
-  // User message
   if (isUser) {
     return (
       <motion.div 
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex flex-col items-end px-3 py-2"
+        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        className="flex flex-col items-end px-4 py-2"
       >
-        <div className="max-w-[88%] bg-[#7c3aed]/20 border border-[#7c3aed]/40 rounded-2xl rounded-tr-sm
-          px-4 py-3 text-[13px] text-[#e9d5ff] whitespace-pre-wrap break-words leading-relaxed shadow-lg shadow-[#7c3aed]/5">
+        <div className="max-w-[90%] bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] rounded-2xl rounded-tr-none
+          px-4 py-3 text-[13px] text-white whitespace-pre-wrap break-words leading-relaxed shadow-xl shadow-[#7c3aed]/10 border border-white/10">
           {message.content}
         </div>
-        <div className="flex items-center gap-3 mt-1.5 px-2 text-[10px] text-[#5a4a6a] font-bold uppercase tracking-wider">
-           <span className="flex items-center gap-1">
-             <FontAwesomeIcon icon={faClock} style={{ fontSize: 9 }} />
+        <div className="flex items-center gap-2 mt-2 px-1 text-[9px] text-[#4a3a5a] font-black uppercase tracking-[0.1em]">
+           <span className="flex items-center gap-1 opacity-60">
+             <FontAwesomeIcon icon={faClock} className="text-[8px]" />
              {timeStr}
            </span>
+           <FontAwesomeIcon icon={faCheckDouble} className="text-[#7c3aed]" />
         </div>
       </motion.div>
     )
   }
 
-  // Assistant message
   return (
-    <div className="px-3 py-4 group">
+    <div className="px-4 py-6 group relative transition-colors duration-500 hover:bg-[#1e1a24]/20">
+      
+      {/* Visual Decoration */}
+      <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-[#7c3aed]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3 ml-1">
-        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0
-          bg-gradient-to-br from-[#7c3aed] via-[#9333ea] to-[#a855f7] shadow-xl shadow-[#7c3aed]/30 border border-white/10">
-          <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 11 }} className="text-white" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-[11px] font-black text-[#a855f7] uppercase tracking-[0.1em]">Varta Intelligence</span>
-          {/* Breadcrumbs Placeholder */}
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <FontAwesomeIcon icon={faCompass} className="text-[#4a3a5a] text-[9px]" />
-            <span className="text-[9px] text-[#5a4a6a] font-bold uppercase tracking-tighter">Thinking in Context</span>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="absolute -inset-1.5 bg-gradient-to-tr from-[#7c3aed] to-[#06b6d4] rounded-xl opacity-20 blur-sm"
+          />
+          <div className="relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0
+            bg-[#1a1620] border border-[#7c3aed]/30 shadow-2xl">
+            <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 12 }} className="text-[#a855f7]" />
           </div>
         </div>
-        <button
-          onClick={() => handleCopy(message.content)}
-          className="opacity-0 group-hover:opacity-100 ml-auto w-7 h-7 rounded-lg bg-[#1e1a24] border border-[#2a1f30] text-[#5a4a6a] hover:text-[#c084fc] hover:border-[#7c3aed]/50 transition-all flex items-center justify-center"
-          title="Copy message"
-        >
-          <FontAwesomeIcon icon={faCopy} style={{ fontSize: 10 }} />
-        </button>
+        
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black text-[#f3e8ff] uppercase tracking-[0.15em]">Varta Intelligence</span>
+            <span className="px-1.5 py-0.5 rounded-md bg-[#7c3aed]/10 text-[#c084fc] text-[8px] font-bold border border-[#7c3aed]/20 uppercase">AI Assistant</span>
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <FontAwesomeIcon icon={faCompass} className="text-[#7c3aed]/50 text-[9px]" />
+            <span className="text-[9px] text-[#5a4a6a] font-bold uppercase tracking-wider">Neural Context Active</span>
+          </div>
+        </div>
+
+        <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <button
+            onClick={() => handleCopy(message.content)}
+            className="w-8 h-8 rounded-lg bg-[#1a1620] border border-[#2a1f30] text-[#5a4a6a] hover:text-[#c084fc] hover:border-[#7c3aed]/50 transition-all flex items-center justify-center"
+            title="Copy message"
+          >
+            <FontAwesomeIcon icon={faCopy} style={{ fontSize: 10 }} />
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="text-[13px] text-[#b0b0b0] space-y-4 ml-10">
+      {/* Content Area */}
+      <div className="text-[13px] text-[#cbd5e1] space-y-5 ml-12">
         <AnimatePresence mode="popLayout">
           {parts?.map((part, i) => {
             if (part.type === 'text') {
@@ -166,7 +182,7 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
                   key={i}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="leading-[1.7] font-medium"
+                  className="leading-[1.8] font-medium"
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(part.content) }} 
                 />
               )
@@ -215,38 +231,62 @@ export function AIChatMessage({ message, isStreaming }: AIChatMessageProps) {
           })}
         </AnimatePresence>
 
-        {/* Streaming cursor */}
-        {isStreaming && message.status === 'streaming' && (
+        {/* Streaming Loading State */}
+        {isStreaming && message.content.length === 0 && (
+          <div className="flex flex-col gap-3 py-2">
+            <motion.div 
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="h-3 w-3/4 bg-[#2a1f30] rounded-full" 
+            />
+            <motion.div 
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+              className="h-3 w-1/2 bg-[#2a1f30] rounded-full" 
+            />
+          </div>
+        )}
+
+        {/* Streaming Cursor */}
+        {isStreaming && message.status === 'streaming' && message.content.length > 0 && (
           <motion.span 
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
-            className="inline-block w-2 h-4 bg-[#c084fc] ml-1 align-middle rounded-sm shadow-[0_0_12px_rgba(192,132,252,0.6)]" 
+            className="inline-block w-1.5 h-4 bg-[#c084fc] ml-1 align-middle rounded-full shadow-[0_0_15px_rgba(192,132,252,0.8)]" 
           />
         )}
 
-        {/* Footer info: Time and Tokens */}
-        <div className="flex items-center gap-4 mt-2 text-[10px] text-[#4a3a5a] font-bold uppercase tracking-wider select-none border-t border-[#2a1f30]/30 pt-3">
-          <span className="flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faClock} style={{ fontSize: 9 }} />
+        {/* Footer Metrics */}
+        <div className="flex items-center gap-5 mt-4 pt-4 border-t border-[#2a1f30]/50 text-[9px] font-black uppercase tracking-[0.15em] text-[#4a3a5a]">
+          <span className="flex items-center gap-1.5 hover:text-[#7c3aed] transition-colors cursor-default">
+            <FontAwesomeIcon icon={faClock} style={{ fontSize: 8 }} />
             {timeStr}
           </span>
           {message.tokenCount && message.tokenCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[#7c3aed]/60">
-              <FontAwesomeIcon icon={faMicrochip} style={{ fontSize: 9 }} />
-              {message.tokenCount} Tokens
+            <span className="flex items-center gap-1.5 text-[#7c3aed]/80">
+              <FontAwesomeIcon icon={faMicrochip} style={{ fontSize: 8 }} />
+              {message.tokenCount} Tokens processed
             </span>
           )}
         </div>
 
-        {/* Error */}
+        {/* Error States */}
         {message.status === 'error' && (
-          <motion.p 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-[11px] font-bold text-[#f87171] bg-[#450a0a]/50 border border-[#991b1b]/50 rounded-xl px-4 py-3 shadow-xl backdrop-blur-sm"
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-4 rounded-2xl bg-red-500/5 border border-red-500/20 flex gap-3 items-start"
           >
-            ⚠ {message.errorCode ?? 'Intelligence service unreachable. Please check your connection or API key.'}
-          </motion.p>
+            <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-red-400 font-bold text-xs">!</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-red-400 uppercase tracking-wider mb-1">System Error</p>
+              <p className="text-[12px] text-red-400/80 leading-relaxed">
+                {message.errorCode ?? 'Intelligence service unreachable. Please check your connection or API key.'}
+              </p>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>

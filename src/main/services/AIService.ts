@@ -231,26 +231,55 @@ export class AIService {
     }
 
     try {
-      const response = await axios.post(
-        url,
-        {
-          model:       payload.model ?? 'moonshotai/kimi-k2.6',
-          messages,
-          tools:       tools.length > 0 ? tools : undefined,
-          max_tokens:  8192,
-          temperature: 0.6,
-          stream:      true,
-        },
-        {
-          headers: {
-            Authorization:  `Bearer ${apiKey}`,
-            Accept:         'text/event-stream',
-            'Content-Type': 'application/json',
-          },
-          responseType: 'stream',
-          timeout:      120000,
-        },
-      )
+      let response: any
+      let retries = 0
+      const maxRetries = 3
+      
+      while (retries <= maxRetries) {
+        try {
+          response = await axios.post(
+            url,
+            {
+              model:       payload.model ?? 'moonshotai/kimi-k2.6',
+              messages,
+              tools:       tools.length > 0 ? tools : undefined,
+              max_tokens:  8192,
+              temperature: 0.6,
+              stream:      true,
+            },
+            {
+              headers: {
+                Authorization:  `Bearer ${apiKey}`,
+                Accept:         'text/event-stream',
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://varta.ide', // Good practice for OpenRouter
+                'X-Title': 'Varta IDE',
+              },
+              responseType: 'stream',
+              timeout:      120000,
+            },
+          )
+          break // Success, exit retry loop
+        } catch (err: any) {
+          if (err.response?.status === 429 && retries < maxRetries) {
+            retries++
+            const delay = Math.pow(2, retries) * 1000
+            logger.warn('AIService', `Rate limited (429). Retrying in ${delay}ms... (Attempt ${retries}/${maxRetries})`)
+            
+            if (!webContents.isDestroyed()) {
+              webContents.send(AIChannel.STREAM_CHUNK, { 
+                conversationId, 
+                delta: `\n> *Rate limit reached. Retrying in ${delay/1000}s... (Attempt ${retries}/${maxRetries})*\n`, 
+                messageId: '' 
+              })
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, delay))
+            continue
+          }
+          throw err // Other error or max retries reached
+        }
+      }
 
       await new Promise<void>(async (resolve, reject) => {
         let buffer = ''
@@ -449,8 +478,14 @@ export class AIService {
 
   getModels() {
     return [
-      { id: 'openrouter/owl-alpha',   name: 'Owl Alpha (Free)',       contextWindow: 128000,  maxOutput: 16384,  description: 'Fast and free model via OpenRouter' },
+      { id: 'inclusionai/ring-2.6-1t:free', name: 'Ring 2.6 1T (Free)', contextWindow: 131072, maxOutput: 16384, description: 'Inclusion AI via OpenRouter' },
       { id: 'google/gemini-2.0-flash-lite-preview-02-05:free', name: 'Gemini 2.0 Flash Lite (Free)', contextWindow: 1000000, maxOutput: 16384, description: 'Google Gemini via OpenRouter' },
+      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)', contextWindow: 64000, maxOutput: 16384, description: 'DeepSeek Reasoning via OpenRouter' },
+      { id: 'deepseek/deepseek-v3:free', name: 'DeepSeek V3 (Free)', contextWindow: 64000, maxOutput: 16384, description: 'DeepSeek V3 via OpenRouter' },
+      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)', contextWindow: 128000, maxOutput: 16384, description: 'Meta Llama via OpenRouter' },
+      { id: 'qwen/qwen-2.5-72b-instruct:free', name: 'Qwen 2.5 72B (Free)', contextWindow: 128000, maxOutput: 16384, description: 'Alibaba Qwen via OpenRouter' },
+      { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Free)', contextWindow: 32000, maxOutput: 16384, description: 'Mistral AI via OpenRouter' },
+      { id: 'openrouter/owl-alpha',   name: 'Owl Alpha (Free)',       contextWindow: 128000,  maxOutput: 16384,  description: 'Fast and free model via OpenRouter' },
       { id: 'claude-sonnet-4-5',      name: 'Claude Sonnet 4.5',      contextWindow: 200000, maxOutput: 16384,  description: 'Best balance (Anthropic)' },
       { id: 'moonshotai/kimi-k2.6',   name: 'Kimi K2.6 (NVIDIA NIM)', contextWindow: 131072, maxOutput: 16384, description: 'Kimi K2 via NVIDIA NIM' },
       { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B',  contextWindow: 128000, maxOutput: 16384,  description: 'Meta Llama via NVIDIA NIM' },
