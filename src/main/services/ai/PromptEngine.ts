@@ -23,6 +23,7 @@ export class PromptEngine {
       '',
     ]
 
+    // 1. Active File
     if (context.activeFile) {
       lines.push('#### Active File:')
       lines.push(`Path: ${context.activeFile.path}`)
@@ -36,6 +37,18 @@ export class PromptEngine {
         lines.push('#### User Selection:')
         lines.push('```' + context.activeFile.language)
         lines.push(context.activeFile.selection)
+        lines.push('```')
+        lines.push('')
+      }
+    }
+
+    // 2. Relevant Files (Massive Context)
+    if (context.relevantFiles.length > 0) {
+      lines.push('#### Related Project Files:')
+      for (const file of context.relevantFiles) {
+        lines.push(`Path: ${file.path}`)
+        lines.push('```' + file.language)
+        lines.push(file.content)
         lines.push('```')
         lines.push('')
       }

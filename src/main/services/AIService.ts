@@ -57,7 +57,8 @@ export class AIService {
     const ideContext = await contextManager.gatherContext(
       rootPath,
       payload.context?.activeFilePath,
-      payload.context?.selectedText
+      payload.context?.selectedText,
+      payload.context?.openTabs ?? []
     )
 
     // 2. Build perfect system prompt
@@ -103,7 +104,7 @@ export class AIService {
       // 3. Stream
       const stream = await client.messages.stream({
         model:      payload.model ?? 'claude-sonnet-4-5',
-        max_tokens: 8192,
+        max_tokens: 16384,
         system:     systemPrompt,
         tools,
         messages,
