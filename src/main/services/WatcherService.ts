@@ -1,16 +1,12 @@
-import chokidar, { FSWatcher } from 'chokidar'
+import watcher, { AsyncSubscription } from '@parcel/watcher'
 import { BrowserWindow }       from 'electron'
 import { FileChannel }         from '../../shared/ipc'
-import { WatchEvent }          from '../../shared/types/file.types'
+import { WatchEvent, WatchEventType } from '../../shared/types/file.types'
 import { VartaError, VartaErrorCode } from '../../shared/errors'
 import { logger }              from '../utils/logger'
 
-const DEBOUNCE_MS = 100
-
 interface WatchEntry {
-  watcher:   FSWatcher
-  paths:     Set<string>
-  timers:    Map<string, ReturnType<typeof setTimeout>>
+  subscriptions: AsyncSubscription[]
 }
 
 export class WatcherService {
@@ -22,9 +18,10 @@ export class WatcherService {
     logger.info('WatcherService', 'Initialized')
   }
 
-  destroy(): void {
-    for (const [id] of this.watches) {
-      this.stopWatch(id).catch((e) => {
+  async destroy(): Promise<void> {
+    const ids = Array.from(this.watches.keys())
+    for (const id of ids) {
+      await this.stopWatch(id).catch((e) => {
         logger.error('WatcherService', `Error stopping watcher ${id}`, e)
       })
     }
@@ -41,44 +38,45 @@ export class WatcherService {
     }
 
     try {
-      const entry: WatchEntry = {
-        watcher: chokidar.watch(paths, {
-          persistent:        true,
-          ignoreInitial:     true,
-          followSymlinks:    false,
-          depth:             undefined,
-          awaitWriteFinish:  { stabilityThreshold: 80, pollInterval: 50 },
-          ignored: [
-            /(^|[/\\])\../,           // dotfiles
-            /node_modules/,
-            /\.git[/\\]/,
-            /dist[/\\]/,
-            /out[/\\]/,
-            /build[/\\]/,
-            /\.next[/\\]/,
-            /\.nuxt[/\\]/,
-          ],
-        }),
-        paths:  new Set(paths),
-        timers: new Map(),
-      }
+      const subscriptions: AsyncSubscription[] = []
+      
+      for (const path of paths) {
+        const subscription = await watcher.subscribe(path, (err, events) => {
+          if (err) {
+            logger.error('WatcherService', `Watcher error [${watchId}]`, err)
+            return
+          }
 
-      const emit = (type: WatchEvent['type'], filePath: string) => {
-        this.debouncedEmit(entry, watchId, type, filePath)
-      }
-
-      entry.watcher
-        .on('add',       (p) => emit('add',       p))
-        .on('change',    (p) => emit('change',    p))
-        .on('unlink',    (p) => emit('unlink',    p))
-        .on('addDir',    (p) => emit('addDir',    p))
-        .on('unlinkDir', (p) => emit('unlinkDir', p))
-        .on('error',     (err) => {
-          logger.error('WatcherService', `Watcher error [${watchId}]`, err)
+          for (const event of events) {
+            logger.debug('WatcherService', `Event detected: ${event.type} on ${event.path}`)
+            let type: WatchEventType = 'change'
+            if (event.type === 'create') type = 'add'
+            if (event.type === 'delete') type = 'unlink'
+            
+            this.pushEvent(watchId, { 
+              type, 
+              path: event.path, 
+              timestamp: Date.now() 
+            })
+          }
+        }, {
+          ignore: [
+            '.git',
+            'node_modules',
+            'dist',
+            'out',
+            'build',
+            '.next',
+            '.nuxt',
+            '.varta', // Varta internal data
+          ]
         })
+        
+        subscriptions.push(subscription)
+      }
 
-      this.watches.set(watchId, entry)
-      logger.info('WatcherService', `Started watch [${watchId}] on ${paths.join(', ')}`)
+      this.watches.set(watchId, { subscriptions })
+      logger.info('WatcherService', `Started @parcel/watcher [${watchId}] on ${paths.join(', ')}`)
     } catch (e) {
       throw new VartaError(VartaErrorCode.WATCHER_START_FAILED, `Failed to start watcher: ${watchId}`, e)
     }
@@ -90,14 +88,8 @@ export class WatcherService {
     const entry = this.watches.get(watchId)
     if (!entry) { return }
 
-    // Clear all pending debounce timers
-    for (const timer of entry.timers.values()) {
-      clearTimeout(timer)
-    }
-    entry.timers.clear()
-
     try {
-      await entry.watcher.close()
+      await Promise.all(entry.subscriptions.map(s => s.unsubscribe()))
     } catch (e) {
       throw new VartaError(VartaErrorCode.WATCHER_STOP_FAILED, `Failed to stop watcher: ${watchId}`, e)
     } finally {
@@ -108,27 +100,6 @@ export class WatcherService {
 
   isWatching(watchId: string): boolean {
     return this.watches.has(watchId)
-  }
-
-  // ── Debounced emit ────────────────────────────────────────────────────────
-
-  private debouncedEmit(
-    entry:   WatchEntry,
-    watchId: string,
-    type:    WatchEvent['type'],
-    filePath: string,
-  ): void {
-    const key = `${type}:${filePath}`
-
-    const existing = entry.timers.get(key)
-    if (existing) { clearTimeout(existing) }
-
-    const timer = setTimeout(() => {
-      entry.timers.delete(key)
-      this.pushEvent(watchId, { type, path: filePath, timestamp: Date.now() })
-    }, DEBOUNCE_MS)
-
-    entry.timers.set(key, timer)
   }
 
   private pushEvent(watchId: string, event: WatchEvent): void {

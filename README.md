@@ -48,7 +48,7 @@ The app window opens automatically. See [Installation](docs/getting-started/inst
 | Terminal renderer | [xterm.js](https://xtermjs.org) |
 | Terminal PTY | [node-pty](https://github.com/microsoft/node-pty) |
 | Git operations | [simple-git](https://github.com/steveukx/git-js) |
-| File watching | [chokidar](https://github.com/paulmillr/chokidar) |
+| File watching | [@parcel/watcher](https://github.com/parcel-bundler/watcher) |
 | Settings storage | [electron-store](https://github.com/sindresorhus/electron-store) |
 | AI provider | [Anthropic Claude](https://anthropic.com) |
 | Packaging | [electron-builder](https://www.electron.build) |

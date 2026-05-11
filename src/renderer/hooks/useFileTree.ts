@@ -7,15 +7,21 @@ import { detectLanguage }       from '../../shared/constants/languages'
 import { isIPCSuccess }         from '../../shared/ipc'
 import type { FileTreeNode }    from '../../shared/types/file.types'
 
+/** Path normalization for consistent comparison across OS */
+function normalize(p: string): string {
+  if (!p) return ''
+  return p.replace(/\\/g, '/').replace(/\/$/, '')
+}
+
 function dirname(p: string): string {
-  const norm  = p.replace(/\\/g, '/')
+  const norm  = normalize(p)
   const parts = norm.split('/')
   parts.pop()
   return parts.join('/') || '/'
 }
 
 function basename(p: string): string {
-  return p.replace(/\\/g, '/').split('/').pop() ?? p
+  return normalize(p).split('/').pop() ?? p
 }
 
 // Module-level watcher cleanup (survives re-renders)
@@ -78,11 +84,10 @@ export function useFileTree() {
       const res = await window.varta.fs.readDir({
         path:       folderPath,
         recursive:  false,
-        showHidden: true,   // show dotfiles
+        showHidden: true,
       })
       if (!isIPCSuccess(res)) { return }
 
-      // Patch the children into the existing nodes tree
       const { nodes, setNodes } = storeRef.current
       const patched = patchChildren(nodes, folderPath, res.data)
       setNodes(patched)
@@ -109,7 +114,6 @@ export function useFileTree() {
     const isExpanded = expandedPaths.has(folderPath)
 
     if (!isExpanded) {
-      // Check if children already loaded
       const node = findNode(nodes, folderPath)
       if (!node?.children || node.children.length === 0) {
         await loadChildren(folderPath)
@@ -124,35 +128,35 @@ export function useFileTree() {
     const { rootPath } = storeRef.current
     if (!rootPath) { return }
 
-    // Root level reload
-    if (folderPath === rootPath) {
-      await loadDir(rootPath)
+    // Normalize both for accurate comparison
+    const normTarget = normalize(folderPath)
+    const normRoot   = normalize(rootPath)
+
+    if (normTarget === normRoot) {
+      await loadDir(rootPath, true) // Silent refresh for root
       return
     }
 
-    // Always read fresh nodes from store at call time
-    const { expandedPaths } = storeRef.current
+    const { expandedPaths, nodes } = storeRef.current
+    
+    // Only refresh if the folder is expanded or it's a known path
+    const isExpanded = Array.from(expandedPaths).some(p => normalize(p) === normTarget)
 
-    if (!expandedPaths.has(folderPath)) {
-      // Not expanded — just clear children so next expand reloads fresh
-      storeRef.current.setNodes(
-        patchChildren(storeRef.current.nodes, folderPath, [])
-      )
+    if (!isExpanded) {
+      // If not expanded, we still patch with empty to force reload on next expand
+      storeRef.current.setNodes(patchChildren(nodes, folderPath, []))
       return
     }
 
-    // Expanded — reload children surgically
     try {
       const res = await window.varta.fs.readDir({
         path:       folderPath,
         recursive:  false,
         showHidden: true,
       })
-      if (!isIPCSuccess(res)) { return }
-      // Read nodes AGAIN after async — they may have changed
-      storeRef.current.setNodes(
-        patchChildren(storeRef.current.nodes, folderPath, res.data)
-      )
+      if (isIPCSuccess(res)) {
+        storeRef.current.setNodes(patchChildren(storeRef.current.nodes, folderPath, res.data))
+      }
     } catch { /* ignore */ }
   }, [loadDir])
 
@@ -162,8 +166,7 @@ export function useFileTree() {
     const { tabs, addTab } = tabStoreRef.current
     const { openTab }      = edStoreRef.current
 
-    // Already open → just activate
-    const existing = tabs.find((t) => t.filePath === filePath)
+    const existing = tabs.find((t) => normalize(t.filePath) === normalize(filePath))
     if (existing) {
       addTab(existing)
       storeRef.current.setSelected(filePath)
@@ -201,7 +204,7 @@ export function useFileTree() {
   // ── Create file ───────────────────────────────────────────────────────────
 
   const createFile = useCallback(async (parentPath: string, name: string) => {
-    const filePath = `${parentPath.replace(/\\/g, '/')}/${name}`
+    const filePath = `${normalize(parentPath)}/${name}`
     const res = await window.varta.fs.writeFile({ path: filePath, content: '', createDirs: false })
     if (isIPCSuccess(res)) {
       await refreshNode(parentPath)
@@ -214,7 +217,7 @@ export function useFileTree() {
   // ── Create folder ─────────────────────────────────────────────────────────
 
   const createFolder = useCallback(async (parentPath: string, name: string) => {
-    const folderPath = `${parentPath.replace(/\\/g, '/')}/${name}`
+    const folderPath = `${normalize(parentPath)}/${name}`
     const res = await window.varta.fs.createDir(folderPath)
     if (isIPCSuccess(res)) {
       await refreshNode(parentPath)
@@ -240,7 +243,7 @@ export function useFileTree() {
     if (isIPCSuccess(res)) {
       await refreshNode(dirname(itemPath))
       const { tabs, removeTab } = tabStoreRef.current
-      const affected = tabs.find((t) => t.filePath === itemPath || t.filePath.startsWith(itemPath + '/'))
+      const affected = tabs.find((t) => normalize(t.filePath).startsWith(normalize(itemPath)))
       if (affected) { removeTab(affected.id) }
     } else {
       notifyRef.current({ type: 'error', message: `Failed to delete: ${res.error.message}` })
@@ -256,7 +259,7 @@ export function useFileTree() {
     if (isIPCSuccess(res)) {
       await refreshNode(parent)
       const { tabs, removeTab } = tabStoreRef.current
-      const affected = tabs.find((t) => t.filePath === oldPath)
+      const affected = tabs.find((t) => normalize(t.filePath) === normalize(oldPath))
       if (affected) {
         removeTab(affected.id)
         await openFile(newPath, false)
@@ -270,16 +273,15 @@ export function useFileTree() {
 
   const moveItem = useCallback(async (sourcePath: string, targetDirPath: string) => {
     const name    = basename(sourcePath)
-    const newPath = `${targetDirPath.replace(/\\/g, '/')}/${name}`
-    if (newPath === sourcePath.replace(/\\/g, '/')) { return }
+    const newPath = `${normalize(targetDirPath)}/${name}`
+    if (normalize(newPath) === normalize(sourcePath)) { return }
 
     const res = await window.varta.fs.renameFile({ oldPath: sourcePath, newPath })
     if (isIPCSuccess(res)) {
-      // Reload root + all expanded folders immediately (silent — no loading flash)
       const { rootPath, expandedPaths } = storeRef.current
       if (rootPath) {
         await loadDir(rootPath, true)
-        const dirs = Array.from(expandedPaths).filter(p => p !== rootPath)
+        const dirs = Array.from(expandedPaths).filter(p => normalize(p) !== normalize(rootPath))
         await Promise.all(dirs.map(async (dir) => {
           const r = await window.varta.fs.readDir({ path: dir, recursive: false, showHidden: true }).catch(() => null)
           if (r && isIPCSuccess(r)) {
@@ -287,16 +289,11 @@ export function useFileTree() {
           }
         }))
       }
-      // Update open tab
       const { tabs, removeTab } = tabStoreRef.current
-      const affected = tabs.find((t) =>
-        t.filePath === sourcePath ||
-        t.filePath.startsWith(sourcePath + '/') ||
-        t.filePath.startsWith(sourcePath + '\\')
-      )
+      const affected = tabs.find((t) => normalize(t.filePath).startsWith(normalize(sourcePath)))
       if (affected) {
         removeTab(affected.id)
-        if (affected.filePath === sourcePath) { await openFile(newPath, false) }
+        if (normalize(affected.filePath) === normalize(sourcePath)) { await openFile(newPath, false) }
       }
     } else {
       notifyRef.current({ type: 'error', message: `Move failed: ${res.error.message}` })
@@ -307,6 +304,8 @@ export function useFileTree() {
   const refreshNodeRef = useRef(refreshNode)
   refreshNodeRef.current = refreshNode
 
+  // ── Setup Watcher — connects to main process ─────────────────────────────
+
   const setupWatcher = useCallback((folderPath: string) => {
     if (watchCleanup) { watchCleanup(); watchCleanup = null }
 
@@ -315,7 +314,7 @@ export function useFileTree() {
 
     const offWatch = window.varta.fs.onWatchEvent((_id, event) => {
       if (_id !== watchId) { return }
-      if (event.type === 'change') { return }  // content change, not structural
+      if (event.type === 'change') { return } 
 
       const parentDir = dirname(event.path)
       refreshNodeRef.current(parentDir)
@@ -325,7 +324,14 @@ export function useFileTree() {
       offWatch()
       window.varta.fs.stopWatch(watchId).catch(() => {})
     }
-  }, [])  // no deps — uses ref
+  }, [])
+
+  useEffect(() => {
+    const { rootPath } = storeRef.current
+    if (rootPath) {
+      setupWatcher(rootPath)
+    }
+  }, [setupWatcher])
 
   // ── Collapse all ──────────────────────────────────────────────────────────
 
@@ -337,28 +343,42 @@ export function useFileTree() {
     if (rootPath) { storeRef.current.setExpanded(rootPath, true) }
   }, [])
 
-  // ── Auto-refresh every 2 seconds — silent, no loading flash ─────────────
+  // ── Auto-refresh — atomic update only if changed ──────────────────────────
 
   useEffect(() => {
     const timer = setInterval(async () => {
       const { rootPath, expandedPaths } = storeRef.current
-      if (!rootPath) { return }
+      if (!rootPath || !document.hasFocus()) { return }
 
-      // Silent reload — no setLoading, no blink
-      await loadDir(rootPath, true)
+      const currentNodes = storeRef.current.nodes
+      const rootRes = await window.varta.fs.readDir({
+        path: rootPath,
+        recursive: false,
+        showHidden: true,
+      }).catch(() => null)
 
-      const dirs = Array.from(expandedPaths).filter(p => p !== rootPath)
-      for (const dir of dirs) {
-        const r = await window.varta.fs.readDir({ path: dir, recursive: false, showHidden: true }).catch(() => null)
-        if (r && isIPCSuccess(r)) {
-          storeRef.current.setNodes(patchChildren(storeRef.current.nodes, dir, r.data))
+      if (rootRes && isIPCSuccess(rootRes)) {
+        let updatedNodes = rootRes.data.map(newNode => {
+          if (newNode.type !== 'directory') return newNode
+          const old = findNode(currentNodes, newNode.path)
+          return old?.children ? { ...newNode, children: old.children } : newNode
+        })
+
+        const dirs = Array.from(expandedPaths).filter(p => normalize(p) !== normalize(rootPath))
+        for (const dir of dirs) {
+          const r = await window.varta.fs.readDir({ path: dir, recursive: false, showHidden: true }).catch(() => null)
+          if (r && isIPCSuccess(r)) {
+            updatedNodes = patchChildren(updatedNodes, dir, r.data)
+          }
+        }
+
+        if (JSON.stringify(updatedNodes) !== JSON.stringify(currentNodes)) {
+          storeRef.current.setNodes(updatedNodes)
         }
       }
     }, 2000)
     return () => clearInterval(timer)
   }, [])
-
-  // ── Cleanup on unmount ────────────────────────────────────────────────────
 
   useEffect(() => {
     return () => {
@@ -375,10 +395,10 @@ export function useFileTree() {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/** Recursively find a node by path */
 function findNode(nodes: FileTreeNode[], targetPath: string): FileTreeNode | null {
+  const normTarget = normalize(targetPath)
   for (const n of nodes) {
-    if (n.path === targetPath) { return n }
+    if (normalize(n.path) === normTarget) { return n }
     if (n.children) {
       const found = findNode(n.children, targetPath)
       if (found) { return found }
@@ -387,14 +407,14 @@ function findNode(nodes: FileTreeNode[], targetPath: string): FileTreeNode | nul
   return null
 }
 
-/** Return a new nodes array with children patched at the given path */
 function patchChildren(
   nodes:      FileTreeNode[],
   targetPath: string,
   children:   FileTreeNode[],
 ): FileTreeNode[] {
+  const normTarget = normalize(targetPath)
   return nodes.map((n) => {
-    if (n.path === targetPath) {
+    if (normalize(n.path) === normTarget) {
       return { ...n, children }
     }
     if (n.children) {

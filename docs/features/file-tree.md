@@ -164,14 +164,14 @@ Type the filename and press `Enter`. Press `Escape` to cancel. The new file is c
 
 ## File Watcher Integration
 
-The file tree stays in sync with the filesystem via `WatcherService` (chokidar):
+The file tree stays in sync with the filesystem via `WatcherService` (@parcel/watcher):
 
 - **File added** — New node appears in the tree
 - **File deleted** — Node is removed; if the file was open in a tab, the tab shows a "file deleted" state
 - **File renamed** — Node updates in place
 - **Directory added/removed** — Parent node refreshes its children
 
-Events are debounced by 100ms to avoid flooding the renderer during bulk operations like `git checkout` or `npm install`.
+Events are automatically batched by the native watcher for maximum performance.
 
 ## Drag and Drop
 

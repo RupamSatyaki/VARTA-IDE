@@ -208,12 +208,13 @@ When any setting changes, `SettingsService` pushes the full settings object to t
 
 `src/main/services/WatcherService.ts`
 
-Uses `chokidar` to watch the open project directory:
+Uses `@parcel/watcher` to watch the open project directory:
 
-- Watches for `add`, `change`, `unlink`, `addDir`, `unlinkDir` events
-- Debounces events by 100ms to avoid flooding the renderer during bulk operations (e.g., `git checkout`)
+- Watches for `add`, `change`, and `unlink` events
+- Highly performant: uses native OS APIs via a C++ core, making it suitable for large monorepos
+- Automatically batches events efficiently, reducing IPC overhead
 - Pushes `FileChannel.WATCH_EVENT` to the renderer with the event type and path
-- Stops watching when a new folder is opened
+- Stops watching when a new folder is opened or the app is destroyed
 
 ### ExtensionService
 

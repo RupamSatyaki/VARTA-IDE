@@ -34,7 +34,7 @@ Varta IDE is built on Electron's two-process model. Understanding the separation
 │    AIService        — Anthropic API calls                       │
 │    SearchService    — async file content search                 │
 │    SettingsService  — electron-store persistence                │
-│    WatcherService   — chokidar file system watcher              │
+│    WatcherService   — @parcel/watcher file system watcher              │
 │    ExtensionService — extension loading (v2)                    │
 │                                                                 │
 │  Logger  ──►  log files on disk                                 │
@@ -50,7 +50,7 @@ The main process runs in Node.js with full system access. It owns:
 - **Terminal PTY** — `TerminalService` creates and manages `node-pty` pseudo-terminals. PTY data streams to the renderer via push IPC events.
 - **AI API calls** — `AIService` makes HTTPS requests to the Anthropic API. The API key lives only in the main process and is never sent to the renderer.
 - **Settings persistence** — `SettingsService` reads and writes `varta-settings.json` via `electron-store`. Settings changes are pushed to the renderer.
-- **File watching** — `WatcherService` uses `chokidar` to watch the open project directory and pushes change events to the renderer.
+- **File watching** — `WatcherService` uses `@parcel/watcher` to watch the open project directory and pushes change events to the renderer.
 - **Window management** — `WindowManager` creates the `BrowserWindow`, persists window size/position, and handles single-instance lock.
 
 ## Renderer Process Responsibilities
