@@ -19,11 +19,17 @@ function isNvidiaEndpoint(baseUrl?: string): boolean {
 
 function isOpenAICompatible(baseUrl?: string): boolean {
   if (!baseUrl?.trim()) { return false }
-  // Anthropic's own domain → use Anthropic SDK
   if (baseUrl.includes('anthropic.com')) { return false }
-  // Everything else with a custom baseUrl → treat as OpenAI-compatible
   return true
 }
+
+// OpenRouter model — has '/' and not claude-* or NVIDIA
+function isOpenRouterModel(modelId: string): boolean {
+  return modelId.includes('/') && !modelId.startsWith('claude-')
+}
+
+// OpenRouter base URL
+const OPENROUTER_BASE = 'https://openrouter.ai/api/v1'
 
 export class AIService {
   private mainWindow:    BrowserWindow | null = null
@@ -65,6 +71,13 @@ export class AIService {
     const systemPrompt = promptEngine.buildSystemPrompt(ideContext)
     
     // 3. Delegate to specific provider
+    const modelId = payload.model ?? 'openrouter/owl-alpha'
+
+    // OpenRouter free models — route to OpenRouter even without custom baseUrl
+    if (isOpenRouterModel(modelId) && !isOpenAICompatible(baseUrl)) {
+      return this.sendMessageOpenAI(payload, apiKey, webContents, systemPrompt, OPENROUTER_BASE)
+    }
+
     if (isOpenAICompatible(baseUrl)) {
       return this.sendMessageOpenAI(payload, apiKey, webContents, systemPrompt, baseUrl!)
     }
@@ -477,19 +490,8 @@ export class AIService {
   }
 
   getModels() {
-    return [
-      { id: 'inclusionai/ring-2.6-1t:free', name: 'Ring 2.6 1T (Free)', contextWindow: 131072, maxOutput: 16384, description: 'Inclusion AI via OpenRouter' },
-      { id: 'google/gemini-2.0-flash-lite-preview-02-05:free', name: 'Gemini 2.0 Flash Lite (Free)', contextWindow: 1000000, maxOutput: 16384, description: 'Google Gemini via OpenRouter' },
-      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)', contextWindow: 64000, maxOutput: 16384, description: 'DeepSeek Reasoning via OpenRouter' },
-      { id: 'deepseek/deepseek-v3:free', name: 'DeepSeek V3 (Free)', contextWindow: 64000, maxOutput: 16384, description: 'DeepSeek V3 via OpenRouter' },
-      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)', contextWindow: 128000, maxOutput: 16384, description: 'Meta Llama via OpenRouter' },
-      { id: 'qwen/qwen-2.5-72b-instruct:free', name: 'Qwen 2.5 72B (Free)', contextWindow: 128000, maxOutput: 16384, description: 'Alibaba Qwen via OpenRouter' },
-      { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Free)', contextWindow: 32000, maxOutput: 16384, description: 'Mistral AI via OpenRouter' },
-      { id: 'openrouter/owl-alpha',   name: 'Owl Alpha (Free)',       contextWindow: 128000,  maxOutput: 16384,  description: 'Fast and free model via OpenRouter' },
-      { id: 'claude-sonnet-4-5',      name: 'Claude Sonnet 4.5',      contextWindow: 200000, maxOutput: 16384,  description: 'Best balance (Anthropic)' },
-      { id: 'moonshotai/kimi-k2.6',   name: 'Kimi K2.6 (NVIDIA NIM)', contextWindow: 131072, maxOutput: 16384, description: 'Kimi K2 via NVIDIA NIM' },
-      { id: 'meta/llama-3.1-405b-instruct', name: 'Llama 3.1 405B',  contextWindow: 128000, maxOutput: 16384,  description: 'Meta Llama via NVIDIA NIM' },
-    ]
+    const { CLAUDE_MODELS } = require('../../shared/types/ai.types')
+    return CLAUDE_MODELS
   }
 }
 
