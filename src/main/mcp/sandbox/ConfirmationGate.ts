@@ -11,13 +11,6 @@ export class ConfirmationGate {
   static async confirm(message: string, detail?: string): Promise<boolean> {
     logger.info('ConfirmationGate', `Requesting confirmation: ${message}`)
     
-    // In a real implementation, this would show a dialog in the renderer.
-    // For now, we'll use the existing dialog service or send an IPC message.
-    
-    // Let's use windowManager to send a request and wait for a reply.
-    // However, since we don't have a generic "request from renderer" yet,
-    // we'll assume a specific channel for MCP confirmations.
-    
     return new Promise((resolve) => {
       // Use a unique ID for this request
       const requestId = Math.random().toString(36).substring(7)
@@ -40,11 +33,11 @@ export class ConfirmationGate {
         replyChannel
       })
       
-      // Safety timeout
+      // Safety timeout: auto-reject if no response after 5 minutes
       setTimeout(() => {
         ipcMain.removeListener(replyChannel, handler)
         resolve(false)
-      }, 60000)
+      }, 300000)
     })
   }
 }

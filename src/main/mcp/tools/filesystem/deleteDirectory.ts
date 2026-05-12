@@ -7,6 +7,7 @@ export const deleteDirectory: MCPToolHandler = {
   definition: {
     name: 'delete_directory',
     description: 'Deletes a directory and its contents.',
+    dangerous: true,
     inputSchema: {
       type: 'object',
       properties: {

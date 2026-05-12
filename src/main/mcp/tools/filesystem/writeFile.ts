@@ -7,6 +7,7 @@ export const writeFile: MCPToolHandler = {
   definition: {
     name: 'write_file',
     description: 'Writes content to an existing file or overwrites it. Use this for modifying code.',
+    dangerous: true,
     inputSchema: {
       type: 'object',
       properties: {

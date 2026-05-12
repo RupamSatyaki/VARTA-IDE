@@ -3,6 +3,7 @@ import { AIChatToolbar }  from './AIChatToolbar'
 import { MessageList }    from './Chat/MessageList'
 import { ChatInput }       from './Input/ChatInput'
 import { APIKeyPrompt }   from './APIKeyPrompt'
+import { AIWelcome }      from './AIWelcome'
 import { useAIStore }     from '../../store/aiStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useAI }          from '../../hooks/useAI'
@@ -14,18 +15,33 @@ export function AIChatPanel() {
     activeConversationId, 
     createConversation, 
     isStreaming,
-    addContextItem
+    addContextItem,
+    autoGrant,
+    setPendingConfirmation
   } = useAIStore()
   const { settings } = useSettingsStore()
   const { sendMessage, cancelStream } = useAI()
 
   useEffect(() => {
+    // Listen for MCP tool confirmations
+    const unlisten = window.varta.mcp.onConfirmRequest((data) => {
+      if (autoGrant) {
+        window.varta.mcp.confirmReply(data.replyChannel, true)
+      } else {
+        setPendingConfirmation(data)
+      }
+    })
+    return () => unlisten()
+  }, [autoGrant, setPendingConfirmation])
+
+  useEffect(() => {
     if (!hasApiKey) { return }
-    if (!activeConversationId || !conversations.has(activeConversationId)) {
+    const exists = activeConversationId && conversations.has(activeConversationId)
+    if (!exists) {
       const id = `conv-${Date.now()}`
       createConversation(id, settings.ai.model)
     }
-  }, [hasApiKey, activeConversationId, conversations, createConversation, settings.ai.model])
+  }, [hasApiKey, activeConversationId, conversations.size, createConversation, settings.ai.model])
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -54,9 +70,10 @@ export function AIChatPanel() {
   }, [addContextItem])
 
   const handleSend = useCallback((text: string) => {
-    if (!activeConversationId) { return }
-    sendMessage(text, activeConversationId)
-  }, [activeConversationId, sendMessage])
+    const currentId = useAIStore.getState().activeConversationId
+    if (!currentId) return
+    sendMessage(text, currentId)
+  }, [sendMessage])
 
   const handleNewChat = useCallback(() => {
     const id = `conv-${Date.now()}`
@@ -64,17 +81,18 @@ export function AIChatPanel() {
   }, [createConversation, settings.ai.model])
 
   const handleClearChat = useCallback(() => {
-    if (!activeConversationId) { return }
+    const currentId = useAIStore.getState().activeConversationId
+    if (!currentId) return
     useAIStore.setState((s) => {
-      const conv = s.conversations.get(activeConversationId)
+      const conv = s.conversations.get(currentId)
       if (conv) {
         const next = new Map(s.conversations)
-        next.set(activeConversationId, { ...conv, messages: [] })
+        next.set(currentId, { ...conv, messages: [] })
         return { conversations: next }
       }
       return s
     })
-  }, [activeConversationId])
+  }, [])
 
   if (!hasApiKey) {
     return (
@@ -89,13 +107,20 @@ export function AIChatPanel() {
     )
   }
 
+  const currentConv = activeConversationId ? conversations.get(activeConversationId) : null
+  const hasMessages = currentConv && currentConv.messages.length > 0
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#1a1620] shadow-2xl">
       <AIChatToolbar onNewChat={handleNewChat} onClearChat={handleClearChat} />
 
-      {activeConversationId && (
-        <MessageList conversationId={activeConversationId} onQuickAction={handleSend} />
-      )}
+      <div className="flex-1 overflow-hidden">
+        {hasMessages ? (
+          <MessageList conversationId={activeConversationId!} onQuickAction={handleSend} />
+        ) : (
+          <AIWelcome onQuickAction={handleSend} />
+        )}
+      </div>
 
       <ChatInput
         onSend={handleSend}

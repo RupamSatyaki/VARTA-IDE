@@ -15,7 +15,7 @@ export interface ChatInputProps {
 export function ChatInput({ onSend, onCancel, isStreaming, disabled }: ChatInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { currentContext, removeContextItem } = useAIStore()
+  const { currentContext, removeContextItem, pendingConfirmation, setPendingConfirmation, autoGrant, setAutoGrant } = useAIStore()
 
   useEffect(() => {
     const el = textareaRef.current
@@ -41,10 +41,53 @@ export function ChatInput({ onSend, onCancel, isStreaming, disabled }: ChatInput
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }, [text, onSend])
 
+  const handleConfirm = (approved: boolean) => {
+    if (pendingConfirmation) {
+      window.varta.mcp.confirmReply(pendingConfirmation.replyChannel, approved)
+      setPendingConfirmation(null)
+    }
+  }
+
   return (
     <div className="relative border-t border-[#2a1f30] bg-[#1a1620]/80 backdrop-blur-xl px-4 py-4 space-y-3 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
       
-      {/* Suggestions / Prompt Pills (Optional, can be added here) */}
+      {/* Confirmation Tab */}
+      <AnimatePresence>
+        {pendingConfirmation && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute left-4 right-4 bottom-[calc(100%+10px)] z-50 bg-[#28242e] border border-[#7c3aed]/30 rounded-xl p-3 shadow-2xl backdrop-blur-md"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#7c3aed]/20 flex items-center justify-center shrink-0">
+                <FontAwesomeIcon icon={faMicrochip} className="text-[#c084fc] text-sm" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-[11px] font-bold text-[#f3e8ff] mb-1">Permission Required</h4>
+                <p className="text-[10px] text-[#9a8aa5] leading-relaxed mb-3">
+                  {pendingConfirmation.message}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleConfirm(true)}
+                    className="px-3 py-1.5 rounded-lg bg-[#7c3aed] hover:bg-[#8b5cf6] text-white text-[10px] font-bold transition-all shadow-lg shadow-[#7c3aed]/20"
+                  >
+                    Allow
+                  </button>
+                  <button
+                    onClick={() => handleConfirm(false)}
+                    className="px-3 py-1.5 rounded-lg bg-[#3a2f45] hover:bg-[#4a3a5a] text-[#f3e8ff] text-[10px] font-bold transition-all"
+                  >
+                    Deny
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Context Chips */}
       <AnimatePresence mode="popLayout">
@@ -121,9 +164,24 @@ export function ChatInput({ onSend, onCancel, isStreaming, disabled }: ChatInput
             <button className="text-[#4a3a5a] hover:text-[#c084fc] transition-colors p-1.5 hover:bg-[#c084fc]/10 rounded-lg">
               <FontAwesomeIcon icon={faPaperclip} className="text-[12px]" />
             </button>
-            <button className="text-[#4a3a5a] hover:text-[#c084fc] transition-colors p-1.5 hover:bg-[#c084fc]/10 rounded-lg">
-              <FontAwesomeIcon icon={faMicrochip} className="text-[12px]" />
-            </button>
+            
+            {/* Permission Toggle */}
+            <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[#0d0b12] border border-[#2a1f30] hover:border-[#7c3aed]/30 transition-all">
+              <span className="text-[9px] font-bold text-[#6e5a7a] uppercase tracking-wider">Grant</span>
+              <button 
+                onClick={() => setAutoGrant(!autoGrant)}
+                className={cn(
+                  'w-7 h-3.5 rounded-full relative transition-colors duration-200 outline-none',
+                  autoGrant ? 'bg-[#7c3aed]' : 'bg-[#1a1620]'
+                )}
+              >
+                <div className={cn(
+                  'absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-white transition-transform duration-200',
+                  autoGrant ? 'translate-x-3.5' : 'translate-x-0'
+                )} />
+              </button>
+            </div>
+
             <div className="h-4 w-[1px] bg-[#2a1f30] mx-1" />
             <span className="text-[9px] font-bold text-[#4a3a5a] uppercase tracking-widest">
               {text.length} chars

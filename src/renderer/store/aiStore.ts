@@ -9,6 +9,13 @@ export interface AIContextItem {
   id: string
 }
 
+export interface MCPConfirmation {
+  requestId: string
+  message: string
+  detail?: string
+  replyChannel: string
+}
+
 export interface AIState {
   conversations:           Map<string, AIConversation>
   activeConversationId:    string | null
@@ -16,6 +23,8 @@ export interface AIState {
   streamingConversationId: string | null
   hasApiKey:               boolean
   currentContext:          AIContextItem[]
+  pendingConfirmation:     MCPConfirmation | null
+  autoGrant:               boolean
 }
 
 export interface AIActions {
@@ -30,6 +39,8 @@ export interface AIActions {
   removeContextItem:     (id: string) => void
   clearContext:          () => void
   reset:                 () => void
+  setPendingConfirmation: (conf: MCPConfirmation | null) => void
+  setAutoGrant:          (v: boolean) => void
 }
 
 export const useAIStore = create<AIState & AIActions>()((set, get) => ({
@@ -39,6 +50,8 @@ export const useAIStore = create<AIState & AIActions>()((set, get) => ({
   streamingConversationId: null,
   hasApiKey:               false,
   currentContext:          [],
+  pendingConfirmation:     null,
+  autoGrant:               false,
 
   createConversation: (id, model) => {
     const next = new Map(get().conversations)
@@ -121,12 +134,18 @@ export const useAIStore = create<AIState & AIActions>()((set, get) => ({
 
   clearContext: () => set({ currentContext: [] }),
 
+  setPendingConfirmation: (conf) => set({ pendingConfirmation: conf }),
+
+  setAutoGrant: (v) => set({ autoGrant: v }),
+
   reset:        ()  => set({ 
     conversations: new Map(), 
     activeConversationId: null, 
     isStreaming: false, 
     streamingConversationId: null, 
     hasApiKey: false,
-    currentContext: []
+    currentContext: [],
+    pendingConfirmation: null,
+    autoGrant: false
   }),
 }))

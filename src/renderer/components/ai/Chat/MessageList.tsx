@@ -21,13 +21,13 @@ export function MessageList({ conversationId, onQuickAction }: MessageListProps)
   }, [conversation?.messages.length, isStreaming])
 
   if (!conversation || conversation.messages.length === 0) {
-    return <AIWelcome onQuickAction={onQuickAction} />
+    return null
   }
 
   return (
     <div 
       ref={scrollRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-[#3a2f45] scroll-smooth"
+      className="flex-1 h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-[#3a2f45] scroll-smooth"
     >
       <div className="flex flex-col py-4">
         <AnimatePresence initial={false}>

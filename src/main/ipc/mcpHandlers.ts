@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { toolRegistry } from '../mcp/registry/ToolRegistry'
+import { MCPHistory } from '../mcp/history/MCPHistory'
 import { logger } from '../utils/logger'
 
 export function registerMCPHandlers(): void {
@@ -30,9 +31,26 @@ export function registerMCPHandlers(): void {
       }
     }
   })
+
+  // Undo last destructive operation
+  ipcMain.handle('mcp:undo', async () => {
+    try {
+      return await MCPHistory.undoLast()
+    } catch (error: any) {
+      logger.error('MCP:IPC', 'Undo failed', error)
+      return false
+    }
+  })
+
+  // Get tool execution history
+  ipcMain.handle('mcp:get-history', async () => {
+    return MCPHistory.getHistory()
+  })
 }
 
 export function removeMCPHandlers(): void {
   ipcMain.removeHandler('mcp:list-tools')
   ipcMain.removeHandler('mcp:call-tool')
+  ipcMain.removeHandler('mcp:undo')
+  ipcMain.removeHandler('mcp:get-history')
 }
