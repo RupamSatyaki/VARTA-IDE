@@ -263,6 +263,9 @@ export function CodeCanvas({
     // 2. Swap model only if different
     if (editor.getModel()?.uri.toString() !== uri.toString()) {
       editor.setModel(model)
+    } else if (content && editor.getModel()?.getValue() === '') {
+      // If same model but it's empty and we have content (e.g. restoration finished)
+      editor.getModel()?.setValue(content)
     }
 
     // 3. Restore cursor state for the new tab

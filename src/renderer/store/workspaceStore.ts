@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { useUIStore } from './uiStore'
 import { useTabStore } from './tabStore'
+import { useEditorStore } from './editorStore'
 import { useFileTreeStore } from './fileTreeStore'
 import { isIPCSuccess } from '../../shared/ipc'
 import { WorkspaceSession, WorkspaceLayout, WorkspaceTabs, WorkspaceExplorer } from '../../shared/types/workspace.types'
@@ -72,11 +73,44 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
       // 3. Restore Tabs
       if (session.tabs) {
         const tabs = useTabStore.getState()
-        tabs.reset()
-        session.tabs.tabs.forEach(t => tabs.addTab(t))
-        if (session.tabs.activeTabId) {
-          tabs.setActive(session.tabs.activeTabId)
+        const editor = useEditorStore.getState()
+        const { contentCache } = await import('../hooks/useEditor')
+        
+        // 1. Prepare contents for the active tab first (high priority)
+        const activeTabId = session.tabs.activeTabId
+        const activeTab = session.tabs.tabs.find(t => t.id === activeTabId)
+        
+        if (activeTab && activeTab.filePath !== 'untitled') {
+          const res = await window.varta.fs.readFile(activeTab.filePath)
+          if (isIPCSuccess(res)) {
+            contentCache.set(activeTab.id, res.data.content)
+          }
         }
+
+        // 2. Now populate stores (this will trigger UI updates)
+        tabs.reset()
+        editor.reset()
+        
+        session.tabs.tabs.forEach(t => {
+          tabs.addTab(t)
+          editor.openTab(t)
+        })
+        
+        // 3. Set the active tab explicitly
+        if (activeTabId) {
+          tabs.setActive(activeTabId)
+          editor.setActiveTab(activeTabId)
+        }
+
+        // 4. Background load remaining tabs
+        session.tabs.tabs.forEach(async (t) => {
+          if (t.id === activeTabId || t.filePath === 'untitled') return
+          const res = await window.varta.fs.readFile(t.filePath)
+          if (isIPCSuccess(res)) {
+            contentCache.set(t.id, res.data.content)
+            // CodeCanvas useEffect will pick this up if the tab is already visible
+          }
+        })
       }
 
       // 4. Restore Explorer (Expanded Paths)
