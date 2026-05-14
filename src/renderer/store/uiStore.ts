@@ -7,6 +7,7 @@ export type BottomPanel  = 'terminal' | 'problems' | 'output' | 'debug'
 export interface UIState {
   sidebarWidth:           number
   panelHeight:            number
+  secondarySidebarWidth:  number
   sidebarVisible:         boolean
   panelVisible:           boolean
   secondarySidebarVisible: boolean
@@ -21,6 +22,7 @@ export interface UIState {
 export interface UIActions {
   setSidebarWidth:          (w: number) => void
   setPanelHeight:           (h: number) => void
+  setSecondarySidebarWidth: (w: number) => void
   toggleSidebar:            () => void
   setSidebarVisible:        (v: boolean) => void
   togglePanel:              () => void
@@ -41,6 +43,7 @@ export interface UIActions {
 const INITIAL: UIState = {
   sidebarWidth:            240,
   panelHeight:             200,
+  secondarySidebarWidth:   320,
   sidebarVisible:          true,
   panelVisible:            false,
   secondarySidebarVisible: false,
@@ -58,6 +61,7 @@ export const useUIStore = create<UIState & UIActions>()(
 
     setSidebarWidth:          (w) => set((s) => { s.sidebarWidth = Math.max(150, Math.min(600, w)) }),
     setPanelHeight:           (h) => set((s) => { s.panelHeight  = Math.max(80,  Math.min(800, h)) }),
+    setSecondarySidebarWidth: (w) => set((s) => { s.secondarySidebarWidth = Math.max(200, Math.min(800, w)) }),
     toggleSidebar:            ()  => set((s) => { s.sidebarVisible = !s.sidebarVisible }),
     setSidebarVisible:        (v) => set((s) => { s.sidebarVisible = v }),
     togglePanel:              ()  => set((s) => { s.panelVisible = !s.panelVisible }),

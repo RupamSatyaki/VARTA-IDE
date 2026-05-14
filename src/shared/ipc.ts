@@ -162,6 +162,16 @@ export const enum AppChannel {
   UPDATE_AVAILABLE= 'APP:UPDATE_AVAILABLE', // main → renderer (push)
 }
 
+// ─── Workspace Channels ───────────────────────────────────────────────────────
+export const enum WorkspaceChannel {
+  GET_LAST_PATH   = 'WORKSPACE:GET_LAST_PATH',
+  SAVE_LAST_PATH  = 'WORKSPACE:SAVE_LAST_PATH',
+  LOAD_SESSION    = 'WORKSPACE:LOAD_SESSION',
+  SAVE_LAYOUT     = 'WORKSPACE:SAVE_LAYOUT',
+  SAVE_TABS       = 'WORKSPACE:SAVE_TABS',
+  SAVE_EXPLORER   = 'WORKSPACE:SAVE_EXPLORER',
+}
+
 // ─── IPC Response wrapper ─────────────────────────────────────────────────────
 /**
  * Every ipcMain.handle must return IPCResponse<T>.

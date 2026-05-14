@@ -6,6 +6,7 @@ import { NotificationContainer } from './components/notifications/NotificationCo
 import { useSettingsStore }      from './store/settingsStore'
 import { useUIStore }            from './store/uiStore'
 import { useAIStore }            from './store/aiStore'
+import { useWorkspaceStore }     from './store/workspaceStore'
 import { useSettings, applyTheme } from './hooks/useSettings'
 import { useKeybinding }         from './hooks/useKeybinding'
 import { registry }              from './lib/commandRegistry'
@@ -124,6 +125,7 @@ function AppInner() {
   const { setPlatform } = useUIStore()
   const { setHasApiKey } = useAIStore()
   const { loadSettings } = useSettings()
+  const { initialize: initWorkspace } = useWorkspaceStore()
 
   // Global keybinding system
   useKeybinding()
@@ -131,6 +133,7 @@ function AppInner() {
   useEffect(() => {
     registerCommands()
     loadSettings()
+    initWorkspace()
 
     window.varta.ai.hasApiKey().then((res) => {
       if (res.success) { setHasApiKey(res.data) }

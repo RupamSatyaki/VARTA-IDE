@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useFileTreeStore }     from '../store/fileTreeStore'
 import { useEditorStore }       from '../store/editorStore'
 import { useTabStore }          from '../store/tabStore'
+import { useWorkspaceStore }    from '../store/workspaceStore'
 import { useNotificationStore } from '../store/notificationStore'
 import { detectLanguage }       from '../../shared/constants/languages'
 import { isIPCSuccess }         from '../../shared/ipc'
@@ -94,33 +95,8 @@ export function useFileTree() {
     } catch { /* ignore */ }
   }, [])
 
-  // ── Open folder ───────────────────────────────────────────────────────────
-
-  const openFolder = useCallback(async () => {
-    const res = await window.varta.dialog.openFolder({ title: 'Open Folder' })
-    if (!isIPCSuccess(res) || res.data.cancelled || res.data.paths.length === 0) { return }
-
-    const folderPath = res.data.paths[0]
-    storeRef.current.setRoot(folderPath)
-    await loadDir(folderPath)
-    setupWatcher(folderPath)
-    window.varta.git.openRepo(folderPath).catch(() => {})
-  }, [loadDir])
-
-  // ── Toggle folder expand (lazy-loads children on first expand) ────────────
-
-  const toggleFolder = useCallback(async (folderPath: string) => {
-    const { expandedPaths, toggleExpanded, nodes } = storeRef.current
-    const isExpanded = expandedPaths.has(folderPath)
-
-    if (!isExpanded) {
-      const node = findNode(nodes, folderPath)
-      if (!node?.children || node.children.length === 0) {
-        await loadChildren(folderPath)
-      }
-    }
-    toggleExpanded(folderPath)
-  }, [loadChildren])
+  // Keep refreshNode in a ref so watcher always calls latest version
+  const refreshNodeRef = useRef<any>(null)
 
   // ── Refresh — surgical: only reload the affected folder ─────────────────
 
@@ -159,6 +135,70 @@ export function useFileTree() {
       }
     } catch { /* ignore */ }
   }, [loadDir])
+
+  refreshNodeRef.current = refreshNode
+
+  // ── Setup Watcher — connects to main process ─────────────────────────────
+
+  const setupWatcher = useCallback((folderPath: string) => {
+    if (watchCleanup) { watchCleanup(); watchCleanup = null }
+
+    const watchId = `filetree-${Date.now()}`
+    window.varta.fs.startWatch(watchId, [folderPath]).catch(() => {})
+
+    const offWatch = window.varta.fs.onWatchEvent((_id, event) => {
+      if (_id !== watchId) { return }
+      if (event.type === 'change') { return } 
+
+      const parentDir = dirname(event.path)
+      refreshNodeRef.current(parentDir)
+    })
+
+    watchCleanup = () => {
+      offWatch()
+      window.varta.fs.stopWatch(watchId).catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    const { rootPath } = storeRef.current
+    if (rootPath) {
+      setupWatcher(rootPath)
+    }
+  }, [setupWatcher])
+
+  // ── Open folder ───────────────────────────────────────────────────────────
+
+  const openFolder = useCallback(async () => {
+    const res = await window.varta.dialog.openFolder({ title: 'Open Folder' })
+    if (!isIPCSuccess(res) || res.data.cancelled || res.data.paths.length === 0) { return }
+
+    const folderPath = res.data.paths[0]
+    await useWorkspaceStore.getState().loadProject(folderPath)
+    setupWatcher(folderPath)
+    window.varta.git.openRepo(folderPath).catch(() => {})
+  }, [setupWatcher])
+
+  useEffect(() => {
+    const handler = () => { openFolder() }
+    window.addEventListener('varta:open-folder' as any, handler)
+    return () => window.removeEventListener('varta:open-folder' as any, handler)
+  }, [openFolder])
+
+  // ── Toggle folder expand (lazy-loads children on first expand) ────────────
+
+  const toggleFolder = useCallback(async (folderPath: string) => {
+    const { expandedPaths, toggleExpanded, nodes } = storeRef.current
+    const isExpanded = expandedPaths.has(folderPath)
+
+    if (!isExpanded) {
+      const node = findNode(nodes, folderPath)
+      if (!node?.children || node.children.length === 0) {
+        await loadChildren(folderPath)
+      }
+    }
+    toggleExpanded(folderPath)
+  }, [loadChildren])
 
   // ── Open file ─────────────────────────────────────────────────────────────
 
@@ -299,39 +339,6 @@ export function useFileTree() {
       notifyRef.current({ type: 'error', message: `Move failed: ${res.error.message}` })
     }
   }, [loadDir, openFile])
-
-  // Keep refreshNode in a ref so watcher always calls latest version
-  const refreshNodeRef = useRef(refreshNode)
-  refreshNodeRef.current = refreshNode
-
-  // ── Setup Watcher — connects to main process ─────────────────────────────
-
-  const setupWatcher = useCallback((folderPath: string) => {
-    if (watchCleanup) { watchCleanup(); watchCleanup = null }
-
-    const watchId = `filetree-${Date.now()}`
-    window.varta.fs.startWatch(watchId, [folderPath]).catch(() => {})
-
-    const offWatch = window.varta.fs.onWatchEvent((_id, event) => {
-      if (_id !== watchId) { return }
-      if (event.type === 'change') { return } 
-
-      const parentDir = dirname(event.path)
-      refreshNodeRef.current(parentDir)
-    })
-
-    watchCleanup = () => {
-      offWatch()
-      window.varta.fs.stopWatch(watchId).catch(() => {})
-    }
-  }, [])
-
-  useEffect(() => {
-    const { rootPath } = storeRef.current
-    if (rootPath) {
-      setupWatcher(rootPath)
-    }
-  }, [setupWatcher])
 
   // ── Collapse all ──────────────────────────────────────────────────────────
 

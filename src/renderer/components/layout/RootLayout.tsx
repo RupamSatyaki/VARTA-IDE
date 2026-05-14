@@ -12,10 +12,8 @@ import { useUIStore }       from '../../store/uiStore'
 export function RootLayout() {
   const {
     sidebarVisible, panelVisible, secondarySidebarVisible,
-    setSidebarWidth, setPanelHeight,
+    setSidebarWidth, setPanelHeight, secondarySidebarWidth, setSecondarySidebarWidth
   } = useUIStore()
-
-  const [secondaryWidth, setSecondaryWidth] = useState(320)
 
   const onSidebarResize   = useCallback((delta: number) => {
     setSidebarWidth(useUIStore.getState().sidebarWidth + delta)
@@ -26,8 +24,8 @@ export function RootLayout() {
   }, [setPanelHeight])
 
   const onSecondaryResize = useCallback((delta: number) => {
-    setSecondaryWidth(w => Math.max(240, Math.min(600, w - delta)))
-  }, [])
+    setSecondarySidebarWidth(useUIStore.getState().secondarySidebarWidth - delta)
+  }, [setSecondarySidebarWidth])
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden bg-[#1a1620]">
@@ -63,7 +61,7 @@ export function RootLayout() {
             <ResizableDivider orientation="vertical" onResize={onSecondaryResize} />
             <div
               className="flex flex-col shrink-0 overflow-hidden rounded-xl ml-0"
-              style={{ width: secondaryWidth, backgroundColor: '#28242e' }}
+              style={{ width: secondarySidebarWidth, backgroundColor: '#28242e' }}
             >
               <AIChatPanel />
             </div>

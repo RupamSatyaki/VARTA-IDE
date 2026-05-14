@@ -8,6 +8,7 @@ import { terminalService }    from './services/TerminalService'
 import { gitService }         from './services/GitService'
 import { searchService }      from './services/SearchService'
 import { settingsService }    from './services/SettingsService'
+import { workspaceService }   from './services/WorkspaceService'
 import { aiService }          from './services/AIService'
 import { extensionService }   from './services/ExtensionService'
 import { logger }             from './utils/logger'
@@ -60,6 +61,7 @@ if (!gotLock) {
     // Init services (order matters — settings first, then window-dependent ones)
     fileService.init()
     settingsService.init(mainWindow)
+    workspaceService.init()
     watcherService.init(mainWindow)
     terminalService.init(mainWindow)
     gitService.init(mainWindow)
@@ -115,6 +117,7 @@ if (!gotLock) {
     gitService.destroy()
     searchService.destroy()
     settingsService.destroy()
+    workspaceService.destroy()
     fileService.destroy()
     windowManager.destroy()
     logger.info('App', 'Shutdown complete')
