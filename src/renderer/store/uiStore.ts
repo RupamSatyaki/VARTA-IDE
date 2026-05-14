@@ -59,9 +59,18 @@ export const useUIStore = create<UIState & UIActions>()(
   immer((set) => ({
     ...INITIAL,
 
-    setSidebarWidth:          (w) => set((s) => { s.sidebarWidth = Math.max(150, Math.min(600, w)) }),
-    setPanelHeight:           (h) => set((s) => { s.panelHeight  = Math.max(80,  Math.min(800, h)) }),
-    setSecondarySidebarWidth: (w) => set((s) => { s.secondarySidebarWidth = Math.max(200, Math.min(800, w)) }),
+    setSidebarWidth: (w) => set((s) => {
+      const val = (w === undefined || w === null || isNaN(w)) ? 240 : w
+      s.sidebarWidth = Math.max(150, Math.min(600, val))
+    }),
+    setPanelHeight: (h) => set((s) => {
+      const val = (h === undefined || h === null || isNaN(h)) ? 200 : h
+      s.panelHeight = Math.max(80, Math.min(800, val))
+    }),
+    setSecondarySidebarWidth: (w) => set((s) => {
+      const val = (w === undefined || w === null || isNaN(w)) ? 320 : w
+      s.secondarySidebarWidth = Math.max(200, Math.min(800, val))
+    }),
     toggleSidebar:            ()  => set((s) => { s.sidebarVisible = !s.sidebarVisible }),
     setSidebarVisible:        (v) => set((s) => { s.sidebarVisible = v }),
     togglePanel:              ()  => set((s) => { s.panelVisible = !s.panelVisible }),

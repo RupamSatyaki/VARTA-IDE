@@ -55,14 +55,18 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
       // 2. Restore Layout
       if (session.layout) {
         const ui = useUIStore.getState()
-        ui.setSidebarWidth(session.layout.sidebarWidth)
-        ui.setPanelHeight(session.layout.panelHeight)
-        ui.setSecondarySidebarWidth(session.layout.secondarySidebarWidth)
-        ui.setSidebarVisible(session.layout.sidebarVisible)
-        ui.setPanelVisible(session.layout.panelVisible)
-        ui.setSecondarySidebarVisible(session.layout.secondarySidebarVisible)
-        ui.setActiveSidebarPanel(session.layout.activeSidebarPanel as any)
-        ui.setActiveBottomPanel(session.layout.activeBottomPanel as any)
+        ui.setSidebarWidth(session.layout.sidebarWidth || 240)
+        ui.setPanelHeight(session.layout.panelHeight || 200)
+        ui.setSecondarySidebarWidth(session.layout.secondarySidebarWidth || 320)
+        ui.setSidebarVisible(!!session.layout.sidebarVisible)
+        ui.setPanelVisible(!!session.layout.panelVisible)
+        ui.setSecondarySidebarVisible(!!session.layout.secondarySidebarVisible)
+        if (session.layout.activeSidebarPanel) {
+          ui.setActiveSidebarPanel(session.layout.activeSidebarPanel as any)
+        }
+        if (session.layout.activeBottomPanel) {
+          ui.setActiveBottomPanel(session.layout.activeBottomPanel as any)
+        }
       }
 
       // 3. Restore Tabs
