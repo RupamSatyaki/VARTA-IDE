@@ -22,8 +22,9 @@ export function DiffEditor({ path, original, modified, language = 'text', readOn
     // Register Varta Dark theme
     ensureMonacoTheme()
 
-    const origUri  = monaco.Uri.parse(`diff-original://${path}`)
-    const modUri   = monaco.Uri.parse(`diff-modified://${path}`)
+    const normalizedPath = path.replace(/\\/g, '/')
+    const origUri  = monaco.Uri.parse(`diff-original://${normalizedPath}`)
+    const modUri   = monaco.Uri.parse(`diff-modified://${normalizedPath}`)
 
     const origModel = monaco.editor.getModel(origUri)
       ?? monaco.editor.createModel(original, language, origUri)

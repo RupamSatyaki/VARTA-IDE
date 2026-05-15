@@ -118,6 +118,11 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
         const ft = useFileTreeStore.getState()
         session.explorer.expandedPaths.forEach(p => ft.setExpanded(p, true))
       }
+
+      // 5. Initialize Git
+      window.varta.git.openRepo(path).catch((e) => {
+        console.error('[Workspace] Failed to open git repo:', e)
+      })
     }
 
     await window.varta.workspace.saveLastProjectPath(path)

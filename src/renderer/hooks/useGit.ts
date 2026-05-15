@@ -274,33 +274,35 @@ export function useGit() {
   // ── Open diff ─────────────────────────────────────────────────────────────
 
   const openDiff = useCallback(async (filePath: string, staged: boolean) => {
-    const res = await window.varta.git.diffFile(filePath, staged)
-    if (!isIPCSuccess(res)) {
-      notifyRef.current({ type: 'error', message: `Cannot get diff: ${res.error.message}` })
-      return
-    }
-
-    const diff     = res.data
     const filename = filePath.replace(/\\/g, '/').split('/').pop() ?? filePath
     const tabId    = `diff:${filePath}:${staged ? 'staged' : 'working'}`
     const language = detectLanguage(filePath)
 
-    // Fetch original content from HEAD (if staged) or from file system (if working tree)
-    // Actually, simple-git's diff already gives us hunks, but we need the FULL content for a side-by-side editor.
-    
     let original = ''
+    let modified = ''
+
     if (staged) {
       // For staged: compare HEAD vs Index
       const headRes = await window.varta.git.showFile(filePath, 'HEAD').catch(() => null)
       original = (headRes && isIPCSuccess(headRes)) ? headRes.data : ''
+
+      const indexRes = await window.varta.git.showFile(filePath, 'INDEX').catch(() => null)
+      modified = (indexRes && isIPCSuccess(indexRes)) ? indexRes.data : ''
     } else {
       // For unstaged: compare Index vs Working Tree
       const indexRes = await window.varta.git.showFile(filePath, 'INDEX').catch(() => null)
       original = (indexRes && isIPCSuccess(indexRes)) ? indexRes.data : ''
-    }
 
-    const modRes = await window.varta.fs.readFile(filePath)
-    const modified = modRes.success ? modRes.data.content : ''
+      // If INDEX is empty (e.g. new untracked file), try HEAD just in case, 
+      // but usually untracked files have no base.
+      if (!original) {
+        const headRes = await window.varta.git.showFile(filePath, 'HEAD').catch(() => null)
+        original = (headRes && isIPCSuccess(headRes)) ? headRes.data : ''
+      }
+
+      const modRes = await window.varta.fs.readFile(filePath)
+      modified = modRes.success ? modRes.data.content : ''
+    }
 
     const { useTabStore } = await import('../store/tabStore')
     const existing = useTabStore.getState().tabs.find((t) => t.id === tabId)
@@ -312,7 +314,7 @@ export function useGit() {
     useTabStore.getState().addTab({
       id:        tabId,
       filePath:  filePath,
-      title:     `Diff: ${filename}`,
+      title:     `Diff: ${filename}${staged ? ' (Staged)' : ''}`,
       language,
       isDirty:   false,
       isPreview: true,

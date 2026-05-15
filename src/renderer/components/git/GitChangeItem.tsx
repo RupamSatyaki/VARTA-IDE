@@ -5,7 +5,7 @@ import { FileIcon } from '../filetree/FileIcon'
 import { ContextMenu, type MenuItemDef } from '../ui/ContextMenu'
 import { useFileTreeStore } from '../../store/fileTreeStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMinus, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faMinus, faRotateLeft, faCode } from '@fortawesome/free-solid-svg-icons'
 import { Tooltip } from '../ui/Tooltip'
 import type { GitFileChange } from '../../../shared/types/git.types'
 
@@ -73,6 +73,7 @@ export function GitChangeItem({ change, staged, onStage, onUnstage, onDiscard, o
 
         {/* Hover actions */}
         <div className={cn('flex items-center gap-0.5 shrink-0 transition-opacity', hovered ? 'opacity-100' : 'opacity-0')}>
+          <ActionBtn onClick={(e) => { e.stopPropagation(); onOpenDiff() }} tooltip="Open Diff" icon={faCode} color="text-[#c084fc]" />
           {!staged && onStage && (
             <ActionBtn onClick={(e) => { e.stopPropagation(); onStage() }} tooltip="Stage" icon={faPlus} color="text-[#34d399]" />
           )}

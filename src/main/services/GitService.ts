@@ -1,5 +1,6 @@
 import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git'
 import { BrowserWindow } from 'electron'
+import path from 'path'
 import { GitChannel }    from '../../shared/ipc'
 import {
   GitStatus, GitBranch, GitCommit, GitDiff,
@@ -24,6 +25,20 @@ export class GitService {
     this.repoRoot   = null
     this.mainWindow = null
     logger.info('GitService', 'Destroyed')
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private toAbsolute(relPath: string): string {
+    if (!this.repoRoot) return relPath
+    if (path.isAbsolute(relPath)) return relPath
+    return path.join(this.repoRoot, relPath)
+  }
+
+  private toRelative(absPath: string): string {
+    if (!this.repoRoot) return absPath
+    if (!path.isAbsolute(absPath)) return absPath
+    return path.relative(this.repoRoot, absPath)
   }
 
   // ── Repo detection ────────────────────────────────────────────────────────
@@ -52,7 +67,7 @@ export class GitService {
 
       const root = await git.revparse(['--show-toplevel'])
       this.git      = git
-      this.repoRoot = root.trim()
+      this.repoRoot = path.normalize(root.trim())
       logger.info('GitService', `Opened repo: ${this.repoRoot}`)
 
       // Push initial status to renderer
@@ -82,28 +97,28 @@ export class GitService {
 
       const toChange = (files: typeof status.modified, staged: boolean): GitFileChange[] =>
         files.map((f) => ({
-          path:   f,
+          path:   this.toAbsolute(f),
           status: 'modified' as GitFileStatus,
           staged,
         }))
 
       const staged: GitFileChange[] = [
-        ...status.staged.map((f)   => ({ path: f, status: 'added'    as GitFileStatus, staged: true })),
-        ...status.renamed.map((r)  => ({ path: r.to, oldPath: r.from, status: 'renamed' as GitFileStatus, staged: true })),
+        ...status.staged.map((f)   => ({ path: this.toAbsolute(f), status: 'added'    as GitFileStatus, staged: true })),
+        ...status.renamed.map((r)  => ({ path: this.toAbsolute(r.to), oldPath: this.toAbsolute(r.from), status: 'renamed' as GitFileStatus, staged: true })),
         ...toChange(status.modified.filter((f) => status.staged.includes(f)), true),
       ]
 
       const unstaged: GitFileChange[] = [
         ...toChange(status.modified.filter((f) => !status.staged.includes(f)), false),
-        ...status.deleted.map((f)  => ({ path: f, status: 'deleted'  as GitFileStatus, staged: false })),
+        ...status.deleted.map((f)  => ({ path: this.toAbsolute(f), status: 'deleted'  as GitFileStatus, staged: false })),
       ]
 
       const untracked: GitFileChange[] = status.not_added.map((f) => ({
-        path: f, status: 'untracked' as GitFileStatus, staged: false,
+        path: this.toAbsolute(f), status: 'untracked' as GitFileStatus, staged: false,
       }))
 
       const conflicted: GitFileChange[] = status.conflicted.map((f) => ({
-        path: f, status: 'conflicted' as GitFileStatus, staged: false,
+        path: this.toAbsolute(f), status: 'conflicted' as GitFileStatus, staged: false,
       }))
 
       return {
@@ -130,17 +145,17 @@ export class GitService {
     const git = this.requireGit()
     try {
       let staged = false
-      let path = filePath
+      let pathArg = filePath
 
       if (typeof stagedOrPath === 'boolean') {
         staged = stagedOrPath
       } else {
-        path = stagedOrPath
+        pathArg = stagedOrPath
       }
 
       const args = staged ? ['--cached'] : []
-      if (path) {
-        args.push('--', path)
+      if (pathArg) {
+        args.push('--', this.toRelative(pathArg))
       }
       return await git.diff(args)
     } catch (e) {
@@ -151,7 +166,8 @@ export class GitService {
   async diffFile(filePath: string, staged = false): Promise<GitDiff> {
     const git = this.requireGit()
     try {
-      const args = staged ? ['--cached', '--', filePath] : ['--', filePath]
+      const relPath = this.toRelative(filePath)
+      const args = staged ? ['--cached', '--', relPath] : ['--', relPath]
       const raw  = await git.diff(args)
       return this.parseDiff(filePath, raw)
     } catch (e) {
@@ -162,8 +178,9 @@ export class GitService {
   async showFile(filePath: string, revision = 'HEAD'): Promise<string> {
     const git = this.requireGit()
     try {
+      const relPath = this.toRelative(filePath).replace(/\\/g, '/')
       // Use ':' for index (unstaged comparison)
-      const target = revision === 'INDEX' ? `:${filePath}` : `${revision}:${filePath}`
+      const target = revision === 'INDEX' ? `:${relPath}` : `${revision}:${relPath}`
       return await git.show([target])
     } catch (e) {
       // If file doesn't exist in that revision (e.g. new untracked file), return empty
@@ -176,7 +193,7 @@ export class GitService {
   async stage(paths: string[]): Promise<void> {
     const git = this.requireGit()
     try {
-      await git.add(paths)
+      await git.add(paths.map(p => this.toRelative(p)))
       this.pushChangedEvent()
     } catch (e) {
       throw new VartaError(VartaErrorCode.GIT_STAGE_FAILED, 'Failed to stage files', e)
@@ -190,7 +207,7 @@ export class GitService {
   async unstage(paths: string[]): Promise<void> {
     const git = this.requireGit()
     try {
-      await git.reset(['HEAD', '--', ...paths])
+      await git.reset(['HEAD', '--', ...paths.map(p => this.toRelative(p))])
       this.pushChangedEvent()
     } catch (e) {
       throw new VartaError(VartaErrorCode.GIT_UNSTAGE_FAILED, 'Failed to unstage files', e)
@@ -352,7 +369,7 @@ export class GitService {
   async discard(paths: string[]): Promise<void> {
     const git = this.requireGit()
     try {
-      await git.checkout(['--', ...paths])
+      await git.checkout(['--', ...paths.map(p => this.toRelative(p))])
       this.pushChangedEvent()
     } catch (e) {
       throw new VartaError(VartaErrorCode.GIT_DISCARD_FAILED, 'Failed to discard changes', e)
