@@ -52,7 +52,7 @@ export function EditorTab({
     >
       {/* Active top accent bar */}
       {isActive && (
-        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-b-sm" />
+        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-b-sm active-tab-glow" />
       )}
 
       {/* Right separator for inactive tabs */}
