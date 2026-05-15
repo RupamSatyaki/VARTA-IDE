@@ -9,6 +9,10 @@ import { useTabStore }           from '../../store/tabStore'
 import { useUIStore }            from '../../store/uiStore'
 import { useEditor }             from '../../hooks/useEditor'
 import { useFileTree }           from '../../hooks/useFileTree'
+import { FontAwesomeIcon }      from '@fortawesome/react-fontawesome'
+import { faSave, faCode, faFileSignature, faXmark } from '@fortawesome/free-solid-svg-icons'
+import { useGit } from '../../hooks/useGit'
+import { cn } from '../../utils/cn'
 
 export function EditorPane() {
   const { tabs, activeTabId, setActive } = useTabStore()
@@ -20,6 +24,7 @@ export function EditorPane() {
   } = useEditor()
 
   const { openFolder } = useFileTree()
+  const { openDiff }   = useGit()
 
   const [unsavedDialog, setUnsavedDialog] = useState<{
     tabId: string; filename: string
@@ -69,7 +74,7 @@ export function EditorPane() {
   const showEditor = tabs.length > 0 && activeTab !== null
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-[#28242e] rounded-xl">
+    <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-[#28242e] rounded-xl relative">
 
       {/* Tab bar — always rendered when tabs exist */}
       {tabs.length > 0 && (
@@ -82,6 +87,35 @@ export function EditorPane() {
       {/* Breadcrumb */}
       {activeTab && (
         <EditorBreadcrumb filePath={activeTab.filePath} />
+      )}
+
+      {/* Floating Toolbar */}
+      {activeTab && !activeTab.diffData && (
+        <div className="absolute top-[46px] right-6 z-10 flex items-center gap-1 p-1 rounded-lg bg-[#1e1a24]/80 border border-[#3a2f45] backdrop-blur-md shadow-2xl transition-opacity opacity-0 hover:opacity-100 group-hover/editor:opacity-100">
+          <ToolbarBtn 
+            icon={faSave} 
+            tooltip="Save (Ctrl+S)" 
+            onClick={() => saveFile(activeTab.id)} 
+            active={activeTab.isDirty}
+          />
+          <ToolbarBtn 
+            icon={faCode} 
+            tooltip="View Diff" 
+            onClick={() => openDiff(activeTab.filePath, false)} 
+          />
+          <ToolbarBtn 
+            icon={faFileSignature} 
+            tooltip="Format Document" 
+            onClick={() => window.dispatchEvent(new CustomEvent('varta:edit.formatDocument'))} 
+          />
+          <div className="w-px h-3 bg-[#3a2f45] mx-0.5" />
+          <ToolbarBtn 
+            icon={faXmark} 
+            tooltip="Close Tab" 
+            onClick={() => handleCloseTab(activeTab.id)} 
+            danger
+          />
+        </div>
       )}
 
       {/* Welcome screen — shown when no tabs */}
@@ -105,18 +139,20 @@ export function EditorPane() {
         NO key prop here — that would remount Monaco on every switch.
       */}
       {showEditor && activeTab && !activeTab.diffData && (
-        <CodeCanvas
-          tabId={activeTab.id}
-          path={activeTab.filePath}
-          content={getContent(activeTab.id)}
-          language={activeTab.language}
-          onChange={(val) => handleChange(activeTab.id, val)}
-          onSave={() => saveFile(activeTab.id)}
-          onSaveAll={saveAllFiles}
-          onClose={() => handleCloseTab(activeTab.id)}
-          onNextTab={handleNextTab}
-          onReopenClosed={reopenLastClosed}
-        />
+        <div className="flex-1 min-h-0 min-w-0 group/editor">
+          <CodeCanvas
+            tabId={activeTab.id}
+            path={activeTab.filePath}
+            content={getContent(activeTab.id)}
+            language={activeTab.language}
+            onChange={(val) => handleChange(activeTab.id, val)}
+            onSave={() => saveFile(activeTab.id)}
+            onSaveAll={saveAllFiles}
+            onClose={() => handleCloseTab(activeTab.id)}
+            onNextTab={handleNextTab}
+            onReopenClosed={reopenLastClosed}
+          />
+        </div>
       )}
 
       {/* Diff View */}
@@ -157,5 +193,23 @@ export function EditorPane() {
         />
       )}
     </div>
+  )
+}
+
+function ToolbarBtn({ icon, tooltip, onClick, active = false, danger = false }: {
+  icon: any, tooltip: string, onClick: () => void, active?: boolean, danger?: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={tooltip}
+      className={cn(
+        "w-7 h-7 flex items-center justify-center rounded-md transition-all",
+        active ? "text-[#a855f7] bg-[#7c3aed]/10" : "text-[#6e5a7a] hover:text-[#cccccc] hover:bg-white/5",
+        danger && "hover:text-[#f87171] hover:bg-red-500/10"
+      )}
+    >
+      <FontAwesomeIcon icon={icon} style={{ fontSize: 11 }} />
+    </button>
   )
 }
