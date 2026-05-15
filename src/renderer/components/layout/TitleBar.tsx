@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useUIStore }   from '../../store/uiStore'
 import { useTabStore }  from '../../store/tabStore'
 import { useFileTreeStore } from '../../store/fileTreeStore'
+import { registry } from '../../lib/commandRegistry'
 import { FontAwesomeIcon }  from '@fortawesome/react-fontawesome'
 import {
   faMagnifyingGlass,
@@ -119,7 +120,6 @@ type MenuName = keyof typeof MENUS
 // ── Action dispatcher ─────────────────────────────────────────────────────────
 
 function dispatchAction(action: string) {
-  const { registry } = require('../../lib/commandRegistry') as typeof import('../../lib/commandRegistry')
   const cmd = registry.getAll().find(c => c.id === action)
   if (cmd) { cmd.execute(); return }
   // Fallback custom events

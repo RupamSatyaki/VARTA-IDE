@@ -5,6 +5,7 @@ import { useEditorStore } from '../../store/editorStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTabStore } from '../../store/tabStore'
+import { useAIStore } from '../../store/aiStore'
 import { ensureMonacoTheme } from '../../utils/monaco'
 
 export interface CodeCanvasProps {
@@ -180,7 +181,6 @@ export function CodeCanvas({
       const settings = useSettingsStore.getState().settings
       if (!settings.ai.inlineHints) { return }
 
-      const { useAIStore } = require('../../store/aiStore') as typeof import('../../store/aiStore')
       if (!useAIStore.getState().hasApiKey) { return }
 
       inlineHintTimeout = setTimeout(async () => {
