@@ -24,6 +24,9 @@ export interface EditorSettings {
   renderWhitespace:     RenderWhitespace
   showLineNumbers:      boolean
   showMinimap:          boolean
+  stickyScroll:         boolean
+  smoothCaret:          boolean
+  occurrencesHighlight: boolean
   minimapMaxColumn:     number
   showBreadcrumbs:      boolean
   smoothScrolling:      boolean

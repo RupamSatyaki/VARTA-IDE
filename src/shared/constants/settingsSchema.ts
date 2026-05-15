@@ -65,6 +65,20 @@ export const SETTINGS_SCHEMA: SettingSchemaItem[] = [
     section: 'editor',
   },
   {
+    id: 'editor.stickyScroll',
+    label: 'Sticky Scroll',
+    description: 'Keep nested scopes pinned to the top while scrolling.',
+    type: 'toggle',
+    section: 'editor',
+  },
+  {
+    id: 'editor.smoothCaret',
+    label: 'Smooth Caret Animation',
+    description: 'Enable smooth animation for the editor cursor.',
+    type: 'toggle',
+    section: 'editor',
+  },
+  {
     id: 'editor.showLineNumbers',
     label: 'Line Numbers',
     description: 'Controls the display of line numbers.',

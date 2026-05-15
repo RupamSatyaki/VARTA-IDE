@@ -11,7 +11,7 @@ import { useUIStore }       from '../../store/uiStore'
 import { useSettings }      from '../../hooks/useSettings'
 import { isIPCSuccess }     from '../../../shared/ipc'
 import { FontAwesomeIcon }  from '@fortawesome/react-fontawesome'
-import { faXmark, faCircleInfo, faKeyboard, faShieldHalved } from '@fortawesome/free-solid-svg-icons'
+import { faXmark, faCircleInfo, faKeyboard, faShieldHalved, faCode, faTerminal, faDisplay, faCodeBranch, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 
 export function SettingsPanel() {
   const { settingsOpen, closeSettings } = useUIStore()
@@ -97,94 +97,102 @@ export function SettingsPanel() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-10 py-8 scrollbar-thin scrollbar-thumb-[#2a1f30]">
+            <div className="flex-1 overflow-y-auto px-10 py-8 scrollbar-thin scrollbar-thumb-[#2a1f30] scroll-smooth">
               <div className="max-w-2xl mx-auto pb-20">
                 <AnimatePresence mode="wait">
-                  {activeSection === 'workbench' && !search && (
-                    <motion.div 
-                      key="theme-section"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="mb-12"
-                    >
-                      <SectionTitle icon={faDisplay} title="Interface Theme" />
-                      <ThemeSelector
-                        activeThemeId={settings.workbench.theme}
-                        onSelect={(id) => window.varta.settings.set({ workbench: { theme: id } })}
-                      />
-                    </motion.div>
-                  )}
+                  {!search && (
+                    <div className="space-y-16">
+                      <div id="settings-editor">
+                        <SectionTitle icon={faCode} title="Text Editor" />
+                        <AutomatedSettings activeSection="editor" search="" />
+                      </div>
 
-                  {activeSection === 'ai' && !search && (
-                    <motion.div 
-                      key="ai-keys"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="mb-12 space-y-8"
-                    >
-                      <SectionTitle icon={faShieldHalved} title="Secure API Access" />
-                      <div className="p-6 rounded-2xl bg-[#7c3aed]/5 border border-[#7c3aed]/10 space-y-6">
-                        <div>
-                          <label className="block text-xs font-bold text-[#7c5a9a] uppercase tracking-wider mb-2">Claude API Key</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="password" 
-                              value={apiKeyInput}
-                              onChange={(e) => setApiKeyInput(e.target.value)}
-                              placeholder={apiKeyStatus === 'saved' ? '••••••••••••••••' : 'Enter API Key...'}
-                              className="flex-1 bg-[#12101a] border border-[#2a1f30] rounded-xl px-4 py-2.5 text-sm text-[#e0e0e0] outline-none focus:border-[#7c3aed]/50 transition-all"
-                            />
-                            <Button variant="primary" onClick={handleSaveApiKey} disabled={!apiKeyInput.trim()}>Save</Button>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-[#7c5a9a] uppercase tracking-wider mb-2">Custom Base URL (Optional)</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="text" 
-                              value={baseUrlInput}
-                              onChange={(e) => setBaseUrlInput(e.target.value)}
-                              placeholder="https://api.anthropic.com"
-                              className="flex-1 bg-[#12101a] border border-[#2a1f30] rounded-xl px-4 py-2.5 text-sm text-[#e0e0e0] outline-none focus:border-[#7c3aed]/50 transition-all"
-                            />
-                            <Button variant="primary" onClick={handleSaveBaseUrl} disabled={!baseUrlInput.trim()}>Save</Button>
-                          </div>
+                      <div id="settings-terminal">
+                        <SectionTitle icon={faTerminal} title="Integrated Terminal" />
+                        <AutomatedSettings activeSection="terminal" search="" />
+                      </div>
+
+                      <div id="settings-workbench">
+                        <SectionTitle icon={faDisplay} title="Workbench Appearance" />
+                        <ThemeSelector
+                          activeThemeId={settings.workbench.theme}
+                          onSelect={(id) => window.varta.settings.set({ workbench: { theme: id } })}
+                        />
+                        <div className="mt-8">
+                          <AutomatedSettings activeSection="workbench" search="" />
                         </div>
                       </div>
-                    </motion.div>
+
+                      <div id="settings-git">
+                        <SectionTitle icon={faCodeBranch} title="Source Control" />
+                        <AutomatedSettings activeSection="git" search="" />
+                      </div>
+
+                      <div id="settings-ai">
+                        <SectionTitle icon={faShieldHalved} title="AI & Intelligence" />
+                        <div className="mb-8 p-6 rounded-2xl bg-[#7c3aed]/5 border border-[#7c3aed]/10 space-y-6">
+                          <div>
+                            <label className="block text-xs font-bold text-[#7c5a9a] uppercase tracking-wider mb-2">Claude API Key</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="password" 
+                                value={apiKeyInput}
+                                onChange={(e) => setApiKeyInput(e.target.value)}
+                                placeholder={apiKeyStatus === 'saved' ? '••••••••••••••••' : 'Enter API Key...'}
+                                className="flex-1 bg-[#12101a] border border-[#2a1f30] rounded-xl px-4 py-2.5 text-sm text-[#e0e0e0] outline-none focus:border-[#7c3aed]/50 transition-all"
+                              />
+                              <Button variant="primary" onClick={handleSaveApiKey} disabled={!apiKeyInput.trim()}>Save</Button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-[#7c5a9a] uppercase tracking-wider mb-2">Custom Base URL (Optional)</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text" 
+                                value={baseUrlInput}
+                                onChange={(e) => setBaseUrlInput(e.target.value)}
+                                placeholder="https://api.anthropic.com"
+                                className="flex-1 bg-[#12101a] border border-[#2a1f30] rounded-xl px-4 py-2.5 text-sm text-[#e0e0e0] outline-none focus:border-[#7c3aed]/50 transition-all"
+                              />
+                              <Button variant="primary" onClick={handleSaveBaseUrl} disabled={!baseUrlInput.trim()}>Save</Button>
+                            </div>
+                          </div>
+                        </div>
+                        <AutomatedSettings activeSection="ai" search="" />
+                      </div>
+
+                      <div id="settings-about">
+                        <SectionTitle icon={faCircleInfo} title="About Varta" />
+                        <div className="grid grid-cols-2 gap-4">
+                          <AboutCard label="Version" value={appVersion || '0.1.0'} />
+                          <AboutCard label="Electron" value={(window as any).vartaVersions?.electron ?? '—'} />
+                          <AboutCard label="Node.js" value={(window as any).vartaVersions?.node ?? '—'} />
+                          <AboutCard label="Engine" value="Ripgrep Powered" />
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 pt-6">
+                          <Button variant="default" onClick={exportSettings}>Export Config</Button>
+                          <Button variant="default" onClick={importSettings}>Import Config</Button>
+                          <Button variant="danger" onClick={resetSettings}>Factory Reset</Button>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
-                  <AutomatedSettings activeSection={search ? 'all' : activeSection} search={search} />
-
-                  {activeSection === 'about' && !search && (
-                    <motion.div 
-                      key="about-section"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="mt-12 pt-12 border-t border-[#2a1f30] space-y-8"
+                  {search && (
+                    <motion.div
+                      key="search-results"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                     >
-                      <SectionTitle icon={faCircleInfo} title="Varta IDE Information" />
-                      <div className="grid grid-cols-2 gap-4">
-                        <AboutCard label="Version" value={appVersion || '0.1.0'} />
-                        <AboutCard label="Electron" value={(window as any).vartaVersions?.electron ?? '—'} />
-                        <AboutCard label="Node.js" value={(window as any).vartaVersions?.node ?? '—'} />
-                        <AboutCard label="Engine" value="Ripgrep Powered" />
-                      </div>
-
-                      <div className="flex flex-wrap gap-3 pt-6">
-                        <Button variant="default" onClick={exportSettings}>Export Config</Button>
-                        <Button variant="default" onClick={importSettings}>Import Config</Button>
-                        <Button variant="danger" onClick={resetSettings}>Factory Reset</Button>
-                      </div>
+                      <SectionTitle icon={faMagnifyingGlass} title={`Search results for "${search}"`} />
+                      <AutomatedSettings activeSection="all" search={search} />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
-            </div>
-          </div>
+            </div>          </div>
         </div>
       </motion.div>
     </div>

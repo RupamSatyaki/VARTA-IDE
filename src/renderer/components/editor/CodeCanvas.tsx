@@ -356,6 +356,9 @@ export function CodeCanvas({
       autoClosingQuotes:   es.autoClosingQuotes   ? 'always' : 'never',
       lineHeight:          es.lineHeight,
       letterSpacing:       es.letterSpacing,
+      stickyScroll:         { enabled: es.stickyScroll },
+      cursorSmoothCaretAnimation: es.smoothCaret ? 'on' : 'off',
+      occurrencesHighlight: es.occurrencesHighlight ? 'on' : 'off',
     })
   }, [settings.editor])
 
@@ -381,9 +384,9 @@ export function CodeCanvas({
         renderLineHighlight:  'line',
         fixedOverflowWidgets: true,
         bracketPairColorization: { enabled: true },
-        stickyScroll:         { enabled: true },
-        cursorSmoothCaretAnimation: 'on',
-        occurrencesHighlight: 'on',
+        stickyScroll:         { enabled: settings.editor.stickyScroll },
+        cursorSmoothCaretAnimation: settings.editor.smoothCaret ? 'on' : 'off',
+        occurrencesHighlight: settings.editor.occurrencesHighlight ? 'on' : 'off',
         fontLigatures:        true,
         pixelRatio:           window.devicePixelRatio,
         fontSize:             settings.editor.fontSize,
