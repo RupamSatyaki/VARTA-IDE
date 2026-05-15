@@ -39,7 +39,7 @@ export function TerminalTab({ instance, isActive, onClick, onClose }: TerminalTa
     >
       {/* Active top accent */}
       {isActive && (
-        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7c3aed] to-[#a855f7]" />
+        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7c3aed] to-[#a855f7] active-tab-glow" />
       )}
 
       {/* Right separator */}
