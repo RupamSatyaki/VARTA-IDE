@@ -382,6 +382,8 @@ export function CodeCanvas({
         fixedOverflowWidgets: true,
         bracketPairColorization: { enabled: true },
         stickyScroll:         { enabled: true },
+        cursorSmoothCaretAnimation: 'on',
+        occurrencesHighlight: 'on',
         fontLigatures:        true,
         pixelRatio:           window.devicePixelRatio,
         fontSize:             settings.editor.fontSize,
