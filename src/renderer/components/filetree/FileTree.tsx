@@ -109,31 +109,45 @@ export function FileTree({
     const map = new Map<string, GitFileChange>()
     if (!gitStatus || !rootPath) { return map }
 
-    const root = rootPath.replace(/\\/g, '/')
-    const allChanges = [...gitStatus.staged, ...gitStatus.unstaged, ...gitStatus.untracked, ...gitStatus.conflicted]
+    const root = rootPath.replace(/\\/g, '/').toLowerCase()
+    const allChanges = [
+      ...gitStatus.conflicted,
+      ...gitStatus.staged,
+      ...gitStatus.unstaged,
+      ...gitStatus.untracked,
+    ]
 
-    // Convert relative git path → absolute normalized path
-    const toAbs = (relPath: string) => {
-      const rel = relPath.replace(/\\/g, '/')
-      if (rel.startsWith('/') || /^[A-Za-z]:/.test(rel)) { return rel }
-      return `${root}/${rel}`
+    // Convert any path → absolute normalized lowercased path for robust mapping
+    const normalize = (p: string) => {
+      let res = p.replace(/\\/g, '/')
+      if (!res.startsWith('/') && !/^[A-Za-z]:/.test(res)) {
+        res = `${rootPath.replace(/\\/g, '/')}/${res}`
+      }
+      return res.replace(/\\/g, '/').toLowerCase()
     }
 
-    const normalized = allChanges.map(c => ({ ...c, path: toAbs(c.path) }))
-
     // Map files
-    for (const c of normalized) {
-      map.set(c.path, c)
+    for (const c of allChanges) {
+      const absPath = normalize(c.path)
+      // If multiple changes for same file, conflicted takes priority
+      if (!map.has(absPath) || c.status === 'conflicted') {
+        map.set(absPath, { ...c, path: absPath })
+      }
     }
 
     // Propagate up to parent dirs
-    for (const c of normalized) {
+    for (const c of Array.from(map.values())) {
       const parts = c.path.split('/')
       for (let i = parts.length - 1; i > 0; i--) {
         const dirPath = parts.slice(0, i).join('/')
-        if (!dirPath || dirPath === root) { continue }
-        if (!map.has(dirPath)) {
-          map.set(dirPath, { ...c, path: dirPath })
+        if (!dirPath || dirPath === root || dirPath.length < root.length) { continue }
+        
+        const existing = map.get(dirPath)
+        // Folders get 'modified' color if any child has changes, unless it's conflicted
+        if (!existing) {
+          map.set(dirPath, { ...c, path: dirPath, status: c.status === 'untracked' ? 'untracked' : 'modified' })
+        } else if (c.status === 'conflicted') {
+          existing.status = 'conflicted'
         }
       }
     }
@@ -143,7 +157,7 @@ export function FileTree({
 
   // Dirty paths from open tabs
   const dirtyPaths = useMemo(
-    () => new Set(tabs.filter((t) => t.isDirty).map((t) => t.filePath)),
+    () => new Set(tabs.filter((t) => t.isDirty).map((t) => t.filePath.replace(/\\/g, '/').toLowerCase())),
     [tabs],
   )
 
@@ -172,7 +186,9 @@ export function FileTree({
   }, [rows, selectedPath, expandedPaths, setSelected, onFileOpen, onFolderToggle])
 
   const renderRow = useCallback((row: FlatRow) => {
-    const nodePath  = row.node.path.replace(/\\/g, '/')
+    const nodePath     = row.node.path.replace(/\\/g, '/')
+    const normNodePath = nodePath.toLowerCase()
+    
     const isIgnored = ignoredPaths.has(nodePath) ||
       Array.from(ignoredPaths).some(p => nodePath.startsWith(p + '/') || nodePath.startsWith(p + '\\'))
     const isDragOver = dragOverPath === row.node.path
@@ -183,8 +199,8 @@ export function FileTree({
         depth={row.depth}
         isExpanded={expandedPaths.has(row.node.path)}
         isSelected={selectedPath === row.node.path}
-        isDirty={dirtyPaths.has(row.node.path)}
-        gitChange={gitChangeMap.get(nodePath)}
+        isDirty={dirtyPaths.has(normNodePath)}
+        gitChange={gitChangeMap.get(normNodePath)}
         isIgnored={isIgnored}
         isDragOver={isDragOver}
         onFileClick={(node, preview) => { setSelected(node.path); onFileOpen(node.path, preview) }}
