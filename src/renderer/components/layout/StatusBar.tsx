@@ -1,6 +1,8 @@
 import React from 'react'
+import { cn }                   from '../../utils/cn'
 import { useGitStore }          from '../../store/gitStore'
 import { useUIStore }           from '../../store/uiStore'
+import { useAIStore }           from '../../store/aiStore'
 import { StatusBarLanguage }    from '../statusbar/StatusBarLanguage'
 import { StatusBarLineCol }     from '../statusbar/StatusBarLineCol'
 import { StatusBarEncoding }    from '../statusbar/StatusBarEncoding'
@@ -13,6 +15,7 @@ import { faCodeBranch, faArrowUp, faArrowDown } from '@fortawesome/free-solid-sv
 export function StatusBar() {
   const { status: gitStatus }  = useGitStore()
   const { setActiveSidebarPanel } = useUIStore()
+  const isStreaming = useAIStore((s) => s.isStreaming)
 
   return (
     <div className="flex items-center justify-between h-[24px] shrink-0 bg-[#181825] border-t border-[#2a2a3d] text-[#9090b0] text-[11px] px-1 select-none">
@@ -41,9 +44,22 @@ export function StatusBar() {
           </StatusBtn>
         )}
 
+        {/* AI Status */}
+        <StatusBtn
+          onClick={() => setActiveSidebarPanel('ai')}
+          title={isStreaming ? 'AI is thinking...' : 'AI Assistant'}
+        >
+          <div className={cn(
+            "w-2 h-2 rounded-full transition-all duration-500",
+            isStreaming ? "bg-[#a855f7] shadow-[0_0_8px_#a855f7] animate-pulse" : "bg-[#4a4a6a]"
+          )} />
+          <span className={cn("transition-colors", isStreaming ? "text-[#c084fc]" : "text-[#6e6e8a]")}>
+            {isStreaming ? 'AI Thinking' : 'Varta AI'}
+          </span>
+        </StatusBtn>
+
         {/* Errors / warnings */}
         <StatusBarErrors />
-
         {/* Sync */}
         <StatusBarSync />
       </div>
