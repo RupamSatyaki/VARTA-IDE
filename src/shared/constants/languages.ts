@@ -11,9 +11,9 @@ export interface LanguageDefinition {
 
 export const LANGUAGE_DEFINITIONS: LanguageDefinition[] = [
   { id: 'typescript',      name: 'TypeScript',       extensions: ['.ts'],          icon: 'typescript' },
-  { id: 'typescriptreact', name: 'TypeScript React',  extensions: ['.tsx'],         icon: 'react_ts' },
+  { id: 'typescript',      name: 'TypeScript React',  extensions: ['.tsx'],         icon: 'react_ts' },
   { id: 'javascript',      name: 'JavaScript',       extensions: ['.js', '.mjs', '.cjs'], icon: 'javascript' },
-  { id: 'javascriptreact', name: 'JavaScript React', extensions: ['.jsx'],         icon: 'react' },
+  { id: 'javascript',      name: 'JavaScript React', extensions: ['.jsx'],         icon: 'react' },
   { id: 'html',            name: 'HTML',             extensions: ['.html', '.htm', '.xhtml'], icon: 'html' },
   { id: 'css',             name: 'CSS',              extensions: ['.css'],         icon: 'css' },
   { id: 'scss',            name: 'SCSS',             extensions: ['.scss'],        icon: 'scss' },

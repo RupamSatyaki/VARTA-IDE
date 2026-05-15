@@ -28,6 +28,25 @@ import TsWorker     from 'monaco-editor/esm/vs/language/typescript/ts.worker?wor
 // This prevents it from fetching from CDN and ensures workers are shared.
 loader.config({ monaco })
 
+// ── Configure TypeScript/JavaScript defaults for JSX support ──────────────────
+monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+  target:               monaco.languages.typescript.ScriptTarget.Latest,
+  allowNonTsExtensions: true,
+  moduleResolution:     monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+  module:               monaco.languages.typescript.ModuleKind.CommonJS,
+  noEmit:               true,
+  esModuleInterop:      true,
+  jsx:                  monaco.languages.typescript.JsxEmit.React,
+  reactNamespace:       'React',
+  allowJs:              true,
+})
+
+monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+  target:               monaco.languages.typescript.ScriptTarget.Latest,
+  allowNonTsExtensions: true,
+  jsx:                  monaco.languages.typescript.JsxEmit.React,
+})
+
 // Pre-initialize so the editor is ready immediately when first opened
 loader.init().catch(console.error)
 

@@ -56,8 +56,7 @@ export function CodeCanvas({
     ensureMonacoTheme()
 
     // ── Set model for the current tab (may have been created before mount) ──
-    const normalizedPath = normalizePath(path)
-    const uri = monaco.Uri.parse(`file://${normalizedPath}`)
+    const uri = monaco.Uri.file(path)
     let model = monaco.editor.getModel(uri)
     if (!model) {
       model = monaco.editor.createModel(content, language, uri)
