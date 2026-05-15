@@ -34,6 +34,21 @@ input, textarea, [contenteditable], .selectable {
   user-select: text;
 }
 
+/* Git gutter indicators */
+.git-gutter-added {
+  border-left: 3px solid #34d399; /* Green */
+  margin-left: 1px;
+}
+.git-gutter-modified {
+  border-left: 3px solid #3b82f6; /* Blue */
+  margin-left: 1px;
+}
+.git-gutter-deleted {
+  border-left: 3px solid #f87171; /* Red */
+  border-bottom: 2px solid #f87171;
+  margin-left: 1px;
+}
+
 /* AI inline hint ghost text */
 .ai-inline-hint {
   color: #6e6e6e !important;

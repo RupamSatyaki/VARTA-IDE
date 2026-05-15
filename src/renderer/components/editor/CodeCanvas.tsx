@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTabStore } from '../../store/tabStore'
 import { useAIStore } from '../../store/aiStore'
+import { useGitStore } from '../../store/gitStore'
 import { ensureMonacoTheme } from '../../utils/monaco'
 
 export interface CodeCanvasProps {
@@ -122,6 +123,7 @@ export function CodeCanvas({
     // Monaco owns the content — we just notify parent of changes
     editor.onDidChangeModelContent(() => {
       onChangeRef.current(editor.getValue())
+      updateGitGutter()
     })
 
     // ── Reveal-in-editor event (from search result click) ─────────────────
@@ -140,6 +142,58 @@ export function CodeCanvas({
       useEditorStore.getState().clearCallback(tabId)
     }
     window.addEventListener('varta:reveal-in-editor', handleReveal)
+
+    // ── Git gutter decorations ──────────────────────────────────────────────
+    let gitDecorations: string[] = []
+    const updateGitGutter = async () => {
+      const model = editor.getModel()
+      if (!model) return
+
+      try {
+        const res = await window.varta.git.diffFile(path, false)
+        if (!res.success || !res.data) {
+          gitDecorations = editor.deltaDecorations(gitDecorations, [])
+          return
+        }
+
+        const newDecorations: monaco.editor.IModelDeltaDecoration[] = []
+        res.data.hunks.forEach((hunk) => {
+          // 'added' hunk
+          if (hunk.oldLines === 0 && hunk.newLines > 0) {
+            newDecorations.push({
+              range: new monaco.Range(hunk.newStart, 1, hunk.newStart + hunk.newLines - 1, 1),
+              options: { isWholeLine: true, linesDecorationsClassName: 'git-gutter-added' },
+            })
+          }
+          // 'deleted' hunk
+          else if (hunk.newLines === 0 && hunk.oldLines > 0) {
+            newDecorations.push({
+              range: new monaco.Range(Math.max(1, hunk.newStart), 1, Math.max(1, hunk.newStart), 1),
+              options: { isWholeLine: true, linesDecorationsClassName: 'git-gutter-deleted' },
+            })
+          }
+          // 'modified' hunk
+          else {
+            newDecorations.push({
+              range: new monaco.Range(hunk.newStart, 1, hunk.newStart + hunk.newLines - 1, 1),
+              options: { isWholeLine: true, linesDecorationsClassName: 'git-gutter-modified' },
+            })
+          }
+        })
+
+        gitDecorations = editor.deltaDecorations(gitDecorations, newDecorations)
+      } catch {
+        gitDecorations = editor.deltaDecorations(gitDecorations, [])
+      }
+    }
+
+    // Initial gutter load
+    updateGitGutter()
+
+    // Update gutter when git status changes
+    const offGit = useGitStore.subscribe((state, prev) => {
+      if (state.status !== prev.status) { updateGitGutter() }
+    })
 
     // ── AI context menu actions ───────────────────────────────────────────
     const aiActions = [
