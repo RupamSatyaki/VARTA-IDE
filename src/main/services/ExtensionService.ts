@@ -174,6 +174,15 @@ export class ExtensionService {
     this.notifyContributionsChanged()
     logger.info('ExtensionService', `Reloaded: ${id}`)
   }
+
+  async reloadAll(): Promise<void> {
+    logger.info('ExtensionService', 'Reloading all extensions...')
+    this.extensions.clear()
+    if (this.host) {
+      // In a more complex system, we'd deactivate all first
+    }
+    await this.loadAll()
+  }
 }
 
 export const extensionService = new ExtensionService()
