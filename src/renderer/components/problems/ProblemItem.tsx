@@ -46,25 +46,27 @@ export function ProblemItem({ diagnostic, filePath, rootPath, onClick }: Problem
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
-      className="flex items-start gap-2 px-3 py-1.5 cursor-pointer hover:bg-[#2a2d2e] focus:outline-none focus:bg-[#2a2d2e] group"
+      className="flex items-start gap-2.5 px-3 py-1.5 cursor-pointer hover:bg-white/5 focus:outline-none focus:bg-white/5 transition-colors group border-b border-transparent hover:border-[#2a1f30]"
     >
       {/* Severity icon */}
-      <div className="mt-0.5">{SEVERITY_ICON[diagnostic.severity] ?? SEVERITY_ICON.info}</div>
+      <div className="mt-1 shrink-0">{SEVERITY_ICON[diagnostic.severity] ?? SEVERITY_ICON.info}</div>
 
       {/* Message */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-[#d4d4d4] leading-snug truncate" title={diagnostic.message}>
+      <div className="flex-1 min-w-0 py-0.5">
+        <p className="text-[12px] text-[#cccccc] group-hover:text-[#e1e1e1] leading-relaxed break-words" title={diagnostic.message}>
           {diagnostic.message}
         </p>
         {diagnostic.source && (
-          <span className="text-[10px] text-[#6e6e6e]">{diagnostic.source}</span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[10px] text-[#6e6e6e] bg-white/5 px-1 rounded-sm">{diagnostic.source}</span>
+          </div>
         )}
       </div>
 
       {/* File + location */}
-      <div className="shrink-0 text-right">
-        <p className="text-[10px] text-[#6e6e6e] truncate max-w-[120px]" title={relPath}>{filename}</p>
-        <p className="text-[10px] text-[#4e4e4e]">{line}:{col}</p>
+      <div className="shrink-0 text-right pt-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+        <p className="text-[10px] text-[#9090b0] truncate max-w-[150px]" title={relPath}>{filename}</p>
+        <p className="text-[10px] text-[#6e6e6e] font-mono mt-0.5">{line}:{col}</p>
       </div>
     </div>
   )

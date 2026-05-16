@@ -58,20 +58,6 @@ export function ProblemsPanel() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#2a1f30] bg-[#28242e] shrink-0">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e]">
-          Problems
-          {(errorCount > 0 || warningCount > 0) && (
-            <span className="ml-1 text-[#d4d4d4]">
-              ({errorCount > 0 ? `${errorCount} error${errorCount !== 1 ? 's' : ''}` : ''}
-              {errorCount > 0 && warningCount > 0 ? ', ' : ''}
-              {warningCount > 0 ? `${warningCount} warning${warningCount !== 1 ? 's' : ''}` : ''})
-            </span>
-          )}
-        </span>
-      </div>
-
       {/* Filters */}
       <ProblemFilter
         showErrors={showErrors}
