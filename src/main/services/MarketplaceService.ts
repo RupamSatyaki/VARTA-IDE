@@ -6,18 +6,22 @@ export class MarketplaceService {
   private readonly API_BASE = 'https://open-vsx.org/api/-'
 
   async search(query: string): Promise<MarketplaceExtension[]> {
-    logger.info('MarketplaceService', `Searching Open VSX for: ${query || 'trending'}`)
+    const searchTerm = query?.trim() || ''
+    logger.info('MarketplaceService', `[API] Searching Open VSX for: "${searchTerm || 'trending'}"`)
     
     try {
-      // Use sortBy=downloadCount to get the most popular/relevant results first
-      const url = query 
-        ? `${this.API_BASE}/search?q=${encodeURIComponent(query)}&size=50&sortBy=downloadCount&sortOrder=desc`
-        : `${this.API_BASE}/search?size=50&sortBy=downloadCount&sortOrder=desc` // Trending
+      // For searches, we want relevance. For trending (empty query), we want downloadCount.
+      const url = searchTerm 
+        ? `${this.API_BASE}/search?query=${encodeURIComponent(searchTerm)}&size=50` 
+        : `${this.API_BASE}/search?size=50&sortBy=downloadCount&sortOrder=desc`
 
-      const response = await axios.get(url)
+      logger.info('MarketplaceService', `[API] Fetching URL: ${url}`)
+      const response = await axios.get(url, {
+        headers: { 'User-Agent': 'Varta-IDE/0.1.0' }
+      })
       const extensions = response.data.extensions || []
       
-      logger.info('MarketplaceService', `Found ${extensions.length} extensions for query: ${query}`)
+      logger.info('MarketplaceService', `[API] Found ${extensions.length} extensions for: "${searchTerm || 'trending'}"`)
 
       return extensions.map((ext: any) => {
         // Open VSX sometimes provides relative URLs or specific fields for icons

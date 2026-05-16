@@ -76,10 +76,10 @@ export function ExtensionsPanel() {
       <ExtensionToolbar filter={filter} onFilter={setFilter} />
 
       <div className="flex-1 overflow-y-auto">
-        {/* Installed */}
+        {/* Installed Section */}
         {filteredInstalled.length > 0 && (
           <>
-            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0">
+            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0 z-10">
               Installed ({filteredInstalled.length})
             </div>
             {filteredInstalled.map((ext) => (
@@ -93,31 +93,37 @@ export function ExtensionsPanel() {
           </>
         )}
 
-        {isLoading && filteredInstalled.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-xs text-[#6e6e6e] animate-pulse">
-            Loading extensions...
-          </div>
-        )}
-
-        {/* Marketplace */}
-        {filter === 'all' && marketplaceResults.length > 0 && (
+        {/* Marketplace Section */}
+        {filter === 'all' && (
           <>
-            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0">
-              {search ? 'Marketplace' : 'Recommended'}
+            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0 z-10 border-t border-[#333333]">
+              {search ? `Marketplace Search Results` : 'Recommended'}
             </div>
-            {marketplaceResults.map((ext) => (
-              <ExtensionItem
-                key={ext.id}
-                ext={ext}
-                onInstall={(id) => install(id).then(() => info(`Installed ${id}`))}
-              />
-            ))}
+
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-32 gap-2">
+                <div className="w-4 h-4 border-2 border-[#569cd6] border-t-transparent rounded-full animate-spin" />
+                <span className="text-[10px] text-[#6e6e6e] animate-pulse">Searching Open VSX...</span>
+              </div>
+            ) : marketplaceResults.length > 0 ? (
+              marketplaceResults.map((ext) => (
+                <ExtensionItem
+                  key={ext.id}
+                  ext={ext}
+                  onInstall={(id) => install(id).then(() => info(`Installed ${id}`))}
+                />
+              ))
+            ) : !isLoading && search && filteredInstalled.length === 0 && (
+              <div className="flex items-center justify-center h-32 text-xs text-[#6e6e6e]">
+                No extensions found for "{search}"
+              </div>
+            )}
           </>
         )}
 
-        {filteredInstalled.length === 0 && marketplaceResults.length === 0 && !isLoading && (
+        {filteredInstalled.length === 0 && marketplaceResults.length === 0 && !isLoading && !search && (
           <div className="flex items-center justify-center h-32 text-xs text-[#6e6e6e]">
-            No extensions found
+            No extensions available
           </div>
         )}
       </div>

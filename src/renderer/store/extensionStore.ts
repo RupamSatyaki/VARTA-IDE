@@ -47,12 +47,16 @@ export const useExtensionStore = create<ExtensionState & ExtensionActions>()((se
   },
 
   searchMarketplace: async (query: string) => {
-    set({ isLoading: true, error: null })
-    const res = await window.varta.extensions.marketplaceSearch(query)
-    if (isIPCSuccess(res)) {
-      set({ marketplace: res.data, isLoading: false })
-    } else {
-      set({ error: res.error.message, isLoading: false })
+    set({ isLoading: true, error: null, marketplace: [] })
+    try {
+      const res = await window.varta.extensions.marketplaceSearch(query)
+      if (isIPCSuccess(res)) {
+        set({ marketplace: res.data, isLoading: false })
+      } else {
+        set({ error: res.error.message, isLoading: false })
+      }
+    } catch (e: any) {
+      set({ error: e.message, isLoading: false })
     }
   },
 
