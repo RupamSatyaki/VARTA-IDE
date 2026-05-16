@@ -67,7 +67,7 @@ if (!gotLock) {
     gitService.init(mainWindow)
     searchService.init(mainWindow)
     aiService.init(mainWindow)
-    extensionService.init()
+    extensionService.init(mainWindow)
 
     // Register all IPC handlers
     registerAllHandlers(mainWindow)

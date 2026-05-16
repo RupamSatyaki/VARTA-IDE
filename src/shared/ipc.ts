@@ -147,6 +147,7 @@ export const enum ExtensionChannel {
   DISABLE         = 'EXTENSION:DISABLE',
   GET_DETAILS     = 'EXTENSION:GET_DETAILS',
   RELOAD          = 'EXTENSION:RELOAD',
+  EXECUTE_COMMAND = 'EXTENSION:EXECUTE_COMMAND',
 }
 
 // ─── App Channels ─────────────────────────────────────────────────────────────

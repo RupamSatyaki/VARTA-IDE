@@ -1,15 +1,20 @@
 import fsp  from 'fs/promises'
 import path  from 'path'
 import { app } from 'electron'
-import { ExtensionInfo, ExtensionManifest, ExtensionStatus } from '../../shared/types/extension.types'
+import { ExtensionInfo, ExtensionManifest } from '../../shared/types/extension.types'
 import { VartaError, VartaErrorCode } from '../../shared/errors'
 import { logger } from '../utils/logger'
+import { ExtensionHost } from '../extension-host/ExtensionHost'
 
 export class ExtensionService {
   private extensions = new Map<string, ExtensionInfo>()
   private extensionsDir: string = ''
+  private mainWindow: any = null
+  private host: ExtensionHost | null = null
 
-  init(): void {
+  init(mainWindow: any): void {
+    this.mainWindow = mainWindow
+    this.host = new ExtensionHost(mainWindow)
     this.extensionsDir = path.join(app.getPath('userData'), 'extensions')
     // Load extensions async — don't block init
     this.loadAll().catch((e) => {
@@ -39,6 +44,7 @@ export class ExtensionService {
       }
 
       logger.info('ExtensionService', `Loaded ${this.extensions.size} extensions`)
+      this.notifyContributionsChanged()
     } catch (e) {
       logger.error('ExtensionService', 'Failed to scan extensions directory', e)
     }
@@ -62,10 +68,53 @@ export class ExtensionService {
       }
 
       this.extensions.set(manifest.id, info)
+      
+      if (info.status === 'enabled') {
+        this.processContributions(info)
+        // Activation happens after loadAll to ensure mainWindow is ready
+        this.activateExtension(info.manifest.id).catch(e => {
+          logger.error('ExtensionService', `Auto-activation failed for ${info.manifest.id}`, e)
+        })
+      }
     } catch (e) {
       if (e instanceof VartaError) { throw e }
       throw new VartaError(VartaErrorCode.EXTENSION_LOAD_FAILED, `Failed to load extension: ${extPath}`, e)
     }
+  }
+
+  private processContributions(info: ExtensionInfo): void {
+    const { contributions } = info.manifest
+    if (!contributions) return
+
+    logger.info('ExtensionService', `Processing contributions for: ${info.manifest.id}`)
+    
+    if (contributions.commands) {
+      logger.info('ExtensionService', `Found ${contributions.commands.length} commands from ${info.manifest.id}`)
+    }
+
+    if (contributions.themes) {
+      logger.info('ExtensionService', `Found ${contributions.themes.length} themes from ${info.manifest.id}`)
+    }
+  }
+
+  private notifyContributionsChanged(): void {
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send('EXTENSION:CONTRIBUTIONS_CHANGED')
+    }
+  }
+
+  async activateExtension(id: string): Promise<void> {
+    const ext = this.extensions.get(id)
+    if (ext && ext.status === 'enabled' && this.host) {
+      await this.host.activate(ext)
+    }
+  }
+
+  async executeCommand(id: string, ...args: any[]): Promise<any> {
+    if (this.host) {
+      return await this.host.executeCommand(id, ...args)
+    }
+    throw new Error('Extension host not initialized')
   }
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
@@ -85,20 +134,30 @@ export class ExtensionService {
   enable(id: string): void {
     const ext = this.getDetails(id)
     ext.status = 'enabled'
+    this.activateExtension(id).catch(e => logger.error('ExtensionService', `Failed to activate ${id}`, e))
+    this.notifyContributionsChanged()
     logger.info('ExtensionService', `Enabled: ${id}`)
   }
 
   disable(id: string): void {
     const ext = this.getDetails(id)
     ext.status = 'disabled'
+    if (this.host) {
+      this.host.deactivate(id).catch(e => logger.error('ExtensionService', `Failed to deactivate ${id}`, e))
+    }
+    this.notifyContributionsChanged()
     logger.info('ExtensionService', `Disabled: ${id}`)
   }
 
   async uninstall(id: string): Promise<void> {
     const ext = this.getDetails(id)
     try {
+      if (this.host) {
+        await this.host.deactivate(id)
+      }
       await fsp.rm(ext.installPath, { recursive: true, force: true })
       this.extensions.delete(id)
+      this.notifyContributionsChanged()
       logger.info('ExtensionService', `Uninstalled: ${id}`)
     } catch (e) {
       throw new VartaError(VartaErrorCode.EXTENSION_INSTALL_FAILED, `Failed to uninstall: ${id}`, e)
@@ -107,8 +166,12 @@ export class ExtensionService {
 
   async reload(id: string): Promise<void> {
     const ext = this.getDetails(id)
+    if (this.host) {
+      await this.host.deactivate(id)
+    }
     this.extensions.delete(id)
     await this.loadExtension(ext.installPath)
+    this.notifyContributionsChanged()
     logger.info('ExtensionService', `Reloaded: ${id}`)
   }
 }

@@ -15,21 +15,25 @@ import type { WindowAPI }   from './api/windowApi'
 import type { AIAPI }       from './api/aiApi'
 import type { AppAPI }      from './api/appApi'
 import type { MCPAPI }      from './api/mcpApi'
+import type { extensionApi } from './api/extensionApi'
 import type { WorkspaceAPI } from './api/workspaceApi'
 
+export type ExtensionAPI = typeof extensionApi
+
 export interface VartaAPI {
-  fs:        FileAPI
-  terminal:  TerminalAPI
-  git:       GitAPI
-  search:    SearchAPI
-  settings:  SettingsAPI
-  theme:     ThemeAPI
-  dialog:    DialogAPI
-  window:    WindowAPI
-  ai:        AIAPI
-  app:       AppAPI
-  mcp:       MCPAPI
-  workspace: WorkspaceAPI
+  fs:         FileAPI
+  terminal:   TerminalAPI
+  git:        GitAPI
+  search:     SearchAPI
+  settings:   SettingsAPI
+  theme:      ThemeAPI
+  dialog:     DialogAPI
+  window:     WindowAPI
+  ai:         AIAPI
+  app:        AppAPI
+  mcp:        MCPAPI
+  extensions: ExtensionAPI
+  workspace:  WorkspaceAPI
 }
 
 declare global {

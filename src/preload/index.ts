@@ -20,6 +20,7 @@ import { windowApi }     from './api/windowApi'
 import { aiApi }         from './api/aiApi'
 import { appApi }        from './api/appApi'
 import { mcpApi }        from './api/mcpApi'
+import { extensionApi }  from './api/extensionApi'
 import { workspaceApi }  from './api/workspaceApi'
 
 /**
@@ -27,18 +28,19 @@ import { workspaceApi }  from './api/workspaceApi'
  * Every property here maps 1:1 to the VartaAPI interface in varta.d.ts.
  */
 const vartaAPI = {
-  fs:        fileApi,
-  terminal:  terminalApi,
-  git:       gitApi,
-  search:    searchApi,
-  settings:  settingsApi,
-  theme:     themeApi,
-  dialog:    dialogApi,
-  window:    windowApi,
-  ai:        aiApi,
-  app:       appApi,
-  mcp:       mcpApi,
-  workspace: workspaceApi,
+  fs:         fileApi,
+  terminal:   terminalApi,
+  git:        gitApi,
+  search:     searchApi,
+  settings:   settingsApi,
+  theme:      themeApi,
+  dialog:     dialogApi,
+  window:     windowApi,
+  ai:         aiApi,
+  app:        appApi,
+  mcp:        mcpApi,
+  extensions: extensionApi,
+  workspace:  workspaceApi,
 } as const
 
 contextBridge.exposeInMainWorld('varta', vartaAPI)

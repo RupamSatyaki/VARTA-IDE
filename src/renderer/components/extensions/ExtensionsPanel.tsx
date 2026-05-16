@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ExtensionSearch }  from './ExtensionSearch'
 import { ExtensionToolbar, type ExtensionFilter } from './ExtensionToolbar'
 import { ExtensionItem, type ExtensionData } from './ExtensionItem'
@@ -14,11 +14,15 @@ const RECOMMENDED: ExtensionData[] = [
 ]
 
 export function ExtensionsPanel() {
-  const { extensions, enabled, enable, disable } = useExtensionStore()
-  const { info } = useNotificationStore()
+  const { extensions, enabled, enable, disable, uninstall, fetchExtensions, isLoading } = useExtensionStore()
+  const { info, error: notifyError } = useNotificationStore()
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<ExtensionFilter>('all')
+
+  useEffect(() => {
+    fetchExtensions().catch(e => notifyError(`Failed to load extensions: ${e.message}`))
+  }, [fetchExtensions, notifyError])
 
   // Convert installed extensions to ExtensionData
   const installed: ExtensionData[] = extensions.map((e) => ({
@@ -65,11 +69,17 @@ export function ExtensionsPanel() {
               <ExtensionItem
                 key={ext.id}
                 ext={ext}
-                onToggle={(id, v) => v ? enable(id) : disable(id)}
-                onUninstall={(id) => info(`Uninstall ${id} — coming in v2`, 2000)}
+                onToggle={(id, v) => v ? (v ? enable(id) : disable(id)) : disable(id)}
+                onUninstall={(id) => uninstall(id).then(() => info(`Uninstalled ${id}`))}
               />
             ))}
           </>
+        )}
+
+        {isLoading && filteredInstalled.length === 0 && (
+          <div className="flex items-center justify-center h-32 text-xs text-[#6e6e6e] animate-pulse">
+            Loading extensions...
+          </div>
         )}
 
         {/* Recommended */}
@@ -88,7 +98,7 @@ export function ExtensionsPanel() {
           </>
         )}
 
-        {filteredInstalled.length === 0 && filteredRecommended.length === 0 && (
+        {filteredInstalled.length === 0 && filteredRecommended.length === 0 && !isLoading && (
           <div className="flex items-center justify-center h-32 text-xs text-[#6e6e6e]">
             No extensions found
           </div>
