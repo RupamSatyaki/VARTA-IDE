@@ -1,10 +1,16 @@
 import { ipcRenderer } from 'electron'
 import { ExtensionChannel, IPCResponse } from '../../shared/ipc'
-import { ExtensionInfo } from '../../shared/types/extension.types'
+import { ExtensionInfo, MarketplaceExtension } from '../../shared/types/extension.types'
 
 export const extensionApi = {
   list: (): Promise<IPCResponse<ExtensionInfo[]>> => 
     ipcRenderer.invoke(ExtensionChannel.LIST),
+
+  marketplaceSearch: (query: string): Promise<IPCResponse<MarketplaceExtension[]>> =>
+    ipcRenderer.invoke(ExtensionChannel.MARKETPLACE_SEARCH, query),
+
+  install: (id: string): Promise<IPCResponse<boolean>> =>
+    ipcRenderer.invoke(ExtensionChannel.INSTALL, id),
 
   getDetails: (id: string): Promise<IPCResponse<ExtensionInfo>> => 
     ipcRenderer.invoke(ExtensionChannel.GET_DETAILS, id),

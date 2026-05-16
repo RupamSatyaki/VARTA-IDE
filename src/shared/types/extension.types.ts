@@ -103,3 +103,13 @@ export interface ExtensionInfo {
   installedAt:  number    // unix ms
   errorMessage?: string
 }
+
+export interface MarketplaceExtension {
+  id: string
+  name: string
+  publisher: string
+  description: string
+  version: string
+  downloadUrl?: string
+  icon?: string
+}

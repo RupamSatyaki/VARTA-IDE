@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { extensionService } from '../services/ExtensionService'
+import { marketplaceService } from '../services/MarketplaceService'
 import { ExtensionChannel, ipcOk, ipcErr } from '../../shared/ipc'
 import { logger } from '../utils/logger'
 import { VartaError } from '../../shared/errors'
@@ -13,6 +14,28 @@ export function registerExtensionHandlers(): void {
     } catch (error: any) {
       logger.error('IPC:Extension', 'Failed to list extensions', error)
       return ipcErr(error instanceof VartaError ? error : { code: 'ERR_EXTENSION_LIST_FAILED', message: error.message })
+    }
+  })
+
+  // Marketplace search
+  ipcMain.handle(ExtensionChannel.MARKETPLACE_SEARCH, async (_event, query: string) => {
+    try {
+      const results = await marketplaceService.search(query)
+      return ipcOk(results)
+    } catch (error: any) {
+      logger.error('IPC:Extension', `Marketplace search failed for ${query}`, error)
+      return ipcErr({ code: 'ERR_MARKETPLACE_SEARCH_FAILED', message: error.message })
+    }
+  })
+
+  // Install extension
+  ipcMain.handle(ExtensionChannel.INSTALL, async (_event, id: string) => {
+    try {
+      const success = await marketplaceService.install(id)
+      return ipcOk(success)
+    } catch (error: any) {
+      logger.error('IPC:Extension', `Failed to install ${id}`, error)
+      return ipcErr({ code: 'ERR_EXTENSION_INSTALL_FAILED', message: error.message })
     }
   })
 
@@ -85,9 +108,12 @@ export function registerExtensionHandlers(): void {
 
 export function removeExtensionHandlers(): void {
   ipcMain.removeHandler(ExtensionChannel.LIST)
+  ipcMain.removeHandler(ExtensionChannel.MARKETPLACE_SEARCH)
+  ipcMain.removeHandler(ExtensionChannel.INSTALL)
   ipcMain.removeHandler(ExtensionChannel.GET_DETAILS)
   ipcMain.removeHandler(ExtensionChannel.ENABLE)
   ipcMain.removeHandler(ExtensionChannel.DISABLE)
   ipcMain.removeHandler(ExtensionChannel.UNINSTALL)
   ipcMain.removeHandler(ExtensionChannel.RELOAD)
+  ipcMain.removeHandler(ExtensionChannel.EXECUTE_COMMAND)
 }

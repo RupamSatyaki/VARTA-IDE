@@ -31,7 +31,7 @@ export function ExtensionToolbar({ filter, onFilter }: ExtensionToolbarProps) {
         ))}
       </div>
       <button
-        onClick={() => info('Extension marketplace coming in v2', 3000)}
+        onClick={() => info('VSIX installation coming soon', 3000)}
         className="text-[10px] text-[#569cd6] hover:text-[#4fc1ff] transition-colors"
       >
         Install from VSIX…

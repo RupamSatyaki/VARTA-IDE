@@ -148,6 +148,7 @@ export const enum ExtensionChannel {
   GET_DETAILS     = 'EXTENSION:GET_DETAILS',
   RELOAD          = 'EXTENSION:RELOAD',
   EXECUTE_COMMAND = 'EXTENSION:EXECUTE_COMMAND',
+  MARKETPLACE_SEARCH = 'EXTENSION:MARKETPLACE_SEARCH',
 }
 
 // ─── App Channels ─────────────────────────────────────────────────────────────

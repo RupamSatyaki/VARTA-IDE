@@ -11,6 +11,7 @@ export interface ExtensionData {
   version?:    string
   installed:   boolean
   enabled?:    boolean
+  icon?:       string
 }
 
 export interface ExtensionItemProps {
@@ -25,22 +26,34 @@ function nameToColor(name: string): string {
   const colors = ['#569cd6', '#4ec9b0', '#ce9178', '#dcdcaa', '#c586c0', '#f44747', '#ff8c00']
   let hash = 0
   for (let i = 0; i < name.length; i++) { hash = name.charCodeAt(i) + ((hash << 5) - hash) }
-  return colors[Math.abs(hash) % colors.length]
+  return colors[Abs(hash) % colors.length]
 }
+
+function Abs(n: number) { return n < 0 ? -n : n }
 
 export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: ExtensionItemProps) {
   const { info } = useNotificationStore()
   const color = nameToColor(ext.name)
+  const [imgError, setImgError] = React.useState(false)
 
   return (
     <div className="flex items-start gap-2.5 px-3 py-2.5 border-b border-[#2d2d2d] hover:bg-[#2a2d2e] transition-colors group">
       {/* Icon */}
-      <div
-        className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white shrink-0"
-        style={{ backgroundColor: color + '33', border: `1px solid ${color}44` }}
-      >
-        <span style={{ color }}>{ext.name[0].toUpperCase()}</span>
-      </div>
+      {ext.icon && !imgError ? (
+        <img 
+          src={ext.icon} 
+          alt={ext.name} 
+          className="w-8 h-8 rounded shrink-0 object-contain bg-white/5" 
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div
+          className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white shrink-0"
+          style={{ backgroundColor: color + '33', border: `1px solid ${color}44` }}
+        >
+          <span style={{ color }}>{ext.name[0].toUpperCase()}</span>
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex-1 min-w-0">
@@ -72,10 +85,7 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
           </>
         ) : (
           <button
-            onClick={() => {
-              info('Extension marketplace coming in v2', 3000)
-              onInstall?.(ext.id)
-            }}
+            onClick={() => onInstall?.(ext.id)}
             className="text-[10px] px-2 h-5 rounded border border-[#569cd6] text-[#569cd6] hover:bg-[#1b2d3e] transition-colors"
           >
             Install

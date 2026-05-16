@@ -1,10 +1,11 @@
 import { create } from 'zustand'
-import type { ExtensionInfo } from '../../shared/types/extension.types'
+import type { ExtensionInfo, MarketplaceExtension } from '../../shared/types/extension.types'
 import { isIPCSuccess } from '../../shared/ipc'
 import { registry } from '../lib/commandRegistry'
 
 export interface ExtensionState {
   extensions: ExtensionInfo[]
+  marketplace: MarketplaceExtension[]
   enabled:    Set<string>
   isLoading:  boolean
   error:      string | null
@@ -12,6 +13,8 @@ export interface ExtensionState {
 
 export interface ExtensionActions {
   fetchExtensions: () => Promise<void>
+  searchMarketplace: (query: string) => Promise<void>
+  install: (id: string) => Promise<void>
   processAllContributions: () => void
   enable:        (id: string) => Promise<void>
   disable:       (id: string) => Promise<void>
@@ -22,6 +25,7 @@ export interface ExtensionActions {
 
 export const useExtensionStore = create<ExtensionState & ExtensionActions>()((set, get) => ({
   extensions: [],
+  marketplace: [],
   enabled:    new Set<string>(),
   isLoading:  false,
   error:      null,
@@ -37,6 +41,27 @@ export const useExtensionStore = create<ExtensionState & ExtensionActions>()((se
         isLoading: false 
       })
       get().processAllContributions()
+    } else {
+      set({ error: res.error.message, isLoading: false })
+    }
+  },
+
+  searchMarketplace: async (query: string) => {
+    set({ isLoading: true, error: null })
+    const res = await window.varta.extensions.marketplaceSearch(query)
+    if (isIPCSuccess(res)) {
+      set({ marketplace: res.data, isLoading: false })
+    } else {
+      set({ error: res.error.message, isLoading: false })
+    }
+  },
+
+  install: async (id: string) => {
+    set({ isLoading: true, error: null })
+    const res = await window.varta.extensions.install(id)
+    if (isIPCSuccess(res)) {
+      // After install, we should probably fetch installed extensions again
+      await get().fetchExtensions()
     } else {
       set({ error: res.error.message, isLoading: false })
     }

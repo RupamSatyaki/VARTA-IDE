@@ -83,17 +83,17 @@ export class ExtensionService {
   }
 
   private processContributions(info: ExtensionInfo): void {
-    const { contributions } = info.manifest
-    if (!contributions) return
+    const { contributes } = info.manifest
+    if (!contributes) return
 
     logger.info('ExtensionService', `Processing contributions for: ${info.manifest.id}`)
     
-    if (contributions.commands) {
-      logger.info('ExtensionService', `Found ${contributions.commands.length} commands from ${info.manifest.id}`)
+    if (contributes.commands) {
+      logger.info('ExtensionService', `Found ${contributes.commands.length} commands from ${info.manifest.id}`)
     }
 
-    if (contributions.themes) {
-      logger.info('ExtensionService', `Found ${contributions.themes.length} themes from ${info.manifest.id}`)
+    if (contributes.themes) {
+      logger.info('ExtensionService', `Found ${contributes.themes.length} themes from ${info.manifest.id}`)
     }
   }
 

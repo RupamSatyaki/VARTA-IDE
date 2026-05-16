@@ -20,7 +20,7 @@ export function ExtensionDetails({ ext, onClose }: ExtensionDetailsProps) {
         </div>
         <p className="text-sm text-[#d4d4d4]">{ext.description}</p>
         <div className="text-xs text-[#6e6e6e] italic">
-          Full extension details available in v2 marketplace
+          More details and documentation available on the marketplace website.
         </div>
       </div>
     </div>

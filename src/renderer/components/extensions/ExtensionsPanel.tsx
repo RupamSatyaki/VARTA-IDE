@@ -5,16 +5,19 @@ import { ExtensionItem, type ExtensionData } from './ExtensionItem'
 import { useExtensionStore } from '../../store/extensionStore'
 import { useNotificationStore } from '../../store/notificationStore'
 
-const RECOMMENDED: ExtensionData[] = [
-  { id: 'prettier',          name: 'Prettier',           publisher: 'Prettier',          description: 'Opinionated code formatter',                  version: '3.1.0', installed: false },
-  { id: 'eslint',            name: 'ESLint',             publisher: 'ESLint',            description: 'Integrates ESLint into the editor',            version: '2.4.4', installed: false },
-  { id: 'gitlens',           name: 'GitLens',            publisher: 'GitKraken',         description: 'Git supercharged — blame, history, insights',  version: '14.9.0',installed: false },
-  { id: 'auto-rename-tag',   name: 'Auto Rename Tag',    publisher: 'Jun Han',           description: 'Auto rename paired HTML/XML tags',             version: '0.1.10',installed: false },
-  { id: 'path-intellisense', name: 'Path IntelliSense',  publisher: 'Christian Kohler',  description: 'Autocompletes filenames in import statements', version: '2.8.5', installed: false },
-]
-
 export function ExtensionsPanel() {
-  const { extensions, enabled, enable, disable, uninstall, fetchExtensions, isLoading } = useExtensionStore()
+  const { 
+    extensions, 
+    enabled, 
+    enable, 
+    disable, 
+    uninstall, 
+    fetchExtensions, 
+    searchMarketplace,
+    install,
+    marketplace,
+    isLoading 
+  } = useExtensionStore()
   const { info, error: notifyError } = useNotificationStore()
 
   const [search, setSearch] = useState('')
@@ -23,6 +26,13 @@ export function ExtensionsPanel() {
   useEffect(() => {
     fetchExtensions().catch(e => notifyError(`Failed to load extensions: ${e.message}`))
   }, [fetchExtensions, notifyError])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchMarketplace(search).catch(e => console.error('Marketplace search failed', e))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search, searchMarketplace])
 
   // Convert installed extensions to ExtensionData
   const installed: ExtensionData[] = extensions.map((e) => ({
@@ -43,10 +53,17 @@ export function ExtensionsPanel() {
     return true
   })
 
-  const filteredRecommended = RECOMMENDED.filter((e) =>
-    !search || e.name.toLowerCase().includes(search.toLowerCase()) ||
-    e.description.toLowerCase().includes(search.toLowerCase())
-  )
+  const marketplaceResults: ExtensionData[] = marketplace
+    .filter(m => !extensions.some(e => e.manifest.id === m.id))
+    .map(m => ({
+      id:          m.id,
+      name:        m.name,
+      publisher:   m.publisher,
+      description: m.description,
+      version:     m.version,
+      icon:        m.icon,
+      installed:   false,
+    }))
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#252526]">
@@ -69,7 +86,7 @@ export function ExtensionsPanel() {
               <ExtensionItem
                 key={ext.id}
                 ext={ext}
-                onToggle={(id, v) => v ? (v ? enable(id) : disable(id)) : disable(id)}
+                onToggle={(id, v) => v ? enable(id) : disable(id)}
                 onUninstall={(id) => uninstall(id).then(() => info(`Uninstalled ${id}`))}
               />
             ))}
@@ -82,23 +99,23 @@ export function ExtensionsPanel() {
           </div>
         )}
 
-        {/* Recommended */}
-        {filter === 'all' && filteredRecommended.length > 0 && (
+        {/* Marketplace */}
+        {filter === 'all' && marketplaceResults.length > 0 && (
           <>
             <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0">
-              Recommended
+              {search ? 'Marketplace' : 'Recommended'}
             </div>
-            {filteredRecommended.map((ext) => (
+            {marketplaceResults.map((ext) => (
               <ExtensionItem
                 key={ext.id}
                 ext={ext}
-                onInstall={(id) => info(`Extension marketplace coming in v2`, 3000)}
+                onInstall={(id) => install(id).then(() => info(`Installed ${id}`))}
               />
             ))}
           </>
         )}
 
-        {filteredInstalled.length === 0 && filteredRecommended.length === 0 && !isLoading && (
+        {filteredInstalled.length === 0 && marketplaceResults.length === 0 && !isLoading && (
           <div className="flex items-center justify-center h-32 text-xs text-[#6e6e6e]">
             No extensions found
           </div>
