@@ -19,33 +19,33 @@ export function ProblemFilter({
   onToggleErrors, onToggleWarnings, onToggleInfo, onSearchChange, onToggleThisFile,
 }: ProblemFilterProps) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[#2a1f30] bg-[#28242e] shrink-0">
+    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-varta-border bg-varta-bg-secondary shrink-0">
       {/* Filter toggles */}
       <div className="flex items-center gap-1">
         <FilterBtn
           active={showErrors}
           onClick={onToggleErrors}
-          color="#f44747"
+          color="var(--varta-error)"
           label="Errors"
           icon={<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1a6 6 0 110 12A6 6 0 018 2zm-.5 3v5h1V6h-1zm0 6v1h1v-1h-1z"/></svg>}
         />
         <FilterBtn
           active={showWarnings}
           onClick={onToggleWarnings}
-          color="#ff8c00"
+          color="var(--varta-warning)"
           label="Warnings"
           icon={<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M7.56 1h.88l6.54 12.26-.44.74H1.44L1 13.26 7.56 1zM8 2.28L2.28 13H13.72L8 2.28zM8.625 12v-1h-1.25v1h1.25zm-1.25-2V6h1.25v4h-1.25z"/></svg>}
         />
         <FilterBtn
           active={showInfo}
           onClick={onToggleInfo}
-          color="#569cd6"
+          color="var(--varta-info)"
           label="Info"
           icon={<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1a6 6 0 110 12A6 6 0 018 2zm-.5 3v1h1V6h-1zm0 2v5h1V8h-1z"/></svg>}
         />
       </div>
 
-      <div className="w-px h-4 bg-[#2a1f30] mx-1" />
+      <div className="w-px h-4 bg-varta-border mx-1" />
 
       {/* Search */}
       <div className="relative flex-1 max-w-xs">
@@ -53,14 +53,14 @@ export function ProblemFilter({
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Filter (e.g. text, **/*.ts)"
-          className="w-full h-6 pl-7 pr-2 text-xs bg-[#1e1e1e] text-[#d4d4d4] border border-[#2a1f30] focus:border-[#569cd6] rounded-sm outline-none placeholder:text-[#6e6e6e] transition-colors"
+          className="w-full h-6 pl-7 pr-2 text-xs bg-varta-bg-tertiary text-varta-text border border-varta-border focus:border-varta-accent rounded-sm outline-none placeholder:text-varta-text-faint transition-colors"
         />
         <svg
           width="12"
           height="12"
           viewBox="0 0 16 16"
           fill="currentColor"
-          className="absolute left-2 top-1/2 -translate-y-1/2 text-[#6e6e6e]"
+          className="absolute left-2 top-1/2 -translate-y-1/2 text-varta-text-faint"
         >
           <path d="M11.83 11.12l3.42 3.43-.71.71-3.43-3.42a6 6 0 11.72-.72zM6.5 11a4.5 4.5 0 100-9 4.5 4.5 0 000 9z" />
         </svg>
@@ -75,8 +75,8 @@ export function ProblemFilter({
         className={cn(
           'text-[11px] px-2 h-6 rounded-sm border transition-colors flex items-center gap-1.5',
           thisFileOnly
-            ? 'border-[#569cd6] text-[#569cd6] bg-[#569cd6]/10'
-            : 'border-transparent text-[#969696] hover:text-[#d4d4d4] hover:bg-white/5',
+            ? 'border-varta-accent text-varta-accent bg-varta-accent/10'
+            : 'border-transparent text-varta-text-muted hover:text-varta-text hover:bg-white/5',
         )}
       >
         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">

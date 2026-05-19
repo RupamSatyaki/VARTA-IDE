@@ -31,7 +31,7 @@ function TBtn({ tooltip, onClick, icon }: { tooltip: string; onClick: () => void
         onClick={onClick}
         aria-label={tooltip}
         className="w-6 h-6 flex items-center justify-center rounded
-          text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5
+          text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5
           transition-all duration-150"
       >
         <FontAwesomeIcon icon={icon} style={{ fontSize: 11 }} />

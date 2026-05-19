@@ -26,7 +26,7 @@ export function TerminalPanel() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden bg-[#28242e]">
+    <div className="flex flex-col w-full h-full overflow-hidden bg-varta-bg">
       <TerminalTabs
         onNewTerminal={() => createTerminal(rootPath ?? undefined)}
         onDestroyTerminal={(id) => destroyTerminal(id)}
@@ -35,11 +35,11 @@ export function TerminalPanel() {
 
       <div className="flex-1 relative overflow-hidden min-h-0">
         {instanceList.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-[#4a4a6a] text-[12px] gap-2">
+          <div className="flex items-center justify-center h-full text-varta-text-faint text-[12px] gap-2">
             <span>No terminal —</span>
             <button
               onClick={() => createTerminal(rootPath ?? undefined)}
-              className="text-[#7c3aed] hover:text-[#a855f7] transition-colors underline underline-offset-2"
+              className="text-varta-accent hover:text-varta-accent-hover transition-colors underline underline-offset-2"
             >
               create one
             </button>

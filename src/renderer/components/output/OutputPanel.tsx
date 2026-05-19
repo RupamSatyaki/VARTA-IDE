@@ -21,10 +21,10 @@ export function outputLog(channel: Channel, level: LogEntry['level'], message: s
 }
 
 const LEVEL_COLORS: Record<LogEntry['level'], string> = {
-  info:    '#d4d4d4',
-  warn:    '#ff8c00',
-  error:   '#f44747',
-  success: '#4ec9b0',
+  info:    'var(--varta-text)',
+  warn:    'var(--varta-warning)',
+  error:   'var(--varta-error)',
+  success: 'var(--varta-success)',
 }
 
 export function OutputPanel() {
@@ -53,14 +53,14 @@ export function OutputPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-2 py-1 border-b border-[#2a1f30] bg-[#28242e] shrink-0">
+      <div className="flex items-center gap-2 px-2 py-1 border-b border-varta-border bg-varta-bg-secondary shrink-0">
         {/* Channel selector */}
         <select
           value={channel}
           onChange={(e) => setChannel(e.target.value as Channel)}
-          className="h-6 px-1 text-xs bg-[#3c3c3c] text-[#d4d4d4] border border-[#3c3c3c] rounded outline-none"
+          className="h-6 px-1 text-xs bg-varta-bg-tertiary text-varta-text border border-varta-border rounded outline-none"
         >
           {(['Varta', 'Git', 'Search', 'AI'] as Channel[]).map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -73,7 +73,7 @@ export function OutputPanel() {
         <button
           onClick={() => setShowTimes((v) => !v)}
           className={cn('text-[10px] px-1.5 h-5 rounded border transition-colors',
-            showTimes ? 'border-[#569cd6] text-[#569cd6]' : 'border-[#333333] text-[#6e6e6e] hover:text-[#d4d4d4]'
+            showTimes ? 'border-varta-accent text-varta-accent' : 'border-varta-border text-varta-text-faint hover:text-varta-text'
           )}
         >
           Timestamps
@@ -82,7 +82,7 @@ export function OutputPanel() {
         {/* Clear */}
         <button
           onClick={() => { logEntries.length = 0; setEntries([]) }}
-          className="text-[10px] text-[#6e6e6e] hover:text-[#d4d4d4] transition-colors px-1"
+          className="text-[10px] text-varta-text-faint hover:text-varta-text transition-colors px-1"
           title="Clear output"
         >
           Clear
@@ -92,12 +92,12 @@ export function OutputPanel() {
       {/* Log output */}
       <div className="flex-1 overflow-y-auto font-mono text-xs px-3 py-2">
         {filtered.length === 0 ? (
-          <span className="text-[#4e4e4e] italic">No output for {channel}</span>
+          <span className="text-varta-text-faint italic">No output for {channel}</span>
         ) : (
           filtered.map((entry, i) => (
             <div key={i} className="flex gap-2 leading-5">
               {showTimes && (
-                <span className="text-[#4e4e4e] shrink-0">{formatTime(entry.timestamp)}</span>
+                <span className="text-varta-text-faint shrink-0">{formatTime(entry.timestamp)}</span>
               )}
               <span style={{ color: LEVEL_COLORS[entry.level] }}>{entry.message}</span>
             </div>

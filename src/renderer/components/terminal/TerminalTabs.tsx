@@ -20,7 +20,7 @@ export function TerminalTabs({ onNewTerminal, onDestroyTerminal, onClearTerminal
   const isMaximized  = panelHeight > 500
 
   return (
-    <div className="flex items-center h-[34px] bg-[#28242e] border-b border-[#2a1f30] shrink-0">
+    <div className="flex items-center h-[34px] bg-varta-bg-secondary border-b border-varta-border shrink-0">
 
       {/* Tab list */}
       <div className="flex items-end h-full flex-1 overflow-x-auto overflow-y-hidden" style={{ scrollbarWidth: 'none' }}>
@@ -39,7 +39,7 @@ export function TerminalTabs({ onNewTerminal, onDestroyTerminal, onClearTerminal
           onClick={onNewTerminal}
           aria-label="New Terminal"
           title="New Terminal"
-          className="flex items-center justify-center w-7 h-full text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5 transition-colors shrink-0"
+          className="flex items-center justify-center w-7 h-full text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5 transition-colors shrink-0"
         >
           <FontAwesomeIcon icon={faPlus} style={{ fontSize: 11 }} />
         </button>
@@ -58,7 +58,7 @@ export function TerminalTabs({ onNewTerminal, onDestroyTerminal, onClearTerminal
         onClick={() => setPanelVisible(false)}
         aria-label="Close panel"
         title="Close Panel"
-        className="flex items-center justify-center w-7 h-full text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5 transition-colors shrink-0 mr-1"
+        className="flex items-center justify-center w-7 h-full text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5 transition-colors shrink-0 mr-1"
       >
         <FontAwesomeIcon icon={faXmark} style={{ fontSize: 12 }} />
       </button>

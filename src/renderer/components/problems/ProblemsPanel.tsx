@@ -57,7 +57,7 @@ export function ProblemsPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg">
       {/* Filters */}
       <ProblemFilter
         showErrors={showErrors}
@@ -75,7 +75,7 @@ export function ProblemsPanel() {
       {/* Problem list */}
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-[#6e6e6e]">
+          <div className="flex flex-col items-center justify-center h-full gap-2 text-varta-text-faint">
             <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor" className="opacity-30">
               <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/>
             </svg>

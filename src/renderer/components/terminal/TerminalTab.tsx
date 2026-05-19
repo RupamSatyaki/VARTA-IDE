@@ -33,25 +33,25 @@ export function TerminalTab({ instance, isActive, onClick, onClose }: TerminalTa
         'min-w-[90px] max-w-[150px] cursor-pointer select-none shrink-0',
         'text-[12px] transition-all duration-150',
         isActive
-          ? 'bg-[#2d2535] text-[#cccccc]'
-          : 'text-[#5a5a7a] hover:text-[#9090b0] hover:bg-white/5',
+          ? 'bg-varta-active text-varta-text'
+          : 'text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5',
       )}
     >
       {/* Active top accent */}
       {isActive && (
-        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7c3aed] to-[#a855f7] active-tab-glow" />
+        <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-varta-accent to-varta-accent-hover active-tab-glow" />
       )}
 
       {/* Right separator */}
       {!isActive && (
-        <span className="absolute right-0 top-2 bottom-2 w-px bg-[#1e1e30]" />
+        <span className="absolute right-0 top-2 bottom-2 w-px bg-varta-border" />
       )}
 
       {/* Terminal icon */}
       <FontAwesomeIcon
         icon={faTerminal}
         style={{ fontSize: 11 }}
-        className={cn('shrink-0', isActive ? 'text-[#a855f7]' : 'text-[#4a4a6a]')}
+        className={cn('shrink-0', isActive ? 'text-varta-accent' : 'text-varta-text-faint')}
       />
 
       {/* Label */}

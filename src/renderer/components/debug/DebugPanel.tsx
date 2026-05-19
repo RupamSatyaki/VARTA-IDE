@@ -10,10 +10,10 @@ export function DebugPanel() {
   const { info } = useNotificationStore()
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#252526]">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#333333] shrink-0">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-varta-border shrink-0">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-varta-text-muted">
           Run & Debug
         </span>
         <Button
@@ -38,8 +38,8 @@ export function DebugPanel() {
         {/* Coming soon notice */}
         <div className="px-4 py-6 text-center">
           <div className="text-3xl mb-3 opacity-20">🐛</div>
-          <p className="text-xs text-[#6e6e6e]">Full debugger support coming in v2</p>
-          <p className="text-[10px] text-[#4e4e4e] mt-1">DAP (Debug Adapter Protocol) integration</p>
+          <p className="text-xs text-varta-text-muted">Full debugger support coming in v2</p>
+          <p className="text-[10px] text-varta-text-faint mt-1">DAP (Debug Adapter Protocol) integration</p>
         </div>
       </div>
     </div>
