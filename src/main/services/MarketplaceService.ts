@@ -88,16 +88,7 @@ export class MarketplaceService {
       }
 
       // 2. Prepare paths
-      const extensionsDir = path.join(app.getPath('userData'), 'extensions')
-      const tempZip      = path.join(app.getPath('temp'), `${id}.vsix`)
-      const tempExtract  = path.join(app.getPath('temp'), `${id}_extracted`)
-      const destDir      = path.join(extensionsDir, id)
-
-      await fsp.mkdir(extensionsDir, { recursive: true })
-      await fsp.rm(tempExtract, { recursive: true, force: true })
-      await fsp.mkdir(tempExtract, { recursive: true })
-      await fsp.rm(destDir, { recursive: true, force: true })
-      await fsp.mkdir(destDir, { recursive: true })
+      const tempVsix = path.join(app.getPath('temp'), `${id}.vsix`)
 
       // 3. Download .vsix (ZIP)
       logger.info('MarketplaceService', `Downloading: ${downloadUrl}`)
@@ -108,7 +99,7 @@ export class MarketplaceService {
         timeout: 30000
       })
 
-      const writer = createWriteStream(tempZip)
+      const writer = createWriteStream(tempVsix)
       response.data.pipe(writer)
 
       await new Promise((resolve, reject) => {
@@ -116,48 +107,85 @@ export class MarketplaceService {
         writer.on('error', reject)
       })
 
-      // 4. Extract
+      const result = await this.extractAndInstall(tempVsix, id)
+      await fsp.rm(tempVsix, { force: true }).catch(() => {})
+      return result
+    } catch (error: any) {
+      logger.error('MarketplaceService', `Failed to install extension ${id}`, error)
+      return false
+    }
+  }
+
+  async installFromFile(filePath: string): Promise<boolean> {
+    logger.info('MarketplaceService', `Installing extension from file: ${filePath}`)
+    try {
+      const fileName = path.basename(filePath, '.vsix')
+      return await this.extractAndInstall(filePath, fileName)
+    } catch (error: any) {
+      logger.error('MarketplaceService', `Failed to install extension from ${filePath}`, error)
+      return false
+    }
+  }
+
+  private async extractAndInstall(vsixPath: string, idHint: string): Promise<boolean> {
+    const tempExtract  = path.join(app.getPath('temp'), `${idHint}_extracted`)
+    const extensionsDir = path.join(app.getPath('userData'), 'extensions')
+    
+    try {
+      await fsp.mkdir(extensionsDir, { recursive: true })
+      await fsp.rm(tempExtract, { recursive: true, force: true })
+      await fsp.mkdir(tempExtract, { recursive: true })
+
+      // 1. Extract
       logger.info('MarketplaceService', `Extracting to temp: ${tempExtract}`)
       if (process.platform === 'win32') {
-        const tempZipRename = tempZip.replace(/\.vsix$/, '.zip')
+        const tempZip = path.join(app.getPath('temp'), `${idHint}_tmp.zip`)
         try {
-          await fsp.rename(tempZip, tempZipRename)
+          await fsp.copyFile(vsixPath, tempZip)
           await this.runCommand('powershell', [
             '-NoProfile',
             '-Command',
-            `Expand-Archive -Path '${tempZipRename}' -DestinationPath '${tempExtract}' -Force`
+            `Expand-Archive -Path '${tempZip}' -DestinationPath '${tempExtract}' -Force`
           ])
         } finally {
-          await fsp.rm(tempZipRename, { force: true }).catch(() => {})
+          await fsp.rm(tempZip, { force: true }).catch(() => {})
         }
       } else {
-        await this.runCommand('tar', ['-xf', tempZip, '-C', tempExtract])
+        await this.runCommand('tar', ['-xf', vsixPath, '-C', tempExtract])
       }
 
-      // 5. Locate package.json and move contents
+      // 2. Locate package.json and move contents
       let sourceDir = tempExtract
       const internalExtDir = path.join(tempExtract, 'extension')
       const manifestInInternal = path.join(internalExtDir, 'package.json')
       
+      let manifestPath = ''
       try {
         await fsp.access(manifestInInternal)
         sourceDir = internalExtDir
+        manifestPath = manifestInInternal
         logger.info('MarketplaceService', `Found manifest in 'extension/' folder`)
       } catch (e) {
+        manifestPath = path.join(tempExtract, 'package.json')
         try {
-          await fsp.access(path.join(tempExtract, 'package.json'))
+          await fsp.access(manifestPath)
           logger.info('MarketplaceService', `Found manifest in extract root`)
         } catch (e2) {
           throw new VartaError(VartaErrorCode.EXTENSION_INVALID, 'Missing package.json in extension package')
         }
       }
 
+      // Read manifest to get real ID
+      const raw = await fsp.readFile(manifestPath, 'utf-8')
+      const manifest = JSON.parse(raw)
+      const realId = manifest.id || (manifest.publisher && manifest.name ? `${manifest.publisher}.${manifest.name}` : idHint)
+      const destDir = path.join(extensionsDir, realId)
+
+      await fsp.rm(destDir, { recursive: true, force: true })
+      await fsp.mkdir(destDir, { recursive: true })
+
       logger.info('MarketplaceService', `Moving files from ${sourceDir} to ${destDir}`)
       const files = await fsp.readdir(sourceDir)
-      if (files.length === 0) {
-        throw new Error(`Extracted source directory is empty: ${sourceDir}`)
-      }
-
       for (const file of files) {
         const src = path.join(sourceDir, file)
         const dst = path.join(destDir, file)
@@ -169,20 +197,20 @@ export class MarketplaceService {
         }
       }
 
-      // 6. Cleanup
-      await fsp.rm(tempZip, { force: true }).catch(() => {})
+      // 3. Cleanup
       await fsp.rm(tempExtract, { recursive: true, force: true }).catch(() => {})
 
-      // 7. Reload ExtensionService
+      // 4. Reload ExtensionService
       logger.info('MarketplaceService', `Installation successful, reloading extensions`)
       await extensionService.reloadAll()
 
       return true
     } catch (error: any) {
-      logger.error('MarketplaceService', `Failed to install extension ${id}`, error)
-      return false
+      logger.error('MarketplaceService', `Extraction/Installation failed`, error)
+      throw error
     }
   }
+
 }
 
 export const marketplaceService = new MarketplaceService()

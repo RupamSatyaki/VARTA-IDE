@@ -15,6 +15,7 @@ export interface ExtensionActions {
   fetchExtensions: () => Promise<void>
   searchMarketplace: (query: string) => Promise<void>
   install: (id: string) => Promise<void>
+  installFromFile: (filePath: string) => Promise<void>
   processAllContributions: () => void
   enable:        (id: string) => Promise<void>
   disable:       (id: string) => Promise<void>
@@ -65,6 +66,16 @@ export const useExtensionStore = create<ExtensionState & ExtensionActions>()((se
     const res = await window.varta.extensions.install(id)
     if (isIPCSuccess(res)) {
       // After install, we should probably fetch installed extensions again
+      await get().fetchExtensions()
+    } else {
+      set({ error: res.error.message, isLoading: false })
+    }
+  },
+
+  installFromFile: async (filePath: string) => {
+    set({ isLoading: true, error: null })
+    const res = await window.varta.extensions.installFromFile(filePath)
+    if (isIPCSuccess(res)) {
       await get().fetchExtensions()
     } else {
       set({ error: res.error.message, isLoading: false })

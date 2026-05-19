@@ -12,6 +12,9 @@ export const extensionApi = {
   install: (id: string): Promise<IPCResponse<boolean>> =>
     ipcRenderer.invoke(ExtensionChannel.INSTALL, id),
 
+  installFromFile: (filePath: string): Promise<IPCResponse<boolean>> =>
+    ipcRenderer.invoke(ExtensionChannel.INSTALL_FROM_FILE, filePath),
+
   getDetails: (id: string): Promise<IPCResponse<ExtensionInfo>> => 
     ipcRenderer.invoke(ExtensionChannel.GET_DETAILS, id),
 

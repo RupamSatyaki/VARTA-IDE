@@ -39,6 +39,17 @@ export function registerExtensionHandlers(): void {
     }
   })
 
+  // Install extension from file
+  ipcMain.handle(ExtensionChannel.INSTALL_FROM_FILE, async (_event, filePath: string) => {
+    try {
+      const success = await marketplaceService.installFromFile(filePath)
+      return ipcOk(success)
+    } catch (error: any) {
+      logger.error('IPC:Extension', `Failed to install from file ${filePath}`, error)
+      return ipcErr({ code: 'ERR_EXTENSION_INSTALL_FAILED', message: error.message })
+    }
+  })
+
   // Get extension details
   ipcMain.handle(ExtensionChannel.GET_DETAILS, async (_event, id: string) => {
     try {
@@ -110,6 +121,7 @@ export function removeExtensionHandlers(): void {
   ipcMain.removeHandler(ExtensionChannel.LIST)
   ipcMain.removeHandler(ExtensionChannel.MARKETPLACE_SEARCH)
   ipcMain.removeHandler(ExtensionChannel.INSTALL)
+  ipcMain.removeHandler(ExtensionChannel.INSTALL_FROM_FILE)
   ipcMain.removeHandler(ExtensionChannel.GET_DETAILS)
   ipcMain.removeHandler(ExtensionChannel.ENABLE)
   ipcMain.removeHandler(ExtensionChannel.DISABLE)

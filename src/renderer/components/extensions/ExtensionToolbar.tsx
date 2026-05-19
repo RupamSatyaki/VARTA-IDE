@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { cn } from '../../utils/cn'
 import { useNotificationStore } from '../../store/notificationStore'
+import { useExtensionStore } from '../../store/extensionStore'
 
 export type ExtensionFilter = 'all' | 'enabled' | 'disabled'
 
@@ -10,10 +11,28 @@ export interface ExtensionToolbarProps {
 }
 
 export function ExtensionToolbar({ filter, onFilter }: ExtensionToolbarProps) {
-  const { info } = useNotificationStore()
+  const { info, error: notifyError } = useNotificationStore()
+  const { installFromFile } = useExtensionStore()
+
+  const handleInstallVsix = async () => {
+    const res = await window.varta.dialog.openFile({
+      title: 'Install Extension from VSIX',
+      filters: [{ name: 'VSIX Extension', extensions: ['vsix'] }],
+      properties: ['openFile']
+    })
+
+    if (res.success && !res.data.cancelled && res.data.paths[0]) {
+      try {
+        await installFromFile(res.data.paths[0])
+        info('Extension installed successfully', 3000)
+      } catch (err: any) {
+        notifyError(`VSIX Installation failed: ${err.message}`)
+      }
+    }
+  }
 
   return (
-    <div className="flex items-center justify-between px-2 py-1.5 border-b border-[#333333] shrink-0">
+    <div className="flex items-center justify-between px-2 py-1.5 border-b border-varta-border shrink-0">
       <div className="flex items-center gap-1">
         {(['all', 'enabled', 'disabled'] as ExtensionFilter[]).map((f) => (
           <button
@@ -22,8 +41,8 @@ export function ExtensionToolbar({ filter, onFilter }: ExtensionToolbarProps) {
             className={cn(
               'text-[10px] px-2 h-5 rounded capitalize transition-colors',
               filter === f
-                ? 'bg-[#37373d] text-[#d4d4d4]'
-                : 'text-[#6e6e6e] hover:text-[#d4d4d4]',
+                ? 'bg-varta-active text-varta-text'
+                : 'text-varta-text-faint hover:text-varta-text',
             )}
           >
             {f}
@@ -31,11 +50,12 @@ export function ExtensionToolbar({ filter, onFilter }: ExtensionToolbarProps) {
         ))}
       </div>
       <button
-        onClick={() => info('VSIX installation coming soon', 3000)}
-        className="text-[10px] text-[#569cd6] hover:text-[#4fc1ff] transition-colors"
+        onClick={handleInstallVsix}
+        className="text-[10px] text-varta-accent hover:text-varta-accent-hover transition-colors"
       >
         Install from VSIX…
       </button>
     </div>
   )
 }
+

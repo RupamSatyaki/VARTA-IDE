@@ -142,6 +142,7 @@ export const enum AIChannel {
 export const enum ExtensionChannel {
   LIST            = 'EXTENSION:LIST',
   INSTALL         = 'EXTENSION:INSTALL',
+  INSTALL_FROM_FILE = 'EXTENSION:INSTALL_FROM_FILE',
   UNINSTALL       = 'EXTENSION:UNINSTALL',
   ENABLE          = 'EXTENSION:ENABLE',
   DISABLE         = 'EXTENSION:DISABLE',
