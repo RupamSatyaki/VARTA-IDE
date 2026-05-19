@@ -34,15 +34,22 @@ export function ExtensionsPanel() {
     return () => clearTimeout(timer)
   }, [search, searchMarketplace])
 
+  const formatPublisher = (manifest: any) => {
+    const pub = manifest.publisher || manifest.author
+    if (!pub) return 'Unknown'
+    if (typeof pub === 'string') return pub
+    return pub.name || 'Unknown'
+  }
+
   // Convert installed extensions to ExtensionData
   const installed: ExtensionData[] = extensions.map((e) => ({
-    id:          e.manifest.id,
+    id:          e.manifest.id || '',
     name:        e.manifest.name,
-    publisher:   e.manifest.author,
-    description: e.manifest.description,
+    publisher:   formatPublisher(e.manifest),
+    description: e.manifest.description || '',
     version:     e.manifest.version,
     installed:   true,
-    enabled:     enabled.has(e.manifest.id),
+    enabled:     enabled.has(e.manifest.id || ''),
   }))
 
   const filteredInstalled = installed.filter((e) => {

@@ -3,17 +3,18 @@
 export type ExtensionStatus = 'enabled' | 'disabled' | 'error' | 'loading'
 
 export interface ExtensionManifest {
-  id:           string
+  id?:          string              // Computed as publisher.name if missing
+  publisher?:   string
   name:         string
   version:      string
-  description:  string
-  author:       string
+  description?: string
+  author?:      string | { name: string; email?: string; url?: string }
   license?:     string
   homepage?:    string
   repository?:  string
   icon?:        string
   keywords?:    string[]
-  engines:      { varta: string }   // semver range
+  engines?:     { varta?: string; vscode?: string }   // Support both
   main?:        string              // entry point (relative to extension root)
   contributes?: ExtensionContributions
   activationEvents?: string[]

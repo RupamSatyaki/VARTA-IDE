@@ -56,7 +56,13 @@ export class ExtensionService {
       const raw      = await fsp.readFile(manifestPath, 'utf-8')
       const manifest = JSON.parse(raw) as ExtensionManifest
 
+      // Synthesize ID if missing (common for VS Code extensions)
+      if (!manifest.id && manifest.publisher && manifest.name) {
+        manifest.id = `${manifest.publisher}.${manifest.name}`
+      }
+
       if (!manifest.id || !manifest.name || !manifest.version) {
+        logger.error('ExtensionService', `Invalid manifest at ${extPath}: missing id/publisher, name, or version`)
         throw new VartaError(VartaErrorCode.EXTENSION_INVALID, `Invalid manifest at ${extPath}`)
       }
 
@@ -72,8 +78,8 @@ export class ExtensionService {
       if (info.status === 'enabled') {
         this.processContributions(info)
         // Activation happens after loadAll to ensure mainWindow is ready
-        this.activateExtension(info.manifest.id).catch(e => {
-          logger.error('ExtensionService', `Auto-activation failed for ${info.manifest.id}`, e)
+        this.activateExtension(manifest.id).catch(e => {
+          logger.error('ExtensionService', `Auto-activation failed for ${manifest.id}`, e)
         })
       }
     } catch (e) {
