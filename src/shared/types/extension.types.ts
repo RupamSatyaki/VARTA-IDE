@@ -13,6 +13,7 @@ export interface ExtensionManifest {
   homepage?:    string
   repository?:  string
   icon?:        string
+  coverImage?:  string
   keywords?:    string[]
   engines?:     { varta?: string; vscode?: string }   // Support both
   main?:        string              // entry point (relative to extension root)
@@ -102,6 +103,7 @@ export interface ExtensionInfo {
   status:       ExtensionStatus
   installPath:  string
   installedAt:  number    // unix ms
+  isBuiltin?:   boolean
   errorMessage?: string
 }
 

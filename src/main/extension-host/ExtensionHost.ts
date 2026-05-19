@@ -2,6 +2,7 @@ import vm from 'vm'
 import path from 'path'
 import fs from 'fs'
 import fsp from 'fs/promises'
+import * as ts from 'typescript'
 import { VartaExtensionAPI, ExtensionContext, Disposable } from './api.types'
 import { logger } from '../utils/logger'
 import { ExtensionInfo } from '../../shared/types/extension.types'
@@ -69,7 +70,26 @@ export class ExtensionHost {
       return this.moduleCache.get(resolvedPath).exports
     }
 
-    const code = fs.readFileSync(resolvedPath, 'utf-8')
+    let code = fs.readFileSync(resolvedPath, 'utf-8')
+
+    // On-the-fly transpilation for TypeScript or ESM
+    if (resolvedPath.endsWith('.ts') || code.includes('export ')) {
+      try {
+        const result = ts.transpileModule(code, {
+          compilerOptions: {
+            module: ts.ModuleKind.CommonJS,
+            target: ts.ScriptTarget.ESNext,
+            allowJs: true,
+            skipLibCheck: true,
+            esModuleInterop: true
+          }
+        })
+        code = result.outputText
+      } catch (e) {
+        logger.error('ExtensionHost', `Transpilation failed for ${resolvedPath}`, e)
+      }
+    }
+
     const module = { exports: {} }
     const dirname = path.dirname(resolvedPath)
 
@@ -166,7 +186,9 @@ export class ExtensionHost {
 
   private resolvePath(p: string): string {
     if (fs.existsSync(p) && fs.statSync(p).isFile()) return p
+    if (fs.existsSync(p + '.ts')) return p + '.ts'
     if (fs.existsSync(p + '.js')) return p + '.js'
+    if (fs.existsSync(path.join(p, 'index.ts'))) return path.join(p, 'index.ts')
     if (fs.existsSync(path.join(p, 'index.js'))) return path.join(p, 'index.js')
     throw new Error(`Module not found: ${p}`)
   }

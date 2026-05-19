@@ -98,6 +98,10 @@ export interface AISettings {
   // NOTE: API key is NEVER stored here — it lives in encrypted store (main only)
 }
 
+export interface ExtensionSettings {
+  disabled: string[]
+}
+
 export interface KeybindingEntry {
   command:    string
   key:        string
@@ -111,6 +115,7 @@ export interface VartaSettings {
   workbench:  WorkbenchSettings
   git:        GitSettings
   ai:         AISettings
+  extensions: ExtensionSettings
   keybindings: KeybindingEntry[]
 }
 

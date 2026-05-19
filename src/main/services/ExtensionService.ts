@@ -5,22 +5,35 @@ import { ExtensionInfo, ExtensionManifest } from '../../shared/types/extension.t
 import { VartaError, VartaErrorCode } from '../../shared/errors'
 import { logger } from '../utils/logger'
 import { ExtensionHost } from '../extension-host/ExtensionHost'
+import { settingsService } from './SettingsService'
 
 export class ExtensionService {
   private extensions = new Map<string, ExtensionInfo>()
   private extensionsDir: string = ''
+  private builtinExtensionsDir: string = ''
   private mainWindow: any = null
   private host: ExtensionHost | null = null
 
   init(mainWindow: any): void {
     this.mainWindow = mainWindow
     this.host = new ExtensionHost(mainWindow)
+    
+    // User installed extensions
     this.extensionsDir = path.join(app.getPath('userData'), 'extensions')
+    
+    // Built-in extensions
+    if (app.isPackaged) {
+      this.builtinExtensionsDir = path.join(app.getAppPath(), 'builtin-extensions')
+    } else {
+      // In dev, we use src/builtin-extensions
+      this.builtinExtensionsDir = path.join(process.cwd(), 'src', 'builtin-extensions')
+    }
+
     // Load extensions async — don't block init
     this.loadAll().catch((e) => {
       logger.error('ExtensionService', 'Failed to load extensions', e)
     })
-    logger.info('ExtensionService', `Initialized (dir: ${this.extensionsDir})`)
+    logger.info('ExtensionService', `Initialized (user: ${this.extensionsDir}, builtin: ${this.builtinExtensionsDir})`)
   }
 
   destroy(): void {
@@ -32,25 +45,36 @@ export class ExtensionService {
 
   private async loadAll(): Promise<void> {
     try {
-      await fsp.mkdir(this.extensionsDir, { recursive: true })
-      const entries = await fsp.readdir(this.extensionsDir, { withFileTypes: true })
+      // 1. Load Built-in extensions
+      await fsp.mkdir(this.builtinExtensionsDir, { recursive: true })
+      const builtinEntries = await fsp.readdir(this.builtinExtensionsDir, { withFileTypes: true })
+      for (const entry of builtinEntries) {
+        if (!entry.isDirectory()) { continue }
+        const extPath = path.join(this.builtinExtensionsDir, entry.name)
+        await this.loadExtension(extPath, true).catch((e) => {
+          logger.warn('ExtensionService', `Failed to load builtin extension at ${extPath}`, e)
+        })
+      }
 
-      for (const entry of entries) {
+      // 2. Load User extensions
+      await fsp.mkdir(this.extensionsDir, { recursive: true })
+      const userEntries = await fsp.readdir(this.extensionsDir, { withFileTypes: true })
+      for (const entry of userEntries) {
         if (!entry.isDirectory()) { continue }
         const extPath = path.join(this.extensionsDir, entry.name)
-        await this.loadExtension(extPath).catch((e) => {
-          logger.warn('ExtensionService', `Failed to load extension at ${extPath}`, e)
+        await this.loadExtension(extPath, false).catch((e) => {
+          logger.warn('ExtensionService', `Failed to load user extension at ${extPath}`, e)
         })
       }
 
       logger.info('ExtensionService', `Loaded ${this.extensions.size} extensions`)
       this.notifyContributionsChanged()
     } catch (e) {
-      logger.error('ExtensionService', 'Failed to scan extensions directory', e)
+      logger.error('ExtensionService', 'Failed to scan extensions directories', e)
     }
   }
 
-  private async loadExtension(extPath: string): Promise<void> {
+  private async loadExtension(extPath: string, isBuiltin: boolean = false): Promise<void> {
     const manifestPath = path.join(extPath, 'package.json')
     try {
       const raw      = await fsp.readFile(manifestPath, 'utf-8')
@@ -66,11 +90,16 @@ export class ExtensionService {
         throw new VartaError(VartaErrorCode.EXTENSION_INVALID, `Invalid manifest at ${extPath}`)
       }
 
+      // Check if disabled in settings
+      const disabledList = settingsService.get('extensions').disabled || []
+      const isInitiallyEnabled = !disabledList.includes(manifest.id)
+
       const info: ExtensionInfo = {
         manifest,
-        status:      'enabled',
+        status:      isInitiallyEnabled ? 'enabled' : 'disabled',
         installPath: extPath,
         installedAt: Date.now(),
+        isBuiltin,
       }
 
       this.extensions.set(manifest.id, info)
@@ -140,6 +169,18 @@ export class ExtensionService {
   enable(id: string): void {
     const ext = this.getDetails(id)
     ext.status = 'enabled'
+
+    // Update settings if it was in disabled list
+    const settings = settingsService.get('extensions')
+    const disabled = settings.disabled || []
+    if (disabled.includes(id)) {
+      settingsService.set({
+        extensions: {
+          disabled: disabled.filter(d => d !== id)
+        }
+      })
+    }
+
     this.activateExtension(id).catch(e => logger.error('ExtensionService', `Failed to activate ${id}`, e))
     this.notifyContributionsChanged()
     logger.info('ExtensionService', `Enabled: ${id}`)
@@ -148,6 +189,18 @@ export class ExtensionService {
   disable(id: string): void {
     const ext = this.getDetails(id)
     ext.status = 'disabled'
+
+    // Update settings
+    const settings = settingsService.get('extensions')
+    const disabled = settings.disabled || []
+    if (!disabled.includes(id)) {
+      settingsService.set({
+        extensions: {
+          disabled: [...disabled, id]
+        }
+      })
+    }
+
     if (this.host) {
       this.host.deactivate(id).catch(e => logger.error('ExtensionService', `Failed to deactivate ${id}`, e))
     }
@@ -157,6 +210,10 @@ export class ExtensionService {
 
   async uninstall(id: string): Promise<void> {
     const ext = this.getDetails(id)
+    if (ext.isBuiltin) {
+      throw new VartaError(VartaErrorCode.EXTENSION_INSTALL_FAILED, `Cannot uninstall built-in extension: ${id}`)
+    }
+
     try {
       if (this.host) {
         await this.host.deactivate(id)
@@ -175,8 +232,9 @@ export class ExtensionService {
     if (this.host) {
       await this.host.deactivate(id)
     }
+    const isBuiltin = ext.isBuiltin ?? false
     this.extensions.delete(id)
-    await this.loadExtension(ext.installPath)
+    await this.loadExtension(ext.installPath, isBuiltin)
     this.notifyContributionsChanged()
     logger.info('ExtensionService', `Reloaded: ${id}`)
   }

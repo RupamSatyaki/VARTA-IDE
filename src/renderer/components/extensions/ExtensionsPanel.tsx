@@ -41,8 +41,8 @@ export function ExtensionsPanel() {
     return pub.name || 'Unknown'
   }
 
-  // Convert installed extensions to ExtensionData
-  const installed: ExtensionData[] = extensions.map((e) => ({
+  // Convert extensions to ExtensionData
+  const allExtensions: ExtensionData[] = extensions.map((e) => ({
     id:          e.manifest.id || '',
     name:        e.manifest.name,
     publisher:   formatPublisher(e.manifest),
@@ -50,15 +50,26 @@ export function ExtensionsPanel() {
     version:     e.manifest.version,
     installed:   true,
     enabled:     enabled.has(e.manifest.id || ''),
+    icon:        e.manifest.icon,
+    coverImage:  e.manifest.coverImage,
+    isBuiltin:   e.isBuiltin,
   }))
 
-  const filteredInstalled = installed.filter((e) => {
-    if (filter === 'enabled'  && !e.enabled)  { return false }
-    if (filter === 'disabled' &&  e.enabled)  { return false }
-    if (search && !e.name.toLowerCase().includes(search.toLowerCase()) &&
-        !e.description.toLowerCase().includes(search.toLowerCase())) { return false }
-    return true
-  })
+  const internal = allExtensions.filter(e => e.isBuiltin)
+  const installed = allExtensions.filter(e => !e.isBuiltin)
+
+  const applyFilters = (list: ExtensionData[]) => {
+    return list.filter((e) => {
+      if (filter === 'enabled'  && !e.enabled)  { return false }
+      if (filter === 'disabled' &&  e.enabled)  { return false }
+      if (search && !e.name.toLowerCase().includes(search.toLowerCase()) &&
+          !e.description.toLowerCase().includes(search.toLowerCase())) { return false }
+      return true
+    })
+  }
+
+  const filteredInternal = applyFilters(internal)
+  const filteredInstalled = applyFilters(installed)
 
   const marketplaceResults: ExtensionData[] = marketplace
     .filter(m => !extensions.some(e => e.manifest.id === m.id))
@@ -83,10 +94,26 @@ export function ExtensionsPanel() {
       <ExtensionToolbar filter={filter} onFilter={setFilter} />
 
       <div className="flex-1 overflow-y-auto">
+        {/* Internal Section */}
+        {filteredInternal.length > 0 && (
+          <>
+            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0 z-10 border-b border-[#333333]">
+              Internal ({filteredInternal.length})
+            </div>
+            {filteredInternal.map((ext) => (
+              <ExtensionItem
+                key={ext.id}
+                ext={ext}
+                onToggle={(id, v) => v ? enable(id) : disable(id)}
+              />
+            ))}
+          </>
+        )}
+
         {/* Installed Section */}
         {filteredInstalled.length > 0 && (
           <>
-            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0 z-10">
+            <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] bg-[#252526] sticky top-0 z-10 border-t border-[#333333]">
               Installed ({filteredInstalled.length})
             </div>
             {filteredInstalled.map((ext) => (

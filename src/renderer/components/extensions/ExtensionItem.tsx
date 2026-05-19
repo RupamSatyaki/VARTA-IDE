@@ -12,6 +12,8 @@ export interface ExtensionData {
   installed:   boolean
   enabled?:    boolean
   icon?:       string
+  coverImage?: string
+  isBuiltin?:  boolean
 }
 
 export interface ExtensionItemProps {
@@ -37,60 +39,78 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
   const [imgError, setImgError] = React.useState(false)
 
   return (
-    <div className="flex items-start gap-2.5 px-3 py-2.5 border-b border-[#2d2d2d] hover:bg-[#2a2d2e] transition-colors group">
-      {/* Icon */}
-      {ext.icon && !imgError ? (
-        <img 
-          src={ext.icon} 
-          alt={ext.name} 
-          className="w-8 h-8 rounded shrink-0 object-contain bg-white/5" 
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div
-          className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white shrink-0"
-          style={{ backgroundColor: color + '33', border: `1px solid ${color}44` }}
-        >
-          <span style={{ color }}>{ext.name[0].toUpperCase()}</span>
+    <div className={cn(
+      "flex flex-col gap-2 px-3 py-3 border-b border-[#2d2d2d] hover:bg-[#2a2d2e] transition-colors group",
+      ext.isBuiltin && "bg-[#252526]/50"
+    )}>
+      {/* Cover Image for Built-ins */}
+      {ext.isBuiltin && ext.coverImage && (
+        <div className="w-full aspect-video rounded overflow-hidden mb-1 bg-black/20 border border-white/5">
+          <img 
+            src={ext.coverImage} 
+            alt={ext.name} 
+            className="w-full h-full object-cover"
+          />
         </div>
       )}
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-[#d4d4d4] truncate">{ext.name}</span>
-          {ext.version && (
-            <span className="text-[10px] text-[#6e6e6e] shrink-0">v{ext.version}</span>
+      <div className="flex items-start gap-2.5">
+        {/* Icon */}
+        {ext.icon && !imgError ? (
+          <img 
+            src={ext.icon} 
+            alt={ext.name} 
+            className="w-8 h-8 rounded shrink-0 object-contain bg-white/5" 
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div
+            className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white shrink-0"
+            style={{ backgroundColor: color + '33', border: `1px solid ${color}44` }}
+          >
+            <span style={{ color }}>{ext.name[0].toUpperCase()}</span>
+          </div>
+        )}
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-[#d4d4d4] truncate">{ext.name}</span>
+            {ext.version && (
+              <span className="text-[10px] text-[#6e6e6e] shrink-0">v{ext.version}</span>
+            )}
+          </div>
+          <p className="text-[10px] text-[#6e6e6e]">{ext.publisher}</p>
+          <p className="text-[10px] text-[#6e6e6e] truncate mt-0.5">{ext.description}</p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {ext.installed ? (
+            <>
+              <Toggle
+                checked={ext.enabled ?? true}
+                onChange={(v) => onToggle?.(ext.id, v)}
+              />
+              {!ext.isBuiltin && (
+                <button
+                  onClick={() => onUninstall?.(ext.id)}
+                  className="opacity-0 group-hover:opacity-100 text-[10px] text-[#6e6e6e] hover:text-[#f44747] transition-all"
+                  title="Uninstall"
+                >
+                  ✕
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={() => onInstall?.(ext.id)}
+              className="text-[10px] px-2 h-5 rounded border border-[#569cd6] text-[#569cd6] hover:bg-[#1b2d3e] transition-colors"
+            >
+              Install
+            </button>
           )}
         </div>
-        <p className="text-[10px] text-[#6e6e6e]">{ext.publisher}</p>
-        <p className="text-[10px] text-[#6e6e6e] truncate mt-0.5">{ext.description}</p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {ext.installed ? (
-          <>
-            <Toggle
-              checked={ext.enabled ?? true}
-              onChange={(v) => onToggle?.(ext.id, v)}
-            />
-            <button
-              onClick={() => onUninstall?.(ext.id)}
-              className="opacity-0 group-hover:opacity-100 text-[10px] text-[#6e6e6e] hover:text-[#f44747] transition-all"
-              title="Uninstall"
-            >
-              ✕
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => onInstall?.(ext.id)}
-            className="text-[10px] px-2 h-5 rounded border border-[#569cd6] text-[#569cd6] hover:bg-[#1b2d3e] transition-colors"
-          >
-            Install
-          </button>
-        )}
       </div>
     </div>
   )

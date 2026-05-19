@@ -1,0 +1,24 @@
+{
+  "name": "varta-default-theme",
+  "publisher": "varta",
+  "id": "varta.varta-default-theme",
+  "displayName": "Varta Default Theme",
+  "version": "1.0.0",
+  "description": "The default dark and light themes for Varta IDE.",
+  "coverImage": "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop",
+  "icon": "https://api.iconify.design/vscode-icons:file-type-light-js.svg",
+  "engines": {
+    "varta": "^0.1.0"
+  },
+  "main": "./src/index.ts",
+  "contributes": {
+    "themes": [
+      {
+        "id": "varta-dark",
+        "label": "Varta Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/varta-dark.json"
+      }
+    ]
+  }
+}

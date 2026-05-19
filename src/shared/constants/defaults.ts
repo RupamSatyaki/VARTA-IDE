@@ -91,6 +91,10 @@ export const DEFAULT_SETTINGS: VartaSettings = {
     // API key is NEVER stored here
   },
 
+  extensions: {
+    disabled: [],
+  },
+
   keybindings: [],   // user overrides; merged with DEFAULT_KEYBINDINGS at runtime
 }
 
