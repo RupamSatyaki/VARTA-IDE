@@ -140,7 +140,7 @@ function ActivityBarItem({ item, active, onClick, badge }: {
         aria-label={item.label}
         aria-pressed={active}
         className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300"
-        style={{ color: active ? '#b38dceff' : 'var(--varta-activitybar-icon)' }}
+        style={{ color: active ? 'var(--varta-accent)' : 'var(--varta-activitybar-icon)' }}
       >
         {/* Hover glass */}
         {!active && <GlassHover />}
@@ -169,8 +169,8 @@ function ActivityBarItem({ item, active, onClick, badge }: {
         {badge !== undefined && badge > 0 && (
           <span className="absolute top-0.5 right-0.5 z-20 min-w-[16px] h-[16px] px-1
             flex items-center justify-center rounded-full
-            bg-[#7e509f] text-white text-[9px] font-bold leading-none
-            shadow-[0_0_6px_rgba(126,80,159,0.6)]">
+            bg-varta-accent text-white text-[9px] font-bold leading-none
+            shadow-[0_0_6px_rgba(160,116,196,0.6)]">
             {badge > 99 ? '99+' : badge}
           </span>
         )}

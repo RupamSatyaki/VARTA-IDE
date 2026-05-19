@@ -78,7 +78,7 @@ export function EditorPane() {
   const showEditor = tabs.length > 0 && activeTab !== null
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-[#28242e] rounded-xl relative">
+    <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-varta-bg rounded-xl relative">
 
       {/* Tab bar — always rendered when tabs exist */}
       {tabs.length > 0 && (
@@ -95,7 +95,7 @@ export function EditorPane() {
 
       {/* Floating Toolbar */}
       {activeTab && !activeTab.diffData && (
-        <div className="absolute top-[46px] right-6 z-10 flex items-center gap-1 p-1 rounded-lg bg-[#1e1a24]/80 border border-[#3a2f45] backdrop-blur-md shadow-2xl transition-opacity opacity-0 hover:opacity-100 group-hover/editor:opacity-100">
+        <div className="absolute top-[46px] right-6 z-10 flex items-center gap-1 p-1 rounded-lg bg-varta-bg-secondary/80 border border-varta-border backdrop-blur-md shadow-2xl transition-opacity opacity-0 hover:opacity-100 group-hover/editor:opacity-100">
           <ToolbarBtn 
             icon={faSave} 
             tooltip="Save (Ctrl+S)" 
@@ -112,7 +112,7 @@ export function EditorPane() {
             tooltip="Format Document" 
             onClick={() => window.dispatchEvent(new CustomEvent('varta:edit.formatDocument'))} 
           />
-          <div className="w-px h-3 bg-[#3a2f45] mx-0.5" />
+          <div className="w-px h-3 bg-varta-border mx-0.5" />
           <ToolbarBtn 
             icon={faXmark} 
             tooltip="Close Tab" 
@@ -162,14 +162,14 @@ export function EditorPane() {
       {/* Diff View */}
       {showEditor && activeTab && activeTab.diffData && (
         <div className="flex-1 min-h-0 min-w-0 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 bg-[#1e1a24]/60 border-b border-[#3a2f45]/50">
-            <span className="text-[11px] font-bold text-[#c084fc] uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#7c3aed] animate-pulse" />
+          <div className="flex items-center justify-between px-4 py-2 bg-varta-bg-secondary/60 border-b border-varta-border/50">
+            <span className="text-[11px] font-bold text-varta-accent uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-varta-accent animate-pulse" />
               Review Changes
             </span>
             <button 
               onClick={() => closeTab(activeTab.id)}
-              className="text-[10px] font-bold text-[#6e5a7a] hover:text-white transition-colors"
+              className="text-[10px] font-bold text-varta-text-faint hover:text-white transition-colors"
             >
               Close Diff
             </button>
@@ -209,7 +209,7 @@ function ToolbarBtn({ icon, tooltip, onClick, active = false, danger = false }: 
       title={tooltip}
       className={cn(
         "w-7 h-7 flex items-center justify-center rounded-md transition-all",
-        active ? "text-[#a855f7] bg-[#7c3aed]/10" : "text-[#6e5a7a] hover:text-[#cccccc] hover:bg-white/5",
+        active ? "text-varta-accent bg-varta-accent/10" : "text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5",
         danger && "hover:text-[#f87171] hover:bg-red-500/10"
       )}
     >

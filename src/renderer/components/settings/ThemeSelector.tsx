@@ -11,7 +11,7 @@ export interface ThemeOption {
 }
 
 export const BUILT_IN_THEMES: ThemeOption[] = [
-  { id: 'varta-dark',     name: 'Varta Dark',     bg: '#1e1e1e', surface: '#252526', accent: '#569cd6', text: '#d4d4d4' },
+  { id: 'varta-dark',     name: 'Varta Dark',     bg: '#1e1b24', surface: '#28242e', accent: '#a074c4', text: '#e0def4' },
   { id: 'varta-light',    name: 'Varta Light',    bg: '#ffffff', surface: '#f5f5f5', accent: '#0066cc', text: '#1a1a1a' },
   { id: 'monokai',        name: 'Monokai',        bg: '#272822', surface: '#3e3d32', accent: '#f92672', text: '#f8f8f2' },
   { id: 'github-dark',    name: 'GitHub Dark',    bg: '#0d1117', surface: '#161b22', accent: '#58a6ff', text: '#c9d1d9' },

@@ -18,7 +18,7 @@ export function StatusBar() {
   const isStreaming = useAIStore((s) => s.isStreaming)
 
   return (
-    <div className="flex items-center justify-between h-[24px] shrink-0 bg-[#181825] border-t border-[#2a2a3d] text-[#9090b0] text-[11px] px-1 select-none">
+    <div className="flex items-center justify-between h-[24px] shrink-0 bg-varta-statusbar border-t border-varta-border text-varta-text-muted text-[11px] px-1 select-none">
 
       {/* ── Left ── */}
       <div className="flex items-center h-full">

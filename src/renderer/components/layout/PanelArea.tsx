@@ -46,7 +46,7 @@ export function PanelArea() {
         flexShrink:     0,
         overflow:       'hidden',
         border:         'none',
-        backgroundColor:'#28242e',
+        backgroundColor:'var(--varta-panel)',
         borderRadius:   '12px 12px 12px 12px',
         margin:         '0 0 0 0',
       }}
@@ -55,7 +55,7 @@ export function PanelArea() {
         tabs={PANEL_TABS}
         activeTab={activeBottomPanel}
         onChange={(id) => setActiveBottomPanel(id as 'terminal' | 'problems' | 'output' | 'debug')}
-        className="bg-[#28242e] border-b border-[#2a1f30] px-2 shrink-0"
+        className="bg-transparent border-b border-varta-border px-2 shrink-0"
       />
 
       <div style={{ flex: '1 1 0', overflow: 'hidden', minHeight: 0 }}>

@@ -37,12 +37,12 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
   if (tabs.length === 0) { return null }
 
   return (
-    <div className="flex items-center h-[38px] bg-[#28242e] border-b border-[#2a1f30] shrink-0 overflow-hidden">
+    <div className="flex items-center h-[38px] bg-varta-bg-secondary border-b border-varta-border shrink-0 overflow-hidden">
 
       {/* Left scroll */}
       <button
         onClick={() => handleScroll('left')}
-        className="shrink-0 w-6 h-full flex items-center justify-center text-[#4a4a6a] hover:text-[#9090b0] transition-colors"
+        className="shrink-0 w-6 h-full flex items-center justify-center text-varta-text-faint hover:text-varta-text-muted transition-colors"
         aria-label="Scroll tabs left"
       >
         <FontAwesomeIcon icon={faChevronLeft} style={{ fontSize: 9 }} />
@@ -87,7 +87,7 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
       <button
         onClick={onNewUntitled}
         title="New File"
-        className="shrink-0 w-8 h-full flex items-center justify-center text-[#4a4a6a] hover:text-[#9090b0] hover:bg-white/5 transition-colors"
+        className="shrink-0 w-8 h-full flex items-center justify-center text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5 transition-colors"
         aria-label="New tab"
       >
         <FontAwesomeIcon icon={faPlus} style={{ fontSize: 11 }} />
@@ -96,7 +96,7 @@ export function EditorTabs({ onCloseTab, onNewUntitled }: EditorTabsProps) {
       {/* Right scroll */}
       <button
         onClick={() => handleScroll('right')}
-        className="shrink-0 w-6 h-full flex items-center justify-center text-[#4a4a6a] hover:text-[#9090b0] transition-colors"
+        className="shrink-0 w-6 h-full flex items-center justify-center text-varta-text-faint hover:text-varta-text-muted transition-colors"
         aria-label="Scroll tabs right"
       >
         <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />

@@ -81,10 +81,10 @@ function ExplorerPanel() {
 function PlaceholderPanel({ panel }: { panel: string }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#7c7ca8] border-b border-[#333333] bg-[#252526]">
+      <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-varta-text-muted border-b border-varta-border bg-varta-bg-secondary">
         {panel.toUpperCase()}
       </div>
-      <div className="flex-1 flex items-center justify-center text-[#6e6e6e] text-sm opacity-40">
+      <div className="flex-1 flex items-center justify-center text-varta-text-faint text-sm opacity-40">
         {panel}
       </div>
     </div>

@@ -151,23 +151,23 @@ function Dropdown({ items, onClose, anchorRef }: DropdownProps) {
     <div
       ref={ref}
       className="absolute top-full left-0 mt-0.5 min-w-[240px] z-[9999]
-        bg-[#1e1a24] border border-[#3a2f45] rounded-xl shadow-2xl
+        bg-varta-bg-secondary border border-varta-border rounded-xl shadow-2xl
         overflow-hidden py-1"
     >
       {items.map((item, i) => {
         if (item.type === 'separator') {
-          return <div key={i} className="my-1 border-t border-[#2a1f30]" />
+          return <div key={i} className="my-1 border-t border-varta-border" />
         }
         return (
           <button
             key={i}
             onClick={() => { dispatchAction(item.action); onClose() }}
             className="w-full flex items-center justify-between px-3 py-1 text-[12px]
-              text-[#cccccc] hover:bg-[#7c3aed]/15 hover:text-white transition-colors text-left"
+              text-varta-text-muted hover:bg-varta-accent/15 hover:text-varta-text transition-colors text-left"
           >
             <span>{item.label}</span>
             {item.shortcut && (
-              <span className="text-[10px] text-[#5a4a6a] ml-8 shrink-0">{item.shortcut}</span>
+              <span className="text-[10px] text-varta-text-faint ml-8 shrink-0">{item.shortcut}</span>
             )}
           </button>
         )
@@ -221,7 +221,7 @@ export function TitleBar() {
 
   return (
     <div
-      className="flex items-center h-[38px] shrink-0 select-none bg-[#1a1620] border-b border-[#2a1f30]"
+      className="flex items-center h-[38px] shrink-0 select-none bg-varta-titlebar border-b border-varta-border"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* ── Left: App icon + Menu bar ── */}
@@ -231,7 +231,7 @@ export function TitleBar() {
       >
         {/* App icon */}
         <div className="w-6 h-6 rounded-md flex items-center justify-center mr-1
-          bg-gradient-to-br from-[#7c3aed] to-[#a855f7]">
+          bg-gradient-to-br from-varta-accent to-varta-accent-hover">
           <span className="text-[10px] font-black text-white">V</span>
         </div>
 
@@ -243,8 +243,8 @@ export function TitleBar() {
               onClick={() => setOpenMenu(prev => prev === name ? null : name)}
               className={`px-2.5 h-7 text-[12px] rounded-md transition-all duration-100
                 ${openMenu === name
-                  ? 'bg-[#7c3aed]/20 text-white'
-                  : 'text-[#9090b0] hover:text-white hover:bg-white/5'}`}
+                  ? 'bg-varta-accent/20 text-varta-text'
+                  : 'text-varta-text-muted hover:text-varta-text hover:bg-white/5'}`}
             >
               {name}
             </button>
@@ -267,14 +267,14 @@ export function TitleBar() {
         <button
           onClick={openCommandPalette}
           className="flex items-center gap-2 w-full max-w-[380px] h-7 px-3 rounded-lg
-            bg-[#28242e] border border-[#3a2f45] hover:border-[#7c3aed]/50
-            text-[#5a4a6a] hover:text-[#9090b0] transition-all duration-150 group"
+            bg-varta-bg-tertiary border border-varta-border hover:border-varta-accent/50
+            text-varta-text-faint hover:text-varta-text-muted transition-all duration-150 group"
         >
           <FontAwesomeIcon icon={faMagnifyingGlass} style={{ fontSize: 11 }} />
           <span className="flex-1 text-left text-[11px]">
             {folderName ? `${folderName}${fileName ? ` — ${fileName}` : ''}` : 'Search files…'}
           </span>
-          <span className="text-[10px] text-[#3a2f45] group-hover:text-[#5a4a6a] font-mono">Ctrl+P</span>
+          <span className="text-[10px] text-varta-border group-hover:text-varta-text-faint font-mono">Ctrl+P</span>
         </button>
       </div>
 
@@ -324,7 +324,7 @@ export function TitleBar() {
         />
 
         {/* Separator */}
-        <div className="w-px h-4 bg-[#2a1f30] mx-1" />
+        <div className="w-px h-4 bg-varta-border mx-1" />
 
         {/* Window controls */}
         {!isMac && (
@@ -354,13 +354,14 @@ function LayoutBtn({ tooltip, active, onClick, icon }: {
       title={tooltip}
       className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150
         ${active
-          ? 'text-[#c084fc] bg-[#7c3aed]/20'
-          : 'text-[#5a4a6a] hover:text-[#cccccc] hover:bg-white/5'}`}
+          ? 'text-varta-accent-hover bg-varta-accent/20'
+          : 'text-varta-text-faint hover:text-varta-text-muted hover:bg-white/5'}`}
     >
       {icon}
     </button>
   )
 }
+
 
 // ── Layout SVG Icons (matching the image exactly) ─────────────────────────────
 

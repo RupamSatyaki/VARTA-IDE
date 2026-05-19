@@ -96,8 +96,8 @@ export function AIChatPanel() {
 
   if (!hasApiKey) {
     return (
-      <div className="flex flex-col h-full bg-[#1a1620]">
-        <div className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[#7c5a9a] border-b border-[#2a1f30] bg-[#1a1620]/50 backdrop-blur-xl">
+      <div className="flex flex-col h-full bg-varta-bg">
+        <div className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-varta-accent border-b border-varta-border bg-varta-bg-secondary/50 backdrop-blur-xl">
           Varta Intelligence
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -111,7 +111,7 @@ export function AIChatPanel() {
   const hasMessages = currentConv && currentConv.messages.length > 0
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#1a1620] shadow-2xl">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg shadow-2xl">
       <AIChatToolbar onNewChat={handleNewChat} onClearChat={handleClearChat} />
 
       <div className="flex-1 overflow-hidden">
