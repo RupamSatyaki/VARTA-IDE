@@ -116,7 +116,10 @@ export function SettingsPanel() {
                         <SectionTitle icon={faDisplay} title="Workbench Appearance" />
                         <ThemeSelector
                           activeThemeId={settings.workbench.theme}
-                          onSelect={(id) => window.varta.settings.set({ workbench: { theme: id } })}
+                          onSelect={(id) => {
+                            updateSetting('workbench', { ...settings.workbench, theme: id })
+                            window.varta.settings.set({ workbench: { theme: id } })
+                          }}
                         />
                         <div className="mt-8">
                           <AutomatedSettings activeSection="workbench" search="" />
