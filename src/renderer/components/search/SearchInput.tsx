@@ -59,15 +59,15 @@ export function SearchInput({ onSearch, onClear, autoFocus }: SearchInputProps) 
   }
 
   return (
-    <div className="px-3 py-2 border-b border-[#2a1f30]">
+    <div className="px-3 py-2 border-b border-varta-border">
       <div className={cn(
-        'flex items-center rounded-lg border bg-[#1e1a24] transition-all duration-150',
+        'flex items-center rounded-lg border bg-varta-bg-secondary transition-all duration-150',
         regexError
-          ? 'border-[#f44747]'
-          : 'border-[#3a2f45] focus-within:border-[#7c3aed]',
+          ? 'border-varta-error'
+          : 'border-varta-border focus-within:border-varta-accent',
       )}>
         {/* Search icon */}
-        <span className="pl-2.5 text-[#5a4a6a] shrink-0">
+        <span className="pl-2.5 text-varta-text-faint shrink-0">
           <FontAwesomeIcon icon={faMagnifyingGlass} style={{ fontSize: 11 }} />
         </span>
 
@@ -78,21 +78,21 @@ export function SearchInput({ onSearch, onClear, autoFocus }: SearchInputProps) 
           onKeyDown={handleKeyDown}
           placeholder="Search files…"
           spellCheck={false}
-          className="flex-1 min-w-0 h-7 px-2 bg-transparent text-[12px] text-[#cccccc] placeholder:text-[#4a3a5a] outline-none"
+          className="flex-1 min-w-0 h-7 px-2 bg-transparent text-[12px] text-varta-text placeholder:text-varta-text-faint outline-none"
         />
 
         {/* Clear button */}
         {query.text && (
           <button
             onClick={() => { setQuery({ text: '' }); onClear() }}
-            className="px-1.5 text-[#5a4a6a] hover:text-[#cccccc] transition-colors"
+            className="px-1.5 text-varta-text-faint hover:text-varta-text transition-colors"
           >
             <FontAwesomeIcon icon={faXmark} style={{ fontSize: 11 }} />
           </button>
         )}
 
         {/* Toggle buttons */}
-        <div className="flex items-center gap-0.5 pr-1.5 border-l border-[#3a2f45] ml-1 pl-1.5">
+        <div className="flex items-center gap-0.5 pr-1.5 border-l border-varta-border ml-1 pl-1.5">
           <ToggleBtn active={query.isCaseSensitive ?? false} onClick={() => toggleOption('isCaseSensitive')} title="Match Case (Alt+C)" label="Aa" />
           <ToggleBtn active={query.isWholeWord ?? false}     onClick={() => toggleOption('isWholeWord')}     title="Whole Word (Alt+W)"  label="ab" border />
           <ToggleBtn active={query.isRegex ?? false}         onClick={() => toggleOption('isRegex')}         title="Regex (Alt+R)"       label=".*" />
@@ -100,7 +100,7 @@ export function SearchInput({ onSearch, onClear, autoFocus }: SearchInputProps) 
       </div>
 
       {regexError && (
-        <p className="text-[10px] text-[#f44747] mt-1 px-1">Invalid regular expression</p>
+        <p className="text-[10px] text-varta-error mt-1 px-1">Invalid regular expression</p>
       )}
     </div>
   )
@@ -117,8 +117,8 @@ function ToggleBtn({ active, onClick, title, label, border }: {
         'w-6 h-5 flex items-center justify-center text-[10px] font-mono rounded transition-all duration-150',
         border && 'border border-current',
         active
-          ? 'text-[#c084fc] bg-[#7c3aed]/25'
-          : 'text-[#5a4a6a] hover:text-[#cccccc] hover:bg-white/5',
+          ? 'text-varta-accent bg-varta-accent/25'
+          : 'text-varta-text-faint hover:text-varta-text hover:bg-white/5',
       )}
     >
       {label}

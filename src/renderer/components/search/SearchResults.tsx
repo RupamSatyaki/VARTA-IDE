@@ -37,10 +37,10 @@ export function SearchResults({ onMatchClick }: SearchResultsProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 select-none">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center
-          bg-[#1e1a24] border border-[#3a2f45]">
-          <FontAwesomeIcon icon={faMagnifyingGlass} style={{ fontSize: 16 }} className="text-[#4a3a5a]" />
+          bg-varta-bg-secondary border border-varta-border">
+          <FontAwesomeIcon icon={faMagnifyingGlass} style={{ fontSize: 16 }} className="text-varta-text-faint" />
         </div>
-        <p className="text-[11px] text-[#5a4a6a]">Type to search across files</p>
+        <p className="text-[11px] text-varta-text-faint">Type to search across files</p>
       </div>
     )
   }
@@ -49,8 +49,8 @@ export function SearchResults({ onMatchClick }: SearchResultsProps) {
   if (results && results.totalMatches === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-2 select-none px-4 text-center">
-        <p className="text-[11px] text-[#5a4a6a]">
-          No results for <span className="text-[#c084fc]">"{query.text}"</span>
+        <p className="text-[11px] text-varta-text-faint">
+          No results for <span className="text-varta-accent">"{query.text}"</span>
         </p>
       </div>
     )

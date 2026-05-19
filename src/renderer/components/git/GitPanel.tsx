@@ -29,14 +29,14 @@ export function GitPanel() {
   // Not a git repo
   if (!isLoading && status && !status.isRepo) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 px-5 text-center bg-[#28242e]">
+      <div className="flex flex-col items-center justify-center h-full gap-4 px-5 text-center bg-varta-bg">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center
-          bg-[#1e1a24] border border-[#3a2f45]">
-          <FontAwesomeIcon icon={faCodeBranch} style={{ fontSize: 24 }} className="text-[#4a3a5a]" />
+          bg-varta-bg-secondary border border-varta-border">
+          <FontAwesomeIcon icon={faCodeBranch} style={{ fontSize: 24 }} className="text-varta-text-faint" />
         </div>
         <div>
-          <p className="text-[13px] font-medium text-[#cccccc]">Not a git repository</p>
-          <p className="text-[11px] text-[#5a4a6a] mt-1">Open a folder with a git repo</p>
+          <p className="text-[13px] font-medium text-varta-text">Not a git repository</p>
+          <p className="text-[11px] text-varta-text-faint mt-1">Open a folder with a git repo</p>
         </div>
       </div>
     )
@@ -44,8 +44,8 @@ export function GitPanel() {
 
   if (isLoading && !status) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#28242e]">
-        <div className="w-5 h-5 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center h-full bg-varta-bg">
+        <div className="w-5 h-5 border-2 border-varta-accent border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -61,7 +61,7 @@ export function GitPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg">
 
       {/* Toolbar */}
       <GitToolbar
@@ -75,7 +75,7 @@ export function GitPanel() {
       />
 
       {/* Tab bar */}
-      <div className="flex items-center border-b border-[#2a1f30] shrink-0 px-2 gap-1">
+      <div className="flex items-center border-b border-varta-border shrink-0 px-2 gap-1">
         <TabBtn active={tab === 'changes'} onClick={() => setTab('changes')} icon={faCodeBranch} label="Changes"
           badge={staged.length + unstaged.length + untracked.length || undefined} />
         <TabBtn active={tab === 'history'} onClick={() => setTab('history')} icon={faClockRotateLeft} label="History" />
@@ -94,10 +94,10 @@ export function GitPanel() {
 
           {!hasChanges && !isLoading && (
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#1e1a24] border border-[#3a2f45]">
-                <FontAwesomeIcon icon={faCodeBranch} style={{ fontSize: 14 }} className="text-[#4a3a5a]" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-varta-bg-secondary border border-varta-border">
+                <FontAwesomeIcon icon={faCodeBranch} style={{ fontSize: 14 }} className="text-varta-text-faint" />
               </div>
-              <p className="text-[11px] text-[#5a4a6a]">No changes</p>
+              <p className="text-[11px] text-varta-text-faint">No changes</p>
             </div>
           )}
 
@@ -121,7 +121,7 @@ export function GitPanel() {
           />
 
           {lastError && (
-            <div className="px-3 py-2 text-[11px] text-[#f44747] border-t border-[#2a1f30]">
+            <div className="px-3 py-2 text-[11px] text-varta-error border-t border-varta-border">
               {lastError}
             </div>
           )}
@@ -140,16 +140,16 @@ function TabBtn({ active, onClick, icon, label, badge }: {
     <button
       onClick={onClick}
       className={`relative flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium transition-all duration-150
-        ${active ? 'text-[#c084fc]' : 'text-[#5a4a6a] hover:text-[#cccccc]'}`}
+        ${active ? 'text-varta-accent' : 'text-varta-text-faint hover:text-varta-text'}`}
     >
       <FontAwesomeIcon icon={icon} style={{ fontSize: 11 }} />
       {label}
       {badge !== undefined && badge > 0 && (
-        <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-[#7c3aed]/30 text-[#c084fc] border border-[#7c3aed]/30">
+        <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-varta-accent/30 text-varta-accent border border-varta-accent/30">
           {badge}
         </span>
       )}
-      {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c084fc] rounded-t" />}
+      {active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-varta-accent rounded-t" />}
     </button>
   )
 }

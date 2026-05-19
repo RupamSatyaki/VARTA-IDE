@@ -30,10 +30,10 @@ export function GitChanges({ changes, untracked, onStage, onStageAll, onDiscard,
         <div className="flex items-center gap-1.5">
           <FontAwesomeIcon
             icon={expanded ? faChevronDown : faChevronRight}
-            style={{ fontSize: 8 }} className="text-[#5a4a6a]"
+            style={{ fontSize: 8 }} className="text-varta-text-faint"
           />
-          <span className="text-[11px] font-semibold text-[#cccccc]">Changes</span>
-          <span className="text-[10px] text-[#5a4a6a]">({all.length})</span>
+          <span className="text-[11px] font-semibold text-varta-text">Changes</span>
+          <span className="text-[10px] text-varta-text-faint">({all.length})</span>
         </div>
 
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
@@ -41,7 +41,7 @@ export function GitChanges({ changes, untracked, onStage, onStageAll, onDiscard,
             <button
               onClick={(e) => { e.stopPropagation(); onStageAll() }}
               className="w-5 h-5 flex items-center justify-center rounded
-                text-[#5a4a6a] hover:text-[#34d399] hover:bg-white/5 transition-all"
+                text-varta-text-faint hover:text-varta-success hover:bg-white/5 transition-all"
             >
               <FontAwesomeIcon icon={faPlus} style={{ fontSize: 10 }} />
             </button>
@@ -50,7 +50,7 @@ export function GitChanges({ changes, untracked, onStage, onStageAll, onDiscard,
             <button
               onClick={(e) => { e.stopPropagation(); onDiscardAll() }}
               className="w-5 h-5 flex items-center justify-center rounded
-                text-[#5a4a6a] hover:text-[#f87171] hover:bg-white/5 transition-all"
+                text-varta-text-faint hover:text-varta-error hover:bg-white/5 transition-all"
             >
               <FontAwesomeIcon icon={faTrash} style={{ fontSize: 10 }} />
             </button>

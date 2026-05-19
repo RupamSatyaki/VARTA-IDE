@@ -35,28 +35,28 @@ export function SearchResultFile({ file, queryText, isRegex, onMatchClick }: Sea
         onKeyDown={(e) => e.key === 'Enter' && toggleFileExpanded(file.filePath)}
         className={cn(
           'flex items-center gap-2 px-3 py-1.5 cursor-pointer select-none',
-          'hover:bg-white/5 focus:outline-none',
-          'sticky top-0 bg-[#28242e] z-10 border-b border-[#2a1f30]/50',
+          'hover:bg-varta-hover focus:outline-none',
+          'sticky top-0 bg-varta-bg-secondary z-10 border-b border-varta-border/50',
         )}
       >
         {/* Chevron */}
         <FontAwesomeIcon
           icon={isExpanded ? faChevronDown : faChevronRight}
           style={{ fontSize: 9 }}
-          className="shrink-0 text-[#5a4a6a]"
+          className="shrink-0 text-varta-text-faint"
         />
 
         {/* File icon */}
         <FileIcon filename={filename} size={14} className="shrink-0" />
 
         {/* Path */}
-        <span className="text-[12px] text-[#cccccc] truncate flex-1 min-w-0" title={file.filePath}>
+        <span className="text-[12px] text-varta-text truncate flex-1 min-w-0" title={file.filePath}>
           {relPath}
         </span>
 
         {/* Match count badge */}
         <span className="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium
-          bg-[#7c3aed]/20 text-[#c084fc] border border-[#7c3aed]/30">
+          bg-varta-accent/20 text-varta-accent border border-varta-accent/30">
           {file.matchCount}
         </span>
       </div>

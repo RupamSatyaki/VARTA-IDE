@@ -66,9 +66,9 @@ export function OutlinePanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#252526]">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg">
       {/* Header */}
-      <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#6e6e6e] border-b border-[#333333] shrink-0">
+      <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-varta-text-muted border-b border-varta-border shrink-0">
         Outline
       </div>
 
@@ -86,11 +86,11 @@ export function OutlinePanel() {
             <Spinner size="sm" />
           </div>
         ) : !activeTab ? (
-          <div className="flex items-center justify-center h-full text-xs text-[#6e6e6e]">
+          <div className="flex items-center justify-center h-full text-xs text-varta-text-muted">
             Open a file to see its outline
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-xs text-[#6e6e6e]">
+          <div className="flex items-center justify-center h-full text-xs text-varta-text-muted">
             No symbols found
           </div>
         ) : (

@@ -53,11 +53,11 @@ export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI
   }, [generatedMessage])
 
   return (
-    <div className="px-3 py-2.5 border-b border-[#2a1f30]">
+    <div className="px-3 py-2.5 border-b border-varta-border">
       {/* Textarea */}
       <div className={cn(
-        'rounded-lg border transition-all duration-150 bg-[#1e1a24]',
-        message.length > 0 ? 'border-[#7c3aed]/50' : 'border-[#3a2f45] focus-within:border-[#7c3aed]/50',
+        'rounded-lg border transition-all duration-150 bg-varta-bg-secondary',
+        message.length > 0 ? 'border-varta-accent/50' : 'border-varta-border focus-within:border-varta-accent/50',
       )}>
         <textarea
           ref={textareaRef}
@@ -67,8 +67,8 @@ export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI
           placeholder="Commit message (Ctrl+Enter to commit)"
           rows={3}
           spellCheck={false}
-          className="w-full px-2.5 py-2 text-[12px] bg-transparent text-[#cccccc]
-            outline-none resize-none placeholder:text-[#4a3a5a] leading-relaxed"
+          className="w-full px-2.5 py-2 text-[12px] bg-transparent text-varta-text
+            outline-none resize-none placeholder:text-varta-text-faint leading-relaxed"
         />
       </div>
 
@@ -77,7 +77,7 @@ export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI
         <button
           onClick={handleGenerateAI}
           disabled={generating}
-          className="flex items-center gap-1.5 text-[10px] text-[#7c3aed] hover:text-[#c084fc]
+          className="flex items-center gap-1.5 text-[10px] text-varta-accent hover:text-varta-accent-hover
             disabled:opacity-40 transition-colors mt-1.5"
         >
           <FontAwesomeIcon icon={faWandMagicSparkles} style={{ fontSize: 10 }}
@@ -89,7 +89,7 @@ export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI
       {/* Buttons row */}
       <div className="flex items-center gap-2 mt-2">
         {stagedCount > 0 && (
-          <span className="text-[10px] text-[#5a4a6a]">{stagedCount} staged</span>
+          <span className="text-[10px] text-varta-text-faint">{stagedCount} staged</span>
         )}
         <div className="flex-1" />
 
@@ -100,8 +100,8 @@ export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI
           className={cn(
             'flex items-center gap-1.5 px-3 h-7 text-[11px] font-medium rounded-lg transition-all duration-150',
             canCommit && !committing && !pushing
-              ? 'bg-[#7c3aed]/20 border border-[#7c3aed]/40 text-[#c084fc] hover:bg-[#7c3aed]/40 hover:text-white'
-              : 'bg-[#1e1a24] border border-[#3a2f45] text-[#4a3a5a] cursor-not-allowed',
+              ? 'bg-varta-accent/20 border border-varta-accent/40 text-varta-accent hover:bg-varta-accent/40 hover:text-white'
+              : 'bg-varta-bg-secondary border border-varta-border text-varta-text-faint cursor-not-allowed',
           )}
         >
           <FontAwesomeIcon icon={faCheck} style={{ fontSize: 10 }} />
@@ -115,8 +115,8 @@ export function GitCommitBox({ stagedCount, onCommit, onCommitPush, onGenerateAI
           className={cn(
             'flex items-center gap-1.5 px-3 h-7 text-[11px] font-medium rounded-lg transition-all duration-150',
             canCommit && !committing && !pushing
-              ? 'bg-[#7c3aed]/40 border border-[#7c3aed]/60 text-white hover:bg-[#7c3aed]/60'
-              : 'bg-[#1e1a24] border border-[#3a2f45] text-[#4a3a5a] cursor-not-allowed',
+              ? 'bg-varta-accent/40 border border-varta-accent/60 text-white hover:bg-varta-accent/60'
+              : 'bg-varta-bg-secondary border border-varta-border text-varta-text-faint cursor-not-allowed',
           )}
         >
           <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: 10 }} />

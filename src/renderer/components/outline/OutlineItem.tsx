@@ -58,8 +58,8 @@ export function OutlineItem({ symbol, isActive, onClick }: OutlineItemProps) {
       onKeyDown={(e) => e.key === 'Enter' && onClick(symbol.line)}
       className={cn(
         'flex items-center gap-1.5 h-[22px] pr-2 cursor-pointer select-none',
-        'hover:bg-[#2a2d2e] focus:outline-none focus:bg-[#2a2d2e] text-xs',
-        isActive && 'bg-[#37373d]',
+        'hover:bg-varta-hover focus:outline-none focus:bg-varta-hover text-xs',
+        isActive && 'bg-varta-active',
       )}
       style={{ paddingLeft: symbol.depth * 12 + 8 }}
     >
@@ -69,10 +69,10 @@ export function OutlineItem({ symbol, isActive, onClick }: OutlineItemProps) {
       </span>
 
       {/* Name */}
-      <span className="flex-1 min-w-0 truncate text-[#d4d4d4]">{symbol.name}</span>
+      <span className="flex-1 min-w-0 truncate text-varta-text">{symbol.name}</span>
 
       {/* Line number */}
-      <span className="text-[10px] text-[#4e4e4e] shrink-0">{symbol.line}</span>
+      <span className="text-[10px] text-varta-text-faint shrink-0">{symbol.line}</span>
     </div>
   )
 }

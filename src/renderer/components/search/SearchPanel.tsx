@@ -25,18 +25,18 @@ export function SearchPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[#28242e]">
+    <div className="flex flex-col h-full overflow-hidden bg-varta-bg">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-9 border-b border-[#2a1f30] shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#6e6e6e]">
+      <div className="flex items-center justify-between px-3 h-9 border-b border-varta-border shrink-0">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-varta-text-muted">
           Search
         </span>
         <button
           onClick={() => setShowReplace(v => !v)}
           title="Toggle Replace (Ctrl+H)"
           className={`w-6 h-6 flex items-center justify-center rounded transition-all duration-150
-            ${showReplace ? 'text-[#c084fc] bg-[#7c3aed]/20' : 'text-[#6e6e6e] hover:text-[#cccccc] hover:bg-white/5'}`}
+            ${showReplace ? 'text-varta-accent bg-varta-accent/20' : 'text-varta-text-muted hover:text-varta-text hover:bg-white/5'}`}
         >
           <FontAwesomeIcon icon={faArrowRightArrowLeft} style={{ fontSize: 11 }} />
         </button>

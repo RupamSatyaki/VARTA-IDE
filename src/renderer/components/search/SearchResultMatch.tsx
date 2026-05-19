@@ -24,24 +24,24 @@ export function SearchResultMatch({ match, onClick }: SearchResultMatchProps) {
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       className={cn(
         'flex items-center gap-2 cursor-pointer select-none group',
-        'hover:bg-[#7c3aed]/10 focus:outline-none',
+        'hover:bg-varta-accent/10 focus:outline-none',
         'text-[11px] py-0.5',
       )}
       style={{ paddingLeft: 40, paddingRight: 12 }}
       title={lineText.trim()}
     >
       {/* Line number */}
-      <span className="shrink-0 text-[#4a3a5a] w-7 text-right font-mono tabular-nums">
+      <span className="shrink-0 text-varta-text-faint w-7 text-right font-mono tabular-nums">
         {lineNumber}
       </span>
 
       {/* Line content */}
       <span className="flex-1 min-w-0 truncate font-mono">
-        <span className="text-[#5a4a6a]">{before}</span>
-        <span className="text-[#e0c0ff] bg-[#7c3aed]/30 rounded-sm px-0.5 font-semibold">
+        <span className="text-varta-text-muted">{before}</span>
+        <span className="text-varta-text bg-varta-accent/30 rounded-sm px-0.5 font-semibold">
           {matched}
         </span>
-        <span className="text-[#5a4a6a]">{after}</span>
+        <span className="text-varta-text-muted">{after}</span>
       </span>
     </div>
   )

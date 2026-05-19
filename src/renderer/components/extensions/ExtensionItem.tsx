@@ -40,8 +40,8 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
 
   return (
     <div className={cn(
-      "flex flex-col gap-2 px-3 py-3 border-b border-[#2d2d2d] hover:bg-[#2a2d2e] transition-colors group",
-      ext.isBuiltin && "bg-[#252526]/50"
+      "flex flex-col gap-2 px-3 py-3 border-b border-varta-border hover:bg-varta-hover transition-colors group",
+      ext.isBuiltin && "bg-varta-bg-secondary/50"
     )}>
       {/* Cover Image for Built-ins */}
       {ext.isBuiltin && ext.coverImage && (
@@ -75,13 +75,13 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[#d4d4d4] truncate">{ext.name}</span>
+            <span className="text-xs font-medium text-varta-text truncate">{ext.name}</span>
             {ext.version && (
-              <span className="text-[10px] text-[#6e6e6e] shrink-0">v{ext.version}</span>
+              <span className="text-[10px] text-varta-text-faint shrink-0">v{ext.version}</span>
             )}
           </div>
-          <p className="text-[10px] text-[#6e6e6e]">{ext.publisher}</p>
-          <p className="text-[10px] text-[#6e6e6e] truncate mt-0.5">{ext.description}</p>
+          <p className="text-[10px] text-varta-text-muted">{ext.publisher}</p>
+          <p className="text-[10px] text-varta-text-faint truncate mt-0.5">{ext.description}</p>
         </div>
 
         {/* Actions */}
@@ -95,7 +95,7 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
               {!ext.isBuiltin && (
                 <button
                   onClick={() => onUninstall?.(ext.id)}
-                  className="opacity-0 group-hover:opacity-100 text-[10px] text-[#6e6e6e] hover:text-[#f44747] transition-all"
+                  className="opacity-0 group-hover:opacity-100 text-[10px] text-varta-text-faint hover:text-varta-error transition-all"
                   title="Uninstall"
                 >
                   ✕
@@ -105,7 +105,7 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
           ) : (
             <button
               onClick={() => onInstall?.(ext.id)}
-              className="text-[10px] px-2 h-5 rounded border border-[#569cd6] text-[#569cd6] hover:bg-[#1b2d3e] transition-colors"
+              className="text-[10px] px-2 h-5 rounded border border-varta-accent text-varta-accent hover:bg-varta-accent/10 transition-colors"
             >
               Install
             </button>

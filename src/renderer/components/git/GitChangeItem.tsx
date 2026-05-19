@@ -66,22 +66,22 @@ export function GitChangeItem({ change, staged, onStage, onUnstage, onDiscard, o
         <FileIcon filename={filename} size={13} className="shrink-0" />
 
         {/* Name + dir */}
-        <span className="flex-1 min-w-0 truncate text-[12px] text-[#cccccc]" title={change.path}>
+        <span className="flex-1 min-w-0 truncate text-[12px] text-varta-text" title={change.path}>
           {filename}
-          {dir && <span className="text-[#4a3a5a] ml-1 text-[10px]">{dir}</span>}
+          {dir && <span className="text-varta-text-faint ml-1 text-[10px]">{dir}</span>}
         </span>
 
         {/* Hover actions */}
         <div className={cn('flex items-center gap-0.5 shrink-0 transition-opacity', hovered ? 'opacity-100' : 'opacity-0')}>
-          <ActionBtn onClick={(e) => { e.stopPropagation(); onOpenDiff() }} tooltip="Open Diff" icon={faCode} color="text-[#c084fc]" />
+          <ActionBtn onClick={(e) => { e.stopPropagation(); onOpenDiff() }} tooltip="Open Diff" icon={faCode} color="text-varta-accent" />
           {!staged && onStage && (
-            <ActionBtn onClick={(e) => { e.stopPropagation(); onStage() }} tooltip="Stage" icon={faPlus} color="text-[#34d399]" />
+            <ActionBtn onClick={(e) => { e.stopPropagation(); onStage() }} tooltip="Stage" icon={faPlus} color="text-varta-success" />
           )}
           {!staged && onDiscard && (
-            <ActionBtn onClick={(e) => { e.stopPropagation(); onDiscard() }} tooltip="Discard" icon={faRotateLeft} color="text-[#f87171]" />
+            <ActionBtn onClick={(e) => { e.stopPropagation(); onDiscard() }} tooltip="Discard" icon={faRotateLeft} color="text-varta-error" />
           )}
           {staged && onUnstage && (
-            <ActionBtn onClick={(e) => { e.stopPropagation(); onUnstage() }} tooltip="Unstage" icon={faMinus} color="text-[#f59e0b]" />
+            <ActionBtn onClick={(e) => { e.stopPropagation(); onUnstage() }} tooltip="Unstage" icon={faMinus} color="text-varta-warning" />
           )}
         </div>
       </div>

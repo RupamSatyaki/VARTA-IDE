@@ -33,7 +33,7 @@ export function FileTreeToolbar({
     <div className="flex items-center justify-between h-9 px-3 shrink-0 border-b group/toolbar" style={{ borderColor: 'var(--varta-border)' }}>
       {/* Folder name */}
       <span
-        className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e6e] truncate flex-1 min-w-0 mr-2"
+        className="text-[11px] font-semibold uppercase tracking-widest text-varta-text-muted truncate flex-1 min-w-0 mr-2"
         title={rootPath ?? undefined}
       >
         {folderName ?? 'EXPLORER'}
@@ -63,7 +63,7 @@ function ToolbarBtn({ tooltip, onClick, icon }: {
         onClick={onClick}
         aria-label={tooltip}
         className="w-6 h-6 flex items-center justify-center rounded
-          text-[#6e6e6e] hover:text-[#cccccc] hover:bg-[#2a2d2e]
+          text-varta-text-muted hover:text-varta-text hover:bg-varta-hover
           transition-all duration-150"
       >
         <FontAwesomeIcon icon={icon} style={{ fontSize: 13 }} />

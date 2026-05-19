@@ -20,15 +20,15 @@ export interface FileTreeFolderProps {
 
 // Folder name color — if any child is new → green, modified → yellow
 function getFolderColor(gitChange?: GitFileChange): string {
-  if (!gitChange) { return '#cccccc' }
+  if (!gitChange) { return 'var(--varta-text)' }
   switch (gitChange.status) {
     case 'added':
     case 'untracked':  return '#73c991'  // green
     case 'modified':
     case 'renamed':    return '#e2c08d'  // yellow
-    case 'deleted':    return '#6e6e6e'
+    case 'deleted':    return 'var(--varta-text-faint)'
     case 'conflicted': return '#e2c08d'
-    default:           return '#cccccc'
+    default:           return 'var(--varta-text)'
   }
 }
 
@@ -45,9 +45,9 @@ export function FileTreeFolder({
   node, depth, isExpanded, isSelected, gitChange, isIgnored, isDragOver,
   dragProps, onClick, onContextMenu,
 }: FileTreeFolderProps) {
-  const nameColor   = isIgnored ? '#6e6e6e' : getFolderColor(gitChange)
+  const nameColor   = isIgnored ? 'var(--varta-text-faint)' : getFolderColor(gitChange)
   const badgeLetter = !isIgnored && gitChange ? FOLDER_BADGE[gitChange.status] : null
-  const badgeColor  = nameColor !== '#cccccc' && nameColor !== '#6e6e6e' ? nameColor : undefined
+  const badgeColor  = nameColor !== 'var(--varta-text)' && nameColor !== 'var(--varta-text-faint)' ? nameColor : undefined
 
   return (
     <div
@@ -60,15 +60,15 @@ export function FileTreeFolder({
       {...dragProps}
       className={cn(
         'relative flex items-center h-[26px] pr-3 cursor-pointer select-none group',
-        isSelected ? 'bg-[#352f3d] hover:bg-[#352f3d]' : 'hover:bg-[#2a2d2e]',
-        isDragOver && 'bg-[#7c3aed]/20 outline outline-1 outline-[#7c3aed]/60',
+        isSelected ? 'bg-varta-active hover:bg-varta-active' : 'hover:bg-varta-hover',
+        isDragOver && 'bg-varta-accent/20 outline outline-1 outline-varta-accent/60',
         'focus:outline-none',
       )}
       style={{ paddingLeft: depth * 16 + 8 }}
     >
       {/* Indent guide lines */}
       {Array.from({ length: depth }).map((_, i) => (
-        <span key={i} className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
+        <span key={i} className="absolute top-0 bottom-0 w-px bg-varta-border/50"
           style={{ left: i * 16 + 14 }} />
       ))}
 

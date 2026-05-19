@@ -32,16 +32,16 @@ const GIT_STATUS: Record<GitFileStatus, { label: string; color: string }> = {
 
 // Filename color based on git status
 function getFileNameColor(gitChange?: GitFileChange): string {
-  if (!gitChange) { return '#cccccc' }
+  if (!gitChange) { return 'var(--varta-text)' }
   switch (gitChange.status) {
     case 'added':
     case 'untracked':  return '#73c991'  // green — new file
     case 'modified':
     case 'renamed':
     case 'copied':     return '#e2c08d'  // yellow — modified
-    case 'deleted':    return '#6e6e6e'  // grey — deleted
+    case 'deleted':    return 'var(--varta-text-faint)'  // grey — deleted
     case 'conflicted': return '#e2c08d'  // yellow-orange
-    default:           return '#cccccc'
+    default:           return 'var(--varta-text)'
   }
 }
 
@@ -50,7 +50,7 @@ export function FileTreeFile({
   onClick, onDoubleClick, onContextMenu,
 }: FileTreeFileProps) {
   const badge = gitChange ? GIT_STATUS[gitChange.status] : null
-  const nameColor = isIgnored ? '#6e6e6e' : getFileNameColor(gitChange)
+  const nameColor = isIgnored ? 'var(--varta-text-faint)' : getFileNameColor(gitChange)
 
   return (
     <div
@@ -63,14 +63,14 @@ export function FileTreeFile({
       {...dragProps}
       className={cn(
         'relative flex items-center h-[26px] pr-3 cursor-grab select-none group',
-        'hover:bg-[#2a2d2e] focus:outline-none',
-        isSelected ? 'bg-[#352f3d] hover:bg-[#352f3d]' : 'hover:bg-[#2a2d2e]',
+        'hover:bg-varta-hover focus:outline-none',
+        isSelected ? 'bg-varta-active hover:bg-varta-active' : 'hover:bg-varta-hover',
       )}
       style={{ paddingLeft: depth * 16 + 8 }}
     >
       {/* Indent guide lines */}
       {Array.from({ length: depth }).map((_, i) => (
-        <span key={i} className="absolute top-0 bottom-0 w-px bg-[#3c3c3c]"
+        <span key={i} className="absolute top-0 bottom-0 w-px bg-varta-border/50"
           style={{ left: i * 16 + 14 }} />
       ))}
 
@@ -91,7 +91,7 @@ export function FileTreeFile({
 
       {/* Dirty dot */}
       {isDirty && (
-        <span className="w-1.5 h-1.5 rounded-full bg-[#cccccc] shrink-0 ml-1.5 opacity-70"
+        <span className="w-1.5 h-1.5 rounded-full bg-varta-text-muted shrink-0 ml-1.5 opacity-70"
           title="Unsaved changes" />
       )}
 
