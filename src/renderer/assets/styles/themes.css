@@ -50,6 +50,44 @@
   --varta-shadow-popup:     0 4px 16px rgba(0,0,0,0.7);
 }
 
+/* ── Varta Black ──────────────────────────────────────────────────────────── */
+[data-theme="varta-black"] {
+  --varta-bg:              #000000;
+  --varta-bg-secondary:    #0a0a0a;
+  --varta-bg-tertiary:     #121212;
+  --varta-bg-input:        #181818;
+  --varta-border:          #1f1f1f;
+  --varta-text:            #ffffff;
+  --varta-text-muted:      #a0a0a0;
+  --varta-text-faint:      #606060;
+  --varta-accent:          #ffffff;
+  --varta-accent-hover:    #e0e0e0;
+  --varta-success:         #4ec9b0;
+  --varta-warning:         #ff8c00;
+  --varta-error:           #f44747;
+  --varta-info:            #569cd6;
+  --varta-selection:       #333333;
+  --varta-hover:           #1a1a1a;
+  --varta-active:          #252525;
+  --varta-tab-active:      #000000;
+  --varta-tab-inactive:    #0a0a0a;
+  --varta-sidebar:         #0a0a0a;
+  --varta-activitybar:     #000000;
+  --varta-activitybar-border: #1f1f1f;
+  --varta-activitybar-icon:   #808080;
+  --varta-activitybar-hover-from: rgba(255, 255, 255, 0.1);
+  --varta-activitybar-hover-to:   rgba(255, 255, 255, 0.05);
+  --varta-activitybar-hover-border: rgba(255, 255, 255, 0.15);
+  --varta-activitybar-active-from: rgba(255, 255, 255, 0.2);
+  --varta-activitybar-active-to:   rgba(255, 255, 255, 0.1);
+  --varta-activitybar-active-border: rgba(255, 255, 255, 0.3);
+  --varta-activitybar-indicator: #ffffff;
+  --varta-statusbar:       #000000;
+  --varta-panel:           #000000;
+  --varta-titlebar:        #0a0a0a;
+  --varta-editor-bg:       #000000;
+}
+
 /* ── Varta Light ──────────────────────────────────────────────────────────── */
 [data-theme="varta-light"] {
   --varta-bg:              #ffffff;

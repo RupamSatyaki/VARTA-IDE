@@ -12,6 +12,7 @@ export interface ThemeOption {
 
 export const BUILT_IN_THEMES: ThemeOption[] = [
   { id: 'varta-dark',     name: 'Varta Dark',     bg: '#1e1b24', surface: '#28242e', accent: '#a074c4', text: '#e0def4' },
+  { id: 'varta-black',    name: 'Varta Black',    bg: '#000000', surface: '#0a0a0a', accent: '#ffffff', text: '#ffffff' },
   { id: 'varta-light',    name: 'Varta Light',    bg: '#ffffff', surface: '#f5f5f5', accent: '#0066cc', text: '#1a1a1a' },
   { id: 'monokai',        name: 'Monokai',        bg: '#272822', surface: '#3e3d32', accent: '#f92672', text: '#f8f8f2' },
   { id: 'github-dark',    name: 'GitHub Dark',    bg: '#0d1117', surface: '#161b22', accent: '#58a6ff', text: '#c9d1d9' },
@@ -31,12 +32,21 @@ export function ThemeSelector({ activeThemeId, onSelect }: ThemeSelectorProps) {
           key={theme.id}
           onClick={() => onSelect(theme.id)}
           className={cn(
-            'rounded-lg border-2 overflow-hidden text-left transition-all',
+            'group relative rounded-lg border-2 overflow-hidden text-left transition-all',
             activeThemeId === theme.id
-              ? 'border-[#569cd6] shadow-lg'
-              : 'border-[#333333] hover:border-[#555555]',
+              ? 'border-varta-accent ring-2 ring-varta-accent/20 shadow-lg scale-[1.02]'
+              : 'border-varta-border hover:border-varta-accent/40',
           )}
         >
+          {/* Active Badge */}
+          {activeThemeId === theme.id && (
+            <div className="absolute top-1.5 right-1.5 z-10 bg-varta-accent text-white rounded-full w-4 h-4 flex items-center justify-center shadow-lg animate-in zoom-in duration-300">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 9 6 12 13 4" />
+              </svg>
+            </div>
+          )}
+
           {/* Preview swatch */}
           <div
             className="h-16 p-2 flex flex-col gap-1"
@@ -53,10 +63,13 @@ export function ThemeSelector({ activeThemeId, onSelect }: ThemeSelectorProps) {
           </div>
           {/* Theme name */}
           <div
-            className="px-2 py-1.5 text-xs font-medium"
+            className="px-2 py-1.5 text-xs font-bold flex items-center justify-between"
             style={{ backgroundColor: theme.surface, color: theme.text }}
           >
-            {theme.name}
+            <span>{theme.name}</span>
+            {activeThemeId === theme.id && (
+              <span className="text-[9px] opacity-60 font-normal uppercase tracking-wider">Active</span>
+            )}
           </div>
         </button>
       ))}

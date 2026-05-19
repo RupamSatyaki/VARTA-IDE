@@ -18,6 +18,12 @@
         "label": "Varta Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/varta-dark.json"
+      },
+      {
+        "id": "varta-black",
+        "label": "Varta Black",
+        "uiTheme": "vs-dark",
+        "path": "./themes/varta-black.json"
       }
     ]
   }
