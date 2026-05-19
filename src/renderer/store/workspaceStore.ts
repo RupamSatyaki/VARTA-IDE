@@ -32,6 +32,7 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>()((se
 
   loadProject: async (path: string) => {
     set({ isRestoring: true, currentProjectPath: path })
+    await window.varta.workspace.setProjectRoot(path)
 
     const res = await window.varta.workspace.loadSession(path)
     if (isIPCSuccess(res)) {

@@ -11,12 +11,32 @@ import { logger } from '../utils/logger'
 export class WorkspaceService {
   private workspacesDir: string = ''
   private lastProjectFile: string = ''
+  private activeFilePath: string | null = null
+  private projectRoot: string | null = null
 
   init(): void {
     const userData = app.getPath('userData')
     this.workspacesDir = path.join(userData, 'workspaces')
     this.lastProjectFile = path.join(this.workspacesDir, 'last-project.json')
     logger.info('WorkspaceService', 'Initialized')
+  }
+
+  setProjectRoot(path: string | null): void {
+    this.projectRoot = path
+    logger.info('WorkspaceService', `Project root set to: ${path}`)
+  }
+
+  getProjectRoot(): string | null {
+    return this.projectRoot
+  }
+
+  setActiveFile(path: string | null): void {
+    this.activeFilePath = path
+    logger.debug('WorkspaceService', `Active file set to: ${path}`)
+  }
+
+  getActiveFile(): string | null {
+    return this.activeFilePath
   }
 
   async ensureDir(dir: string): Promise<void> {

@@ -7,6 +7,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useTabStore } from '../../store/tabStore'
 import { useAIStore } from '../../store/aiStore'
 import { useGitStore } from '../../store/gitStore'
+import { useExtensionStore } from '../../store/extensionStore'
 import { ensureMonacoTheme } from '../../utils/monaco'
 
 export interface CodeCanvasProps {
@@ -45,8 +46,48 @@ export function CodeCanvas({
   const { saveCursorState, getCursorState } = useEditorStore()
   const { settings } = useSettingsStore()
   const { openCommandPalette, setActiveBottomPanel, setPanelVisible } = useUIStore()
+  const { extensions, enabled } = useExtensionStore()
   const uiRef = useRef({ openCommandPalette, setActiveBottomPanel, setPanelVisible })
   uiRef.current = { openCommandPalette, setActiveBottomPanel, setPanelVisible }
+
+  // ── Register extension actions in context menu ───────────────────────────
+  useEffect(() => {
+    if (!editorRef.current) { return }
+    const editor = editorRef.current
+
+    // Store disposables for cleanup
+    const disps: monaco.IDisposable[] = []
+
+    extensions.forEach((ext) => {
+      if (!enabled.has(ext.manifest.id || '') || !ext.manifest.contributes?.menus?.['editor/context']) { return }
+
+      ext.manifest.contributes.menus['editor/context'].forEach((menuItem) => {
+        const cmd = ext.manifest.contributes?.commands?.find((c) => c.command === menuItem.command)
+        if (!cmd) { return }
+
+        // Simple 'when' check for resourceLangId
+        if (menuItem.when && menuItem.when.includes('resourceLangId ==')) {
+          const expectedLang = menuItem.when.split('==')[1].trim()
+          if (expectedLang !== language) { return }
+        }
+
+        const disp = editor.addAction({
+          id:                 `${ext.manifest.id}.${menuItem.command}`,
+          label:              cmd.title,
+          contextMenuGroupId: '7_extensions', // Sort group
+          run: async () => {
+            const res = await window.varta.extensions.executeCommand(menuItem.command)
+            if (!res.success) {
+              console.error(`Failed to execute extension command ${menuItem.command}:`, res.error)
+            }
+          },
+        })
+        disps.push(disp)
+      })
+    })
+
+    return () => disps.forEach((d) => d.dispose())
+  }, [extensions, enabled, language])
 
   // ── onMount: called once when Monaco editor instance is created ───────────
   const handleMount: OnMount = (editor) => {

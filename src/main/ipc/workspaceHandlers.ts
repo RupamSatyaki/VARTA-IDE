@@ -59,6 +59,16 @@ export function registerWorkspaceHandlers(): void {
     }
   })
 
+  ipcMain.handle(WorkspaceChannel.SET_ACTIVE_FILE, async (_, path: string | null) => {
+    workspaceService.setActiveFile(path)
+    return ipcOk(undefined)
+  })
+
+  ipcMain.handle(WorkspaceChannel.SET_PROJECT_ROOT, async (_, path: string | null) => {
+    workspaceService.setProjectRoot(path)
+    return ipcOk(undefined)
+  })
+
   logger.info('WorkspaceHandlers', 'Registered')
 }
 
@@ -70,6 +80,8 @@ export function removeWorkspaceHandlers(): void {
     WorkspaceChannel.SAVE_LAYOUT,
     WorkspaceChannel.SAVE_TABS,
     WorkspaceChannel.SAVE_EXPLORER,
+    WorkspaceChannel.SET_ACTIVE_FILE,
+    WorkspaceChannel.SET_PROJECT_ROOT,
   ]
   for (const ch of channels) { ipcMain.removeHandler(ch) }
 }

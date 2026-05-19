@@ -6,6 +6,8 @@ import { VartaExtensionAPI, ExtensionContext, Disposable } from './api.types'
 import { logger } from '../utils/logger'
 import { ExtensionInfo } from '../../shared/types/extension.types'
 
+import { workspaceService } from '../services/WorkspaceService'
+
 export class ExtensionHost {
   private activeExtensions = new Map<string, {
     context: ExtensionContext,
@@ -188,6 +190,30 @@ export class ExtensionHost {
         }
       },
       window: {
+        StatusBarAlignment: { Left: 1, Right: 2 },
+        createStatusBarItem: (alignment?: any, priority?: number) => ({
+          alignment: alignment || 1,
+          priority: priority || 0,
+          text: '',
+          tooltip: '',
+          command: '',
+          color: '',
+          backgroundColor: '',
+          show: () => {},
+          hide: () => {},
+          dispose: () => {}
+        }),
+        get activeTextEditor() {
+          const activeFile = workspaceService.getActiveFile()
+          if (!activeFile) return undefined
+          return {
+            document: {
+              uri: { fsPath: activeFile, scheme: 'file' },
+              fileName: activeFile,
+              getText: () => '' // Fallback
+            }
+          }
+        },
         showMessage: (msg: string) => this.mainWindow.webContents.send('DIALOG:SHOW_MESSAGE', { message: msg }),
         showErrorMessage: (msg: string) => this.mainWindow.webContents.send('DIALOG:SHOW_ERROR', { message: msg }),
         showInformationMessage: (msg: string) => this.mainWindow.webContents.send('DIALOG:SHOW_MESSAGE', { message: msg }),
@@ -198,7 +224,9 @@ export class ExtensionHost {
         })
       },
       workspace: {
-        rootPath: null,
+        get rootPath() {
+          return workspaceService.getProjectRoot()
+        },
         onDidOpenTextDocument: () => ({ dispose: () => {} }),
         getConfiguration: () => ({
           get: (key: string, defaultValue: any) => defaultValue,

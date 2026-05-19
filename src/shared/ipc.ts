@@ -172,6 +172,8 @@ export const enum WorkspaceChannel {
   SAVE_LAYOUT     = 'WORKSPACE:SAVE_LAYOUT',
   SAVE_TABS       = 'WORKSPACE:SAVE_TABS',
   SAVE_EXPLORER   = 'WORKSPACE:SAVE_EXPLORER',
+  SET_ACTIVE_FILE = 'WORKSPACE:SET_ACTIVE_FILE',
+  SET_PROJECT_ROOT = 'WORKSPACE:SET_PROJECT_ROOT',
 }
 
 // ─── IPC Response wrapper ─────────────────────────────────────────────────────

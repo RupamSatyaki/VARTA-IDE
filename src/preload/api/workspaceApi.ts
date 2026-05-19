@@ -23,6 +23,12 @@ export const workspaceApi = {
 
   saveExplorer: (path: string, explorer: WorkspaceExplorer): Promise<IPCResponse<void>> =>
     ipcRenderer.invoke(WorkspaceChannel.SAVE_EXPLORER, { path, explorer }),
+
+  setActiveFile: (path: string | null): Promise<IPCResponse<void>> =>
+    ipcRenderer.invoke(WorkspaceChannel.SET_ACTIVE_FILE, path),
+
+  setProjectRoot: (path: string | null): Promise<IPCResponse<void>> =>
+    ipcRenderer.invoke(WorkspaceChannel.SET_PROJECT_ROOT, path),
 }
 
 export type WorkspaceAPI = typeof workspaceApi

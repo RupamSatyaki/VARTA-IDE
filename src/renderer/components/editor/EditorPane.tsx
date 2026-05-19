@@ -32,6 +32,10 @@ export function EditorPane() {
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
+  React.useEffect(() => {
+    window.varta.workspace.setActiveFile(activeTab?.filePath ?? null)
+  }, [activeTab])
+
   // ── Tab close with dirty check ───────────────────────────────────────────
   const handleCloseTab = useCallback((tabId: string) => {
     const tab = tabs.find((t) => t.id === tabId)
