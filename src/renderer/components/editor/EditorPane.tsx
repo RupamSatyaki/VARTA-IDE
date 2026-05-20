@@ -5,6 +5,7 @@ import { EditorTabs }            from './EditorTabs'
 import { EditorBreadcrumb }      from './EditorBreadcrumb'
 import { WelcomeScreen }         from './WelcomeScreen'
 import { UnsavedChangesDialog }  from './UnsavedChangesDialog'
+import { ExtensionDetailsTab }   from '../extensions/ExtensionDetailsTab'
 import { useTabStore }           from '../../store/tabStore'
 import { useUIStore }            from '../../store/uiStore'
 import { useEditor }             from '../../hooks/useEditor'
@@ -76,6 +77,8 @@ export function EditorPane() {
   }, [unsavedDialog, closeTab])
 
   const showEditor = tabs.length > 0 && activeTab !== null
+  const isExtensionTab = activeTab?.filePath.startsWith('extension:')
+  const extensionId = isExtensionTab ? activeTab?.filePath.split(':')[1] : null
 
   return (
     <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden bg-varta-bg rounded-xl relative">
@@ -89,12 +92,12 @@ export function EditorPane() {
       )}
 
       {/* Breadcrumb */}
-      {activeTab && (
+      {activeTab && !isExtensionTab && (
         <EditorBreadcrumb filePath={activeTab.filePath} />
       )}
 
       {/* Floating Toolbar */}
-      {activeTab && !activeTab.diffData && (
+      {activeTab && !activeTab.diffData && !isExtensionTab && (
         <div className="absolute top-[46px] right-6 z-10 flex items-center gap-1 p-1 rounded-lg bg-varta-bg-secondary/80 border border-varta-border backdrop-blur-md shadow-2xl transition-opacity opacity-0 hover:opacity-100 group-hover/editor:opacity-100">
           <ToolbarBtn 
             icon={faSave} 
@@ -137,12 +140,19 @@ export function EditorPane() {
         />
       )}
 
+      {/* Extension Details View */}
+      {isExtensionTab && extensionId && (
+        <div className="flex-1 min-h-0 min-w-0">
+          <ExtensionDetailsTab extensionId={extensionId} />
+        </div>
+      )}
+
       {/*
         CodeCanvas — mounted ONCE, never unmounted while tabs exist.
         Tab switch = model swap inside CodeCanvas via path/tabId props.
         NO key prop here — that would remount Monaco on every switch.
       */}
-      {showEditor && activeTab && !activeTab.diffData && (
+      {showEditor && activeTab && !activeTab.diffData && !isExtensionTab && (
         <div className="flex-1 min-h-0 min-w-0 group/editor">
           <CodeCanvas
             tabId={activeTab.id}

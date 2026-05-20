@@ -21,6 +21,7 @@ export interface ExtensionItemProps {
   onToggle?: (id: string, enabled: boolean) => void
   onInstall?:(id: string) => void
   onUninstall?:(id: string) => void
+  onClick?:   (id: string) => void
 }
 
 // Generate a consistent color from extension name
@@ -33,19 +34,22 @@ function nameToColor(name: string): string {
 
 function Abs(n: number) { return n < 0 ? -n : n }
 
-export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: ExtensionItemProps) {
+export function ExtensionItem({ ext, onToggle, onInstall, onUninstall, onClick }: ExtensionItemProps) {
   const { info } = useNotificationStore()
   const color = nameToColor(ext.name)
   const [imgError, setImgError] = React.useState(false)
 
   return (
-    <div className={cn(
-      "flex flex-col gap-2 px-3 py-3 border-b border-varta-border hover:bg-varta-hover transition-colors group",
-      ext.isBuiltin && "bg-varta-bg-secondary/50"
-    )}>
+    <div 
+      className={cn(
+        "flex flex-col gap-2 px-3 py-3 border-b border-varta-border hover:bg-varta-hover transition-colors group cursor-pointer",
+        ext.isBuiltin && "bg-varta-bg-secondary/50"
+      )}
+      onClick={() => onClick?.(ext.id)}
+    >
       {/* Cover Image for Built-ins */}
       {ext.isBuiltin && ext.coverImage && (
-        <div className="w-full aspect-video rounded overflow-hidden mb-1 bg-black/20 border border-white/5">
+        <div className="w-full aspect-video rounded overflow-hidden mb-1 bg-black/20 border border-white/5 pointer-events-none">
           <img 
             src={ext.coverImage} 
             alt={ext.name} 
@@ -56,24 +60,26 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
 
       <div className="flex items-start gap-2.5">
         {/* Icon */}
-        {ext.icon && !imgError ? (
-          <img 
-            src={ext.icon} 
-            alt={ext.name} 
-            className="w-8 h-8 rounded shrink-0 object-contain bg-white/5" 
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div
-            className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white shrink-0"
-            style={{ backgroundColor: color + '33', border: `1px solid ${color}44` }}
-          >
-            <span style={{ color }}>{ext.name[0].toUpperCase()}</span>
-          </div>
-        )}
+        <div className="pointer-events-none">
+          {ext.icon && !imgError ? (
+            <img 
+              src={ext.icon} 
+              alt={ext.name} 
+              className="w-8 h-8 rounded shrink-0 object-contain bg-white/5" 
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div
+              className="w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white shrink-0"
+              style={{ backgroundColor: color + '33', border: `1px solid ${color}44` }}
+            >
+              <span style={{ color }}>{ext.name[0].toUpperCase()}</span>
+            </div>
+          )}
+        </div>
 
         {/* Info */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pointer-events-none">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-varta-text truncate">{ext.name}</span>
             {ext.version && (
@@ -85,7 +91,7 @@ export function ExtensionItem({ ext, onToggle, onInstall, onUninstall }: Extensi
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {ext.installed ? (
             <>
               <Toggle

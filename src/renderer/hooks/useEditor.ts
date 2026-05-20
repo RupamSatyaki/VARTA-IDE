@@ -191,9 +191,32 @@ export function useEditor() {
     })
   }, [])
 
+  const openExtensionDetails = useCallback((extensionId: string) => {
+    const tabStore = useTabStore.getState()
+    const path = `extension:${extensionId}`
+    
+    const existing = tabStore.tabs.find((t) => t.filePath === path)
+    if (existing) {
+      tabStore.setActive(existing.id)
+      return
+    }
+
+    const tabId = `extension-${extensionId}-${Date.now()}`
+    tabStore.addTab({
+      id: tabId,
+      filePath: path,
+      title: `Extension: ${extensionId.split('.').pop() || extensionId}`,
+      language: 'plaintext',
+      isDirty: false,
+      isPreview: false,
+      isPinned: false,
+    })
+  }, [])
+
   return {
     openFile,
     openDiff,
+    openExtensionDetails,
     getContent,
     saveFile,
     saveAllFiles,
