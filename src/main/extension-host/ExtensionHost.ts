@@ -138,12 +138,17 @@ export class ExtensionHost {
       throw err
     }
 
+    const truncate = (val: any) => {
+      if (typeof val === 'string' && val.length > 500) return val.substring(0, 500) + '... [TRUNCATED]'
+      return val
+    }
+
     const sandbox: any = {
       varta: api,
       console: {
-        log: (...args: any[]) => logger.info(`Ext:${info.manifest.id}`, ...args),
-        error: (...args: any[]) => logger.error(`Ext:${info.manifest.id}`, ...args),
-        warn: (...args: any[]) => logger.warn(`Ext:${info.manifest.id}`, ...args),
+        log:   (...args: any[]) => logger.info(`Ext:${info.manifest.id}`, ...args.map(truncate)),
+        error: (...args: any[]) => logger.error(`Ext:${info.manifest.id}`, ...args.map(truncate)),
+        warn:  (...args: any[]) => logger.warn(`Ext:${info.manifest.id}`, ...args.map(truncate)),
       },
       Buffer,
       URL,
@@ -274,12 +279,29 @@ export class ExtensionHost {
         get rootPath() {
           return workspaceService.getProjectRoot()
         },
+        get workspaceFolders() {
+          const root = workspaceService.getProjectRoot()
+          if (!root) return undefined
+          return [{
+            uri: { fsPath: root, scheme: 'file', toString: () => `file://${root.replace(/\\/g, '/')}` },
+            name: path.basename(root),
+            index: 0
+          }]
+        },
         onDidOpenTextDocument: () => ({ dispose: () => {} }),
         getConfiguration: () => ({
           get: (key: string, defaultValue: any) => defaultValue,
           has: () => false,
           update: () => Promise.resolve()
         })
+      },
+      env: {
+        openExternal: async (uri: any) => {
+          const url = typeof uri === 'string' ? uri : uri.toString()
+          const { shell } = require('electron')
+          await shell.openExternal(url)
+          return true
+        }
       },
       // Placeholders for VS Code compatibility
       EventEmitter: class {
