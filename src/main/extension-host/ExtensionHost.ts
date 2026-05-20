@@ -195,7 +195,24 @@ export class ExtensionHost {
   }
 
   private createAPI(info: ExtensionInfo, context: ExtensionContext): any {
+    const StatusBarAlignment = { Left: 1, Right: 2 }
+    
     const api = {
+      // ── Enums (Top level in VS Code API) ──────────────────────────────────
+      StatusBarAlignment,
+      ViewColumn: {
+        Active: -1, Beside: -2, One: 1, Two: 2, Three: 3, Four: 4, Five: 5, Six: 6, Seven: 7, Eight: 8, Nine: 9
+      },
+      TextEditorRevealType: {
+        Default: 0, InCenter: 1, InCenterIfOutsideViewport: 2, AtTop: 3
+      },
+      ConfigurationTarget: {
+        Global: 1, Workspace: 2, WorkspaceFolder: 3
+      },
+      TreeItemCollapsibleState: {
+        None: 0, Collapsed: 1, Expanded: 2
+      },
+
       commands: {
         registerCommand: (id: string, callback: (...args: any[]) => any) => {
           this.commands.set(id, callback)
@@ -213,7 +230,7 @@ export class ExtensionHost {
         }
       },
       window: {
-        StatusBarAlignment: { Left: 1, Right: 2 },
+        StatusBarAlignment,
         createStatusBarItem: (alignment?: any, priority?: number) => ({
           alignment: alignment || 1,
           priority: priority || 0,
