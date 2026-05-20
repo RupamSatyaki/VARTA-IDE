@@ -19,7 +19,7 @@ export class ExtensionHost {
   private commands = new Map<string, (...args: any[]) => any>()
   private moduleCache = new Map<string, any>()
 
-  constructor(private mainWindow: any) {}
+  constructor(private mainWindow: any, private extensionService: any) {}
 
   /**
    * Activates an extension by loading its main entry point in a sandbox.
@@ -35,12 +35,24 @@ export class ExtensionHost {
 
     const entryPath = path.join(installPath, manifest.main)
     try {
+      const createMemento = () => {
+        const data = new Map<string, any>()
+        return {
+          get: (key: string, defaultValue?: any) => data.has(key) ? data.get(key) : defaultValue,
+          update: (key: string, value: any) => { data.set(key, value); return Promise.resolve() },
+          setKeysForSync: (_keys: string[]) => {}, // Shim
+          keys: () => Array.from(data.keys())
+        }
+      }
+
       const context: ExtensionContext = {
         subscriptions: [],
         extensionPath: installPath,
         storagePath: path.join(installPath, 'storage'),
         globalStoragePath: path.join(installPath, 'globalStorage'),
-        logPath: path.join(installPath, 'logs')
+        logPath: path.join(installPath, 'logs'),
+        workspaceState: createMemento() as any,
+        globalState: createMemento() as any
       }
 
       const api = this.createAPI(info, context)
@@ -301,6 +313,28 @@ export class ExtensionHost {
           const { shell } = require('electron')
           await shell.openExternal(url)
           return true
+        }
+      },
+      extensions: {
+        getExtension: (id: string) => {
+          const info = this.extensionService.list().find((e: any) => e.manifest.id === id)
+          if (!info) return undefined
+          return {
+            id: info.manifest.id,
+            extensionPath: info.installPath,
+            packageJSON: info.manifest,
+            isActive: this.activeExtensions.has(info.manifest.id),
+            exports: this.activeExtensions.get(info.manifest.id)?.exports
+          }
+        },
+        get all() {
+          return this.extensionService.list().map((info: any) => ({
+            id: info.manifest.id,
+            extensionPath: info.installPath,
+            packageJSON: info.manifest,
+            isActive: this.activeExtensions.has(info.manifest.id),
+            exports: this.activeExtensions.get(info.manifest.id)?.exports
+          }))
         }
       },
       // Placeholders for VS Code compatibility

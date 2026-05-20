@@ -16,7 +16,7 @@ export class ExtensionService {
 
   init(mainWindow: any): void {
     this.mainWindow = mainWindow
-    this.host = new ExtensionHost(mainWindow)
+    this.host = new ExtensionHost(mainWindow, this)
     
     // User installed extensions
     this.extensionsDir = path.join(app.getPath('userData'), 'extensions')
