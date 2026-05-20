@@ -105,13 +105,17 @@ export function registerExtensionHandlers(): void {
     }
   })
 
-  // Execute extension command in host
+  // Execute command
   ipcMain.handle(ExtensionChannel.EXECUTE_COMMAND, async (_event, id: string, ...args: any[]) => {
     try {
+      if (id === 'varta:internal.triggerActivationEvent') {
+        extensionService.triggerActivationEvent(args[0])
+        return ipcOk(null)
+      }
       const result = await extensionService.executeCommand(id, ...args)
       return ipcOk(result)
     } catch (error: any) {
-      logger.error('IPC:Extension', `Command execution failed: ${id}`, error)
+      logger.error('IPC:Extension', `Failed to execute command ${id}`, error)
       return ipcErr({ code: 'ERR_EXTENSION_COMMAND_FAILED', message: error.message })
     }
   })

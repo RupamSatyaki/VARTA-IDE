@@ -106,10 +106,14 @@ export class ExtensionService {
       
       if (info.status === 'enabled') {
         this.processContributions(info)
-        // Activation happens after loadAll to ensure mainWindow is ready
-        this.activateExtension(manifest.id).catch(e => {
-          logger.error('ExtensionService', `Auto-activation failed for ${manifest.id}`, e)
-        })
+        
+        // Auto-activate if it has '*' or global activation events
+        const events = manifest.activationEvents || []
+        if (events.includes('*') || events.includes('onStartupFinished')) {
+          this.activateExtension(manifest.id).catch(e => {
+            logger.error('ExtensionService', `Auto-activation failed for ${manifest.id}`, e)
+          })
+        }
       }
     } catch (e) {
       if (e instanceof VartaError) { throw e }
@@ -117,7 +121,19 @@ export class ExtensionService {
     }
   }
 
+  // Triggered from renderer when a file is opened
+  triggerActivationEvent(event: string): void {
+    logger.info('ExtensionService', `Triggering activation event: ${event}`)
+    this.extensions.forEach((info, id) => {
+      if (info.status === 'enabled' && info.manifest.activationEvents?.includes(event)) {
+        this.activateExtension(id).catch(err => logger.error('ExtensionService', `Failed to activate ${id} for ${event}`, err))
+      }
+    })
+  }
+
   private themes = new Map<string, any>()
+
+  private commandToExtension = new Map<string, string>()
 
   private processContributions(info: ExtensionInfo): void {
     const { contributes } = info.manifest
@@ -127,6 +143,9 @@ export class ExtensionService {
     
     if (contributes.commands) {
       logger.info('ExtensionService', `Found ${contributes.commands.length} commands from ${info.manifest.id}`)
+      for (const cmd of contributes.commands) {
+        this.commandToExtension.set(cmd.command, info.manifest.id)
+      }
     }
 
     if (contributes.themes) {
@@ -143,6 +162,10 @@ export class ExtensionService {
 
   getThemes(): any[] {
     return Array.from(this.themes.values())
+  }
+
+  getOwnerOfCommand(commandId: string): string | undefined {
+    return this.commandToExtension.get(commandId)
   }
 
   async getThemeData(themeId: string): Promise<any> {
@@ -272,6 +295,9 @@ export class ExtensionService {
   async reloadAll(): Promise<void> {
     logger.info('ExtensionService', 'Reloading all extensions...')
     this.extensions.clear()
+    this.themes.clear()
+    this.commandToExtension.clear()
+    
     if (this.host) {
       // In a more complex system, we'd deactivate all first
     }

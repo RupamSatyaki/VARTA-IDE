@@ -8,6 +8,7 @@ import { logger } from '../utils/logger'
 import { ExtensionInfo } from '../../shared/types/extension.types'
 
 import { workspaceService } from '../services/WorkspaceService'
+import { fileService } from '../services/FileService'
 
 export class ExtensionHost {
   private activeExtensions = new Map<string, {
@@ -230,9 +231,16 @@ export class ExtensionHost {
           if (!activeFile) return undefined
           return {
             document: {
-              uri: { fsPath: activeFile, scheme: 'file' },
+              uri: { fsPath: activeFile, scheme: 'file', toString: () => `file://${activeFile}` },
               fileName: activeFile,
-              getText: () => '' // Fallback
+              getText: () => {
+                try {
+                  // Synchronous read for the shim, as VS Code API is often sync here
+                  return fs.readFileSync(activeFile, 'utf-8')
+                } catch (e) {
+                  return ''
+                }
+              }
             }
           }
         },
@@ -282,7 +290,20 @@ export class ExtensionHost {
   }
 
   async executeCommand(id: string, ...args: any[]): Promise<any> {
-    const callback = this.commands.get(id)
+    let callback = this.commands.get(id)
+    
+    if (!callback) {
+      const extId = extensionService.getOwnerOfCommand(id)
+      if (extId) {
+        logger.info('ExtensionHost', `Auto-activating extension ${extId} for command ${id}`)
+        const info = extensionService.list().find(e => e.manifest.id === extId)
+        if (info && info.status === 'enabled') {
+          await this.activate(info)
+          callback = this.commands.get(id)
+        }
+      }
+    }
+
     if (callback) return await callback(...args)
     throw new Error(`Command not found: ${id}`)
   }

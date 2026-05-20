@@ -1,5 +1,6 @@
 import React from 'react'
 import { ContextMenu, type MenuItemDef } from '../ui/ContextMenu'
+import { useExtensionStore } from '../../store/extensionStore'
 import type { FileTreeNode } from '../../../shared/types/file.types'
 import type { GitFileChange } from '../../../shared/types/git.types'
 
@@ -33,6 +34,28 @@ export function FileTreeContextMenu({
   onGitDiscard,
 }: FileTreeContextMenuProps) {
   const isDir = node.type === 'directory'
+  const { extensions, enabled } = useExtensionStore()
+
+  const extItems: MenuItemDef[] = []
+  extensions.forEach((ext) => {
+    if (!enabled.has(ext.manifest.id) || !ext.manifest.contributes?.menus?.['explorer/context']) return
+
+    ext.manifest.contributes.menus['explorer/context'].forEach((menuItem) => {
+      const cmd = ext.manifest.contributes?.commands?.find(c => c.command === menuItem.command)
+      if (!cmd) return
+
+      extItems.push({
+        label: cmd.title,
+        onClick: async () => {
+          const uri = { fsPath: node.path, scheme: 'file', toString: () => `file://${node.path.replace(/\\/g, '/')}` }
+          const res = await window.varta.extensions.executeCommand(menuItem.command, uri)
+          if (!res.success) {
+            console.error(`Failed to execute extension command ${menuItem.command}:`, res.error)
+          }
+        }
+      })
+    })
+  })
 
   const items: MenuItemDef[] = [
     ...(isDir ? [
@@ -46,6 +69,10 @@ export function FileTreeContextMenu({
     { label: 'Copy Path',         onClick: onCopyPath },
     { label: 'Copy Relative Path',onClick: onCopyRelPath },
     { label: 'Reveal in Explorer',onClick: onRevealInShell, icon: <FolderIcon /> },
+    ...(extItems.length > 0 ? [
+      { type: 'separator' as const },
+      ...extItems
+    ] : []),
     ...(gitChange ? [
       { type: 'separator' as const },
       ...(gitChange.status !== 'untracked' && onGitStage ? [

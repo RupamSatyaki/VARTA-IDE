@@ -65,10 +65,20 @@ export function CodeCanvas({
         const cmd = ext.manifest.contributes?.commands?.find((c) => c.command === menuItem.command)
         if (!cmd) { return }
 
-        // Simple 'when' check for resourceLangId
-        if (menuItem.when && menuItem.when.includes('resourceLangId ==')) {
-          const expectedLang = menuItem.when.split('==')[1].trim()
-          if (expectedLang !== language) { return }
+        // Improved 'when' check
+        if (menuItem.when) {
+          const w = menuItem.when.toLowerCase()
+          // Check language
+          if (w.includes('resourcelangid ==')) {
+            const val = w.split('resourcelangid ==')[1].trim().split(' ')[0]
+            if (val !== language.toLowerCase()) return
+          }
+          // Check extension
+          if (w.includes('resourceextname ==')) {
+            const val = w.split('resourceextname ==')[1].trim().split(' ')[0]
+            const currentExt = '.' + path.split('.').pop()?.toLowerCase()
+            if (val !== currentExt) return
+          }
         }
 
         const disp = editor.addAction({
@@ -76,7 +86,8 @@ export function CodeCanvas({
           label:              cmd.title,
           contextMenuGroupId: '7_extensions', // Sort group
           run: async () => {
-            const res = await window.varta.extensions.executeCommand(menuItem.command)
+            const uri = { fsPath: path, scheme: 'file', toString: () => `file://${path.replace(/\\/g, '/')}` }
+            const res = await window.varta.extensions.executeCommand(menuItem.command, uri)
             if (!res.success) {
               console.error(`Failed to execute extension command ${menuItem.command}:`, res.error)
             }

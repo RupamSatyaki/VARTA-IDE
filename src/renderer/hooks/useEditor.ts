@@ -76,6 +76,9 @@ export function useEditor() {
       id: tabId, filePath, title: stat.name,
       language, isDirty: false, isPreview: preview, isPinned: false,
     })
+
+    // Trigger activation event for the language
+    window.varta.extensions.executeCommand('varta:internal.triggerActivationEvent', `onLanguage:${language}`)
   }, [])
 
   // ── Get content ───────────────────────────────────────────────────────────
