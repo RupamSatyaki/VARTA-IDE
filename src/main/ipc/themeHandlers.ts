@@ -48,7 +48,8 @@ export function registerThemeHandlers(): void {
         loadThemesFromDir(BUILTIN_THEMES_DIR),
         loadThemesFromDir(USER_THEMES_DIR),
       ])
-      return ipcOk([...builtin, ...user])
+      const extThemes = extensionService.getThemes()
+      return ipcOk([...builtin, ...user, ...extThemes])
     } catch (e) { return handleErr(e) }
   })
 

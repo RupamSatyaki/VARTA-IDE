@@ -117,6 +117,8 @@ export class ExtensionService {
     }
   }
 
+  private themes = new Map<string, any>()
+
   private processContributions(info: ExtensionInfo): void {
     const { contributes } = info.manifest
     if (!contributes) return
@@ -129,6 +131,34 @@ export class ExtensionService {
 
     if (contributes.themes) {
       logger.info('ExtensionService', `Found ${contributes.themes.length} themes from ${info.manifest.id}`)
+      for (const t of contributes.themes) {
+        this.themes.set(t.id, {
+          ...t,
+          extensionId: info.manifest.id,
+          extensionPath: info.installPath
+        })
+      }
+    }
+  }
+
+  getThemes(): any[] {
+    return Array.from(this.themes.values())
+  }
+
+  async getThemeData(themeId: string): Promise<any> {
+    const themeInfo = this.themes.get(themeId)
+    if (!themeInfo || !themeInfo.path) return null
+    
+    try {
+      const fullPath = path.isAbsolute(themeInfo.path) 
+        ? themeInfo.path 
+        : path.join(themeInfo.extensionPath, themeInfo.path)
+        
+      const raw = await fsp.readFile(fullPath, 'utf-8')
+      return JSON.parse(raw)
+    } catch (e) {
+      logger.error('ExtensionService', `Failed to read theme file for ${themeId}`, e)
+      return null
     }
   }
 
